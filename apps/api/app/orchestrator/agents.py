@@ -19,4 +19,4 @@ class ORCAAgent:
             return AgentResult(agent=self.name,step_id=step.id,status=AgentStatus.FAILED,errors=[{"code":type(exc).__name__,"message":"Approved ORCA service failed."}],started_at=started,completed_at=datetime.now(UTC),duration_ms=(time.perf_counter()-clock)*1000)
 
 
-AGENT_NAMES={PlannerTool.WEATHER:"WeatherAgent",PlannerTool.MARINE:"MarineAgent",PlannerTool.ALERTS:"AlertAgent",PlannerTool.RISK:"RiskAgent",PlannerTool.PFZ:"PFZAgent",PlannerTool.OCEAN_PRODUCTS:"OceanProductAgent",PlannerTool.GEOSPATIAL:"GeospatialAgent",PlannerTool.MAP:"MapActionAgent"}
+AGENT_NAMES={PlannerTool.WEATHER:"WeatherAgent",PlannerTool.MARINE:"MarineAgent",PlannerTool.ALERTS:"AlertAgent",PlannerTool.RISK:"RiskAgent",PlannerTool.PFZ:"PFZAgent",PlannerTool.OCEAN_PRODUCTS:"OceanProductAgent",PlannerTool.GEOSPATIAL:"GeospatialAgent",PlannerTool.GEOFENCE:"GeofenceAgent",PlannerTool.MAP:"MapActionAgent"}

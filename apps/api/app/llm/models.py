@@ -18,6 +18,10 @@ class LanguageDetectionResult(BaseModel):
     language_name: str = Field(min_length=2, max_length=64)
     confidence: float = Field(ge=0, le=1)
     script: str | None = Field(default=None, max_length=64)
+    language_mode: str = "MONOLINGUAL"
+    dominant_language: str | None = None
+    secondary_languages: list[str] = Field(default_factory=list, max_length=4)
+    romanized: bool = False
 
 
 class QueryExtractionResult(BaseModel):

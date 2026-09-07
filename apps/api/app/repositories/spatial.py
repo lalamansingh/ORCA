@@ -20,3 +20,8 @@ class MarineZoneRepository:
     async def containing(self, *, latitude: float, longitude: float) -> list[MarineZone]:
         point = _point(longitude, latitude)
         return list((await self.session.scalars(select(MarineZone).where(func.ST_Contains(MarineZone.geometry, point)))).all())
+    async def nearby(self,*,latitude:float,longitude:float,radius_km:float)->list[tuple[MarineZone,float]]:
+        point=_point(longitude,latitude);zone_geography=MarineZone.geometry.cast(Geography);point_geography=point.cast(Geography)
+        distance=func.ST_Distance(zone_geography,point_geography)
+        rows=await self.session.execute(select(MarineZone,distance.label("distance_m")).where(func.ST_DWithin(zone_geography,point_geography,radius_km*1000)).order_by(distance))
+        return [(zone,float(distance_m)) for zone,distance_m in rows.all()]

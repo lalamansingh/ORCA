@@ -74,6 +74,7 @@ class Settings(BaseSettings):
     ai_rate_limit_per_minute: int = Field(10, ge=1, le=120, validation_alias="AI_RATE_LIMIT_PER_MINUTE")
     orchestration_timeout_seconds: float = Field(45, gt=1, le=180, validation_alias="ORCHESTRATION_TIMEOUT_SECONDS")
     orchestration_max_parallel_steps: int = Field(3, ge=1, le=10, validation_alias="ORCHESTRATION_MAX_PARALLEL_STEPS")
+    geofence_boundary_caution_km: float = Field(5, gt=0, le=100, validation_alias="GEOFENCE_BOUNDARY_CAUTION_KM")
 
     @field_validator("debug", "orca_demo_mode", "llm_enabled", mode="before")
     @classmethod

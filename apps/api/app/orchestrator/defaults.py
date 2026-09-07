@@ -12,6 +12,7 @@ from app.services.pfz_service import PFZService
 from app.services.provider_status import ProviderStatusRegistry
 from app.services.weather_service import WeatherService
 from app.services.risk_service import RiskService
+from app.services.geofence_service import GeofenceService
 from app.domain.ocean_products import OceanProduct
 from app.planner.models import PlannerTool
 from app.orchestrator.registry import ORCAToolRegistry
@@ -42,5 +43,9 @@ def build_default_registry(request:Any)->ORCAToolRegistry:
     async def risk_adapter(step,inputs,steps):
         lat,lon=await location(inputs)
         return (await risk.evaluate(latitude=lat,longitude=lon,persist=False)).model_dump(mode="json")
+    async def geofence_adapter(step,inputs,steps):
+        lat,lon=await location(inputs)
+        async with request.app.state.db_session_factory() as session:
+            return (await GeofenceService(session,getattr(settings,"geofence_boundary_caution_km",5)).check_point(lat,lon)).model_dump(mode="json")
     async def map_adapter(step,inputs,steps):return {"action":"SHOW_LAYER","layer":"pfz"}
-    return ORCAToolRegistry({PlannerTool.WEATHER:weather_adapter,PlannerTool.MARINE:marine_adapter,PlannerTool.ALERTS:alert_adapter,PlannerTool.PFZ:pfz_adapter,PlannerTool.GEOSPATIAL:geo_adapter,PlannerTool.OCEAN_PRODUCTS:ocean_adapter,PlannerTool.RISK:risk_adapter,PlannerTool.MAP:map_adapter})
+    return ORCAToolRegistry({PlannerTool.WEATHER:weather_adapter,PlannerTool.MARINE:marine_adapter,PlannerTool.ALERTS:alert_adapter,PlannerTool.PFZ:pfz_adapter,PlannerTool.GEOSPATIAL:geo_adapter,PlannerTool.GEOFENCE:geofence_adapter,PlannerTool.OCEAN_PRODUCTS:ocean_adapter,PlannerTool.RISK:risk_adapter,PlannerTool.MAP:map_adapter})

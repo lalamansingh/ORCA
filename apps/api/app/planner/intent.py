@@ -5,7 +5,7 @@ from app.planner.models import IntentClassification,IntentSignals,PlannerIntent
 
 def classify(extraction: QueryExtractionResult) -> IntentClassification:
     text=f"{extraction.raw_query} {extraction.normalized_query}".lower()
-    signals=IntentSignals(mentions_safe=bool(re.search(r"\b(safe|risk|danger|sail|depart|venture|surakshit|jana)\b",text)),mentions_pfz=bool(re.search(r"\b(pfz|fishing zone|potential fishing zone|machhli)\b",text)),mentions_weather=bool(re.search(r"\b(weather|rain|mausam|wind|visibility)\b",text)),mentions_waves=bool(re.search(r"\b(wave|waves|swell|current|lehar|samundar|sea condition)\b",text)),mentions_alert=bool(re.search(r"\b(alert|warning|cyclone|high wave)\b",text)),mentions_chlorophyll=bool(re.search(r"\b(chlorophyll|sst|productivity)\b",text)),mentions_map=bool(re.search(r"\b(map|map pe|on map|display layer)\b",text)),mentions_route=bool(re.search(r"\b(route|safest route|navigate)\b",text)))
+    signals=IntentSignals(mentions_safe=bool(re.search(r"\b(safe|risk|danger|sail|depart|venture|surakshit|jana)\b",text)),mentions_pfz=bool(re.search(r"\b(pfz|fishing zone|potential fishing zone|machhli)\b",text)),mentions_weather=bool(re.search(r"\b(weather|rain|mausam|wind|visibility)\b",text)),mentions_waves=bool(re.search(r"\b(wave|waves|swell|current|lehar|samundar|sea condition)\b",text)),mentions_alert=bool(re.search(r"\b(alert|warning|cyclone|high wave)\b",text)),mentions_chlorophyll=bool(re.search(r"\b(chlorophyll|sst|productivity)\b",text)),mentions_geofence=bool(re.search(r"\b(international waters?|maritime boundary|restricted waters?|protected areas?|geofence|fishing restriction|allowed|prohibited|boundary kitni)\b",text)),mentions_map=bool(re.search(r"\b(map|map pe|on map|display layer)\b",text)),mentions_route=bool(re.search(r"\b(route|safest route|navigate)\b",text)))
     candidates=[]
     if re.match(r"\s*(what is|what's|define|meaning of)\s+(a\s+)?pfz", text):
         return IntentClassification(primary_intent=PlannerIntent.GENERAL_INFORMATION,confidence=.9,signals=signals,safety_sensitive=False,classification_source="RULES",conflicts=[])
@@ -15,6 +15,7 @@ def classify(extraction: QueryExtractionResult) -> IntentClassification:
     if signals.mentions_weather:candidates.append(PlannerIntent.WEATHER_QUERY)
     if signals.mentions_waves:candidates.append(PlannerIntent.MARINE_CONDITIONS_QUERY)
     if signals.mentions_chlorophyll:candidates.append(PlannerIntent.OCEAN_PRODUCTIVITY_QUERY)
+    if signals.mentions_geofence:candidates.append(PlannerIntent.GEOFENCE_QUERY)
     if signals.mentions_route:candidates.append(PlannerIntent.ROUTE_QUERY)
     if signals.mentions_map:candidates.append(PlannerIntent.MAP_QUERY)
     if not candidates:
