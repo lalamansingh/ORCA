@@ -72,6 +72,8 @@ class Settings(BaseSettings):
     llm_max_input_chars: int = Field(4000, ge=100, le=16000, validation_alias="LLM_MAX_INPUT_CHARS")
     llm_max_output_tokens: int = Field(800, ge=64, le=4000, validation_alias="LLM_MAX_OUTPUT_TOKENS")
     ai_rate_limit_per_minute: int = Field(10, ge=1, le=120, validation_alias="AI_RATE_LIMIT_PER_MINUTE")
+    orchestration_timeout_seconds: float = Field(45, gt=1, le=180, validation_alias="ORCHESTRATION_TIMEOUT_SECONDS")
+    orchestration_max_parallel_steps: int = Field(3, ge=1, le=10, validation_alias="ORCHESTRATION_MAX_PARALLEL_STEPS")
 
     @field_validator("debug", "orca_demo_mode", "llm_enabled", mode="before")
     @classmethod
