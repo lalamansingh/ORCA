@@ -122,7 +122,7 @@ Use **Use my current location** to request browser GPS only after an explicit ac
 
 ### Map layers and fixtures
 
-The layer panel distinguishes `DEMO` from `NOT_CONNECTED`. Potential Fishing Zone, alert, restricted-zone, and route geometries in this step are small development fixtures for interaction testing. They are not INCOIS data, live advisories, real boundaries, or route recommendations. Real marine providers remain future work.
+The layer panel distinguishes `LIVE`, `PARTIAL`, `DEMO`, `NOT_CONNECTED`, and `UNAVAILABLE`. Alert geometry now comes from normalized providers and is never synthesized from textual affected-area descriptions. PFZ, restricted-zone, and route geometries remain labeled development fixtures; they are not INCOIS data, real boundaries, or route recommendations.
 
 ### Location privacy
 
@@ -162,6 +162,29 @@ API endpoints:
 
 Forecast/model data is decision support only. It must not be used as the sole source for navigation or emergency decisions; coastal current, tide, and sea-level accuracy can be limited. See `docs/data-sources.md` for the full contract and replacement architecture.
 
+## Marine safety alerts
+
+Step 7 adds `API route → AlertService → AlertProvider → official/public source`, normalized advisory types and severities, alert history, evidence, explicit source status, PostGIS proximity/containment, map geometry, alert details, and authenticated alert-preference CRUD. It does not derive official alerts from Step 6 forecast thresholds.
+
+The live adapter reads IMD-authored Common Alerting Protocol records from the public IMD CAP feed used by the WMO Alert Hub. Direct IMD warning APIs remain access-controlled through the IMD API portal. No stable structured INCOIS alert feed was verified, so `INCOIS Alerts` reports `NOT_CONNECTED` instead of pretending an integration exists.
+
+Alert endpoints:
+
+- `GET /api/v1/alerts`
+- `GET /api/v1/alerts/active`
+- `GET /api/v1/alerts/{alert_id}`
+- `GET|POST /api/v1/alert-subscriptions`
+- `PATCH|DELETE /api/v1/alert-subscriptions/{subscription_id}`
+
+Run a single controlled ingestion outside request handlers:
+
+```bash
+cd apps/api
+uv run python -m app.scripts.refresh_alerts
+```
+
+`ALERT_REFRESH_INTERVAL_MINUTES` documents the production polling interval for a future scheduler/worker; the API does not create an uncontrolled background loop. See `docs/alerts.md` for the full provider, data, safety, and demo contract.
+
 ## Current project status
 
 - Step 1 complete: responsive frontend UI, mock data, maps, charts, and navigation.
@@ -170,6 +193,7 @@ Forecast/model data is decision support only. It must not be used as the sole so
 - Step 4 complete: Argon2 password authentication, HttpOnly JWT cookies, refresh-session revocation, protected routes, and profile foundations.
 - Step 5 complete: reusable MapLibre map, explicit GPS/manual location state, typed demo map layers, and authenticated saved-location CRUD.
 - Step 6 complete: provider-independent weather/marine forecasts, normalized evidence, caching, partial responses, and dashboard/map/analytics integration.
-- Future work: authoritative advisory providers, risk rules, route intelligence, and AI-agent orchestration.
+- Step 7 complete: normalized IMD CAP alerts, provider status, PostGIS ingestion/querying, alert UX/map, and preference CRUD.
+- Future work: additional authorized advisory feeds, risk rules, route intelligence, and AI-agent orchestration.
 
-Open-Meteo model forecasts are integrated. No certified advisory source, deterministic risk engine, route optimization, or AI agent is implemented yet.
+Open-Meteo model forecasts and the public IMD CAP advisory feed are integrated. No deterministic risk engine, fishing-safety recommendation, push delivery, route optimization, or AI agent is implemented yet.

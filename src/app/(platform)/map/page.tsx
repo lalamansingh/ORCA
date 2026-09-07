@@ -4,13 +4,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Crosshair, LocateFixed, MapPin, Pencil, Save, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { MarineMap } from "@/components/marine-map";
 import { useAuth } from "@/components/auth-provider";
-import { DataFreshnessBadge, DemoDataBadge, PageHeader } from "@/components/ui";
+import { DataFreshnessBadge, PageHeader } from "@/components/ui";
 import { formatCoordinate, locationLabel, validCoordinates } from "@/features/map/coordinates";
 import { useGeolocation } from "@/features/map/hooks/use-geolocation";
 import { useMapLayers } from "@/features/map/hooks/use-map-layers";
 import { publishSelectedLocation } from "@/features/map/location-store";
 import { useConditions } from "@/features/conditions/hooks/use-conditions";
 import { ConditionsPanel } from "@/components/conditions-panel";
+import { AlertSafetyNote, MarineAlertCard } from "@/components/alert-components";
+import { useAlerts } from "@/features/alerts/hooks/use-alerts";
+import { getAlert } from "@/lib/api/alerts";
+import type { MarineAlert } from "@/features/alerts/types";
 import type { MapFeatureDetails, SelectedLocation } from "@/features/map/types";
 import {
   createSavedLocation,
@@ -39,7 +43,14 @@ export default function MapPage() {
   const [saveType, setSaveType] = useState<SavedLocationType>("CUSTOM");
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [requestedAlertId,setRequestedAlertId]=useState("");
+  const [focusedAlert,setFocusedAlert]=useState<MarineAlert|null>(null);
   const conditions = useConditions(selected);
+  const alertData = useAlerts(selected, 250, true);
+  useEffect(()=>{const timer=window.setTimeout(()=>setRequestedAlertId(new URLSearchParams(window.location.search).get("alert")??""),0);return()=>window.clearTimeout(timer);},[]);
+  useEffect(()=>{if(!requestedAlertId)return;let active=true;void getAlert(requestedAlertId,selected?.latitude,selected?.longitude).then(item=>{if(active)setFocusedAlert(item);},()=>{if(active)setFocusedAlert(null);});return()=>{active=false;};},[requestedAlertId,selected?.latitude,selected?.longitude]);
+  const mapAlerts=useMemo(()=>{const items=alertData.data?.alerts??[];return focusedAlert&&items.every(item=>item.id!==focusedAlert.id)?[focusedAlert,...items]:items;},[alertData.data?.alerts,focusedAlert]);
+  const displayedLayers=useMemo(()=>layers.map(layer=>layer.id==="alerts"?{...layer,dataStatus:alertData.data?.status==="complete"?"LIVE" as const:alertData.data?.status==="partial"?"PARTIAL" as const:alertData.data?.status==="unavailable"?"UNAVAILABLE" as const:"NOT_CONNECTED" as const}:layer),[alertData.data?.status,layers]);
 
   const loadSavedLocations = useCallback(async () => {
     try {
@@ -169,8 +180,7 @@ export default function MapPage() {
       <PageHeader
         eyebrow="SPATIAL INTELLIGENCE"
         title="Marine Intelligence Map"
-        subtitle="Interactive location context with development-only marine geometry."
-        action={<DemoDataBadge />}
+        subtitle="Interactive location context with official alert geometry when providers supply it."
       />
 
       <div className="map-toolbar">
@@ -183,7 +193,7 @@ export default function MapPage() {
         <button onClick={() => setCoordinatesOpen((value) => !value)} className="map-control">
           <SlidersHorizontal size={16} />Coordinates
         </button>
-        <span className="map-status">Map Ready · Location: {selected?.source ?? "none"} · Marine layers: Demo / Not connected</span>
+        <span className="map-status">Map Ready · Location: {selected?.source ?? "none"} · Alerts: {alertData.data?.status ?? "not checked"}</span>
       </div>
 
       {gps.status === "idle" && <p className="location-help">ORCA uses your location to show nearby marine conditions, fishing zones and safety information.</p>}
@@ -208,7 +218,7 @@ export default function MapPage() {
           {categories.map((category) => (
             <section key={category}>
               <p>{category}</p>
-              {layers.filter((layer) => layer.category === category).map((layer) => (
+              {displayedLayers.filter((layer) => layer.category === category).map((layer) => (
                 <label className={`layer-row ${!layer.available ? "unavailable" : ""}`} key={layer.id}>
                   <span><i style={{ background: layer.color }} />{layer.name}<small>{layer.dataStatus.replace("_", " ")}</small></span>
                   <input checked={layer.enabled} disabled={!layer.available} onChange={() => toggle(layer.id)} type="checkbox" />
@@ -229,7 +239,7 @@ export default function MapPage() {
         </aside>
 
         <section className="map-canvas-v2">
-          <MarineMap large layers={layers} selectedLocation={selected} savedLocations={saved} selectMode={selectMode} onSelectLocation={onSelect} onFeatureSelect={setDetails} />
+          <MarineMap large layers={displayedLayers} selectedLocation={selected} savedLocations={saved} alerts={mapAlerts} focusAlertId={requestedAlertId} selectMode={selectMode} onSelectLocation={onSelect} onFeatureSelect={setDetails} />
         </section>
 
         <aside className="feature-panel-v2">
@@ -250,6 +260,7 @@ export default function MapPage() {
       </div>
 
       <ConditionsPanel compact conditions={conditions.data} loading={conditions.loading} error={conditions.error} onRefresh={conditions.refresh} />
+      <section className="map-alert-sidebar"><AlertSafetyNote/>{focusedAlert&&<><div className="section-heading"><h2>Requested advisory</h2></div><MarineAlertCard compact alert={focusedAlert}/></>}{alertData.error||alertData.data?.status==="unavailable"?<p className="alert-state-warning">Unable to check alerts. The map cannot show a safety-clear state.</p>:alertData.data?.alerts.length?<><div className="section-heading"><h2>Nearby active advisories</h2><span>{alertData.data.alerts.length}</span></div>{alertData.data.alerts.filter(alert=>alert.id!==focusedAlert?.id).slice(0,3).map(alert=><MarineAlertCard compact alert={alert} key={alert.id}/>)}</>:selected?<p className="location-help">No active alerts found from available configured providers.</p>:<p className="location-help">Select a location to check nearby alerts.</p>}</section>
 
       {saveError && !saveOpen && <p className="save-error" role="alert">{saveError}</p>}
       {saveOpen && selected && (

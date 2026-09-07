@@ -16,6 +16,9 @@ class ProviderStatusRegistry:
         self._statuses: dict[str, ProviderStatus] = {
             "weather": ProviderStatus(provider="Open-Meteo Weather"),
             "marine": ProviderStatus(provider="Open-Meteo Marine"),
+            "alerts_imd": ProviderStatus(provider="IMD Alerts (CAP)", status="not_checked"),
+            "alerts_incois": ProviderStatus(provider="INCOIS Alerts", status="not_connected"),
+            "alerts_demo": ProviderStatus(provider="ORCA Demo Alerts", status="not_configured"),
         }
 
     def success(self, kind: str) -> None:
@@ -25,6 +28,14 @@ class ProviderStatusRegistry:
     def failure(self, kind: str, code: str) -> None:
         item = self._statuses[kind]
         item.status, item.last_failure, item.error_code = "unavailable", datetime.now(UTC), code
+
+    def set_status(self, kind: str, status: str, code: str | None = None) -> None:
+        item = self._statuses[kind]
+        item.status, item.error_code = status.lower(), code
+        if status.upper() in {"OPERATIONAL", "DEMO"}:
+            item.last_success = datetime.now(UTC)
+        elif status.upper() in {"DEGRADED", "UNAVAILABLE"}:
+            item.last_failure = datetime.now(UTC)
 
     def snapshot(self) -> dict[str, ProviderStatus]:
         return self._statuses.copy()

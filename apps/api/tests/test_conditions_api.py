@@ -33,6 +33,7 @@ def test_weather_and_marine_endpoints_return_normalized_schemas() -> None:
     with TestClient(app) as client, patch("app.api.v1.endpoints.conditions.services", return_value=(FakeService(WEATHER), FakeService(MARINE))):
         assert client.get("/api/v1/weather?latitude=13&longitude=80.35").json()["source"]["provider"] == "Open-Meteo"
         assert client.get("/api/v1/marine?latitude=13&longitude=80.35").json()["timezone"] == "Asia/Kolkata"
+        assert client.get("/api/v1/weather?latitude=13&longitude=80.35&date=2026-09-08").status_code == 200
 
 
 def test_conditions_endpoint_returns_partial_data() -> None:

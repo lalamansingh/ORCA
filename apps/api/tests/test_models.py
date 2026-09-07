@@ -1,5 +1,5 @@
 from app.db.base import Base
-from app.db.models import MarineRoute, MarineZone, PotentialFishingZone, SavedLocation
+from app.db.models import MarineAlert, MarineRoute, MarineZone, PotentialFishingZone, SavedLocation
 
 
 def test_initial_metadata_contains_persistence_models() -> None:
@@ -13,3 +13,5 @@ def test_spatial_models_use_postgis_geometry_columns() -> None:
     assert PotentialFishingZone.__table__.c.centroid.type.geometry_type == "POINT"
     assert MarineZone.__table__.c.geometry.type.geometry_type == "MULTIPOLYGON"
     assert MarineRoute.__table__.c.geometry.type.geometry_type == "LINESTRING"
+    assert MarineAlert.__table__.c.geometry.type.geometry_type == "GEOMETRY"
+    assert MarineAlert.__table__.c.forecast_track.type.geometry_type == "LINESTRING"

@@ -1,13 +1,12 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight, Bot, ChevronRight, Clock3, MapPin, Send, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Bot, Send, ShieldCheck, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
-import type { MapLayer, MarineAlert, RiskAssessment } from "@/types";
-import { DataFreshnessBadge, DemoDataBadge, RiskBadge } from "@/components/ui";
+import type { MapLayer, RiskAssessment } from "@/types";
+import { DataFreshnessBadge, DemoDataBadge } from "@/components/ui";
 
 export function MarineMetricCard({label,value,detail,icon,status="DEMO"}:{label:string;value:string;detail:string;icon:ReactNode;status?:"DEMO"|"CURRENT"|"UNAVAILABLE"}) {return <article className="metric-card"><div className="metric-top"><span>{icon}</span>{status==="DEMO"?<DemoDataBadge/>:<DataFreshnessBadge>{status==="CURRENT"?"Current forecast":"Unavailable"}</DataFreshnessBadge>}</div><p>{label}</p><strong>{value}</strong><small>{detail}</small></article>}
 export function RiskCard({risk}:{risk:RiskAssessment}) {return <section className="risk-card"><div><p className="card-label">RISK ASSESSMENT · DEMONSTRATION ONLY</p><h2>RISK ENGINE NOT CONNECTED</h2><p className="risk-copy">The score below remains a labeled interface fixture. ORCA does not infer safety from forecast metrics in Step 6.</p><div className="factor-row">{risk.factors.map(f=><span key={f}>{f} · demo</span>)}</div></div><div className="gauge"><div><strong>{risk.score}</strong><small>/ 100</small><span>Demo score</span></div></div></section>}
-export function AlertCard({alert,compact=false}:{alert:MarineAlert;compact?:boolean}) {return <article className={`alert-card ${compact?"compact":""}`}><span className={`alert-marker ${alert.severity}`}/><div className="alert-main"><div className="alert-title"><RiskBadge level={alert.severity}/><h3>{alert.title}</h3></div><p>{alert.description}</p><small><MapPin size={12}/>{alert.location}</small></div><div className="alert-meta"><DataFreshnessBadge><Clock3 size={11}/>Until {alert.validUntil}</DataFreshnessBadge><small>{alert.source}</small>{!compact&&<Link href="/map">View on Map <ChevronRight size={14}/></Link>}</div></article>}
 export function PFZCard(){return <article className="pfz-card"><div className="card-top"><div><p className="card-label">NEAREST POTENTIAL FISHING ZONE</p><DemoDataBadge/></div><span className="pfz-compass">SE</span></div><div className="pfz-stats"><div><strong>14.2 <small>km</small></strong><span>Distance</span></div><div><strong>48 <small>min</small></strong><span>Estimated travel</span></div><div><strong>High</strong><span>Confidence</span></div></div><p>South-East from selected location</p><Link className="inline-link" href="/map">View on Map <ArrowRight size={14}/></Link></article>}
 export function QuickPrompt({children}:{children:ReactNode}){return <Link className="quick-prompt" href="/assistant"><Sparkles size={14}/>{children}<ArrowRight size={13}/></Link>}
 export function ChatMessage({role,children}:{role:"user"|"orca";children:ReactNode}) {return <article className={`chat-message ${role}`}><span className="chat-avatar">{role==="orca"?<Bot size={17}/>:"LM"}</span><div><small>{role==="orca"?"ORCA":"YOU"}</small><div className="message-bubble">{children}</div></div></article>}

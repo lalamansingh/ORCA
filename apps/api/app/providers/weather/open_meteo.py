@@ -3,6 +3,7 @@ from typing import Any
 
 import httpx
 
+from app.providers.errors import DataUnavailableError
 from app.providers.http import get_json
 from app.providers.parsing import column_value, measurement, timestamp
 from app.providers.weather.base import WeatherProvider
@@ -34,6 +35,15 @@ def _conditions(values: dict[str, Any], time_value: Any) -> WeatherConditions:
     )
 
 
+def _has_weather_data(conditions: WeatherConditions | None) -> bool:
+    if conditions is None:
+        return False
+    return conditions.weather_code is not None or any(
+        getattr(conditions, field) is not None
+        for field in ("temperature", "apparent_temperature", "humidity", "precipitation", "rain", "visibility", "wind_speed", "wind_direction", "wind_gust", "cloud_cover", "pressure")
+    )
+
+
 class OpenMeteoWeatherProvider(WeatherProvider):
     name = "open_meteo_weather"
 
@@ -55,6 +65,8 @@ class OpenMeteoWeatherProvider(WeatherProvider):
         for index, time_value in enumerate(times[:48]):
             values = {field: column_value(hourly_block, field, index) for field in WEATHER_FIELDS}
             hourly.append(WeatherForecastPoint(**_conditions(values, time_value).model_dump()))
+        if not _has_weather_data(current) and not any(_has_weather_data(point) for point in hourly):
+            raise DataUnavailableError("Weather conditions are unavailable for this location.")
         provider_location = Location(latitude=float(payload.get("latitude", latitude)), longitude=float(payload.get("longitude", longitude)))
         source = DataSource(provider="Open-Meteo", dataset="Weather Forecast API", source_url=self.base_url, provider_location=provider_location)
         evidence = []

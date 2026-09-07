@@ -28,7 +28,7 @@ REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.http_client = httpx.AsyncClient(headers={"User-Agent": "ORCA/0.1 weather-service"})
+    app.state.http_client = httpx.AsyncClient(headers={"User-Agent": "ORCA/0.1 data-provider-service"})
     yield
     await app.state.http_client.aclose()
     await app.state.db_engine.dispose()

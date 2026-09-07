@@ -2,7 +2,7 @@
 
 ## Provider architecture
 
-Environmental requests follow `API route → service → provider interface → provider implementation → external API`. Provider-specific JSON is normalized inside the adapter. A future provider can implement `WeatherProvider` or `MarineWeatherProvider` and be selected in the provider factory without changing routes or frontend contracts.
+Environmental and alert requests follow `API route → service → provider interface → provider implementation → external source`. Provider-specific JSON or CAP XML is normalized inside the adapter. A future provider can implement `WeatherProvider`, `MarineWeatherProvider`, or `AlertProvider` and be selected in the provider factory without changing routes or frontend contracts.
 
 ## Weather
 
@@ -44,3 +44,16 @@ Provider nulls stay null. Inland or unsupported marine locations return “Marin
 Open-Meteo supplies numerical forecast/model data. It is not INCOIS, IMD, or a certified navigation/advisory service. Model grids may differ slightly from requested coordinates. Coastal tide, current, and sea-level values can be inaccurate.
 
 Forecast/model data is provided for decision support and should not be used as the sole source for navigation or emergency decisions.
+
+## Marine alerts
+
+| Source | Runtime status | Use |
+| --- | --- | --- |
+| IMD CAP | Live public feed (`OPERATIONAL` or `DEGRADED`) | IMD-authored CAP warnings; the adapter preserves original severity, certainty, urgency, area text, validity, instructions, and supplied polygons. |
+| INCOIS Alerts | `NOT_CONNECTED` | Official ocean-state service information is linked, but ORCA does not scrape or claim a stable structured alert feed. |
+| IMD direct warning APIs | `REQUIRES_ACCESS` (documented limitation) | The official API catalog lists port, sea, coastal and cyclone products, but portal registration/access is required. |
+| ORCA Demo Alerts | `DEMO`, only when `ORCA_DEMO_MODE=true` | Deterministic interface/development fixtures, prominently labeled `DEMO DATA`. |
+
+Alert traffic is bounded by an in-memory TTL, short retry policy, XML size limit, a maximum CAP record count, and an exact configured HTTPS host/path allowlist for record links. The parser rejects DTD/entity declarations and malformed/timezone-less timestamps. Source strings are normalized to bounded plain text before rendering.
+
+The source status and alert result are independent. A reachable feed with zero matching active records returns `NO_ACTIVE_ALERTS`; unreachable configured providers return `PROVIDER_UNAVAILABLE`; mixed success returns `partial`. See `docs/alerts.md`.

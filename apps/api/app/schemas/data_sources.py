@@ -14,3 +14,4 @@ class DataSourceStatus(BaseModel):
 class DataSourcesResponse(BaseModel):
     weather: DataSourceStatus
     marine: DataSourceStatus
+    alerts: list[DataSourceStatus]

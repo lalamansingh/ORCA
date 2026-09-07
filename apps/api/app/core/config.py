@@ -48,8 +48,16 @@ class Settings(BaseSettings):
     provider_retry_count: int = Field(1, ge=0, le=3, validation_alias="PROVIDER_RETRY_COUNT")
     weather_cache_ttl: int = Field(600, ge=30, validation_alias="WEATHER_CACHE_TTL")
     marine_cache_ttl: int = Field(900, ge=30, validation_alias="MARINE_CACHE_TTL")
+    alert_providers: str = Field("imd_cap,incois", validation_alias="ALERT_PROVIDERS")
+    imd_cap_feed_url: str = Field("https://cap-sources.s3.amazonaws.com/in-imd-en/rss.xml", validation_alias="IMD_CAP_FEED_URL")
+    imd_cap_base_url: str = Field("https://cap-sources.s3.amazonaws.com/in-imd-en/", validation_alias="IMD_CAP_BASE_URL")
+    alert_request_timeout: float = Field(10.0, gt=0, validation_alias="ALERT_REQUEST_TIMEOUT")
+    alert_cache_ttl: int = Field(900, ge=60, validation_alias="ALERT_CACHE_TTL")
+    alert_max_feed_items: int = Field(20, ge=1, le=100, validation_alias="ALERT_MAX_FEED_ITEMS")
+    alert_refresh_interval_minutes: int = Field(15, ge=5, le=1440, validation_alias="ALERT_REFRESH_INTERVAL_MINUTES")
+    orca_demo_mode: bool = Field(False, validation_alias="ORCA_DEMO_MODE")
 
-    @field_validator("debug", mode="before")
+    @field_validator("debug", "orca_demo_mode", mode="before")
     @classmethod
     def parse_debug_value(cls, value: object) -> bool:
         """Accept common deployment values while keeping DEBUG a boolean in-app."""
@@ -61,6 +69,10 @@ class Settings(BaseSettings):
     def cors_origin_list(self) -> list[str]:
         """Return normalized, non-empty CORS origins from a comma-separated setting."""
         return [origin.strip().rstrip("/") for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def alert_provider_list(self) -> list[str]:
+        return [provider.strip().lower() for provider in self.alert_providers.split(",") if provider.strip()]
 
 
 @lru_cache

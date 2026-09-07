@@ -81,6 +81,19 @@ async def test_provider_timeout_is_sanitized() -> None:
     await client.aclose()
 
 
+@pytest.mark.asyncio
+async def test_transient_server_error_is_retried_once() -> None:
+    calls = 0
+    def handler(_request):
+        nonlocal calls
+        calls += 1
+        return httpx.Response(500) if calls == 1 else httpx.Response(200, json=WEATHER_PAYLOAD)
+    client = client_for(handler)
+    response = await OpenMeteoWeatherProvider(client, "https://weather.test", 1, 1).get_conditions(13, 80, "auto")
+    assert response.current and calls == 2
+    await client.aclose()
+
+
 def test_find_forecast_at_time_returns_nearest_timezone_aware_point() -> None:
     start = datetime(2026, 9, 7, 0, tzinfo=UTC)
     points = [WeatherForecastPoint(**WeatherConditions(observed_at=start + timedelta(hours=hour)).model_dump()) for hour in (0, 3, 6)]

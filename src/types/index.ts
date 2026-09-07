@@ -3,7 +3,6 @@ export interface MarineConditions { waveHeight: number; windSpeed: number; windD
 export interface WeatherConditions { windSpeed: number; direction: string; visibility: number; summary: string; }
 export interface OceanConditions { seaSurfaceTemperature: number; waveHeight: number; currentSpeed: number; chlorophyll: number; }
 export interface RiskAssessment { score: number; level: RiskLevel; recommendation: string; factors: string[]; }
-export interface MarineAlert { id: string; title: string; severity: RiskLevel; location: string; validUntil: string; source: string; description: string; status: "active" | "resolved"; }
 export interface PFZ { id: string; distance: number; direction: string; travelMinutes: number; confidence: "High" | "Medium" | "Low"; coordinates: [number, number]; }
 export interface Evidence { parameter: string; value: string; source: string; updated: string; }
 export interface Message { id: string; role: "user" | "orca"; text: string; timestamp: string; }

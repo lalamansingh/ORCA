@@ -1,0 +1,1 @@
+"""Marine alert provider adapters."""

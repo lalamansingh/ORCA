@@ -1,9 +1,11 @@
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
+from unittest.mock import AsyncMock, patch
 
 from app.core.config import Settings
 from app.main import create_app
 from app.schemas.common import Coordinates
+from app.services.database_health import DatabaseHealth
 
 
 def build_client() -> TestClient:
@@ -23,7 +25,8 @@ def test_api_info() -> None:
 
 
 def test_health_returns_structured_status_and_request_id() -> None:
-    response = build_client().get("/api/v1/health", headers={"X-Request-ID": "orca-test-42"})
+    with patch("app.api.v1.endpoints.health.check_database_health", new=AsyncMock(return_value=DatabaseHealth(status="unavailable", postgis=None))):
+        response = build_client().get("/api/v1/health", headers={"X-Request-ID": "orca-test-42"})
 
     assert response.status_code == 200
     assert response.json() == {

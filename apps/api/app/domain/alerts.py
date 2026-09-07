@@ -1,0 +1,58 @@
+"""Provider-independent marine alert vocabulary."""
+
+from enum import StrEnum
+
+
+class AlertType(StrEnum):
+    CYCLONE = "CYCLONE"
+    STORM_SURGE = "STORM_SURGE"
+    HIGH_WAVES = "HIGH_WAVES"
+    SWELL_SURGE = "SWELL_SURGE"
+    STRONG_WIND = "STRONG_WIND"
+    LIGHTNING = "LIGHTNING"
+    HEAVY_RAIN = "HEAVY_RAIN"
+    LOW_VISIBILITY = "LOW_VISIBILITY"
+    TSUNAMI = "TSUNAMI"
+    MARINE_HEAT_WAVE = "MARINE_HEAT_WAVE"
+    OTHER = "OTHER"
+
+
+class AlertSeverity(StrEnum):
+    INFO = "INFO"
+    WATCH = "WATCH"
+    WARNING = "WARNING"
+    SEVERE = "SEVERE"
+    CRITICAL = "CRITICAL"
+
+
+class AlertStatus(StrEnum):
+    ACTIVE = "ACTIVE"
+    UPCOMING = "UPCOMING"
+    EXPIRED = "EXPIRED"
+    CANCELLED = "CANCELLED"
+    UNKNOWN = "UNKNOWN"
+
+
+class AlertSourceType(StrEnum):
+    OFFICIAL_ADVISORY = "OFFICIAL_ADVISORY"
+    FORECAST_RISK = "FORECAST_RISK"
+    INTERNAL_RULE = "INTERNAL_RULE"
+    DEMO = "DEMO"
+
+
+class AlertFreshness(StrEnum):
+    CURRENT = "CURRENT"
+    RECENT = "RECENT"
+    STALE = "STALE"
+    EXPIRED = "EXPIRED"
+    UNKNOWN = "UNKNOWN"
+
+
+class ProviderAvailability(StrEnum):
+    OPERATIONAL = "OPERATIONAL"
+    DEGRADED = "DEGRADED"
+    UNAVAILABLE = "UNAVAILABLE"
+    NOT_CONFIGURED = "NOT_CONFIGURED"
+    NOT_CONNECTED = "NOT_CONNECTED"
+    REQUIRES_ACCESS = "REQUIRES_ACCESS"
+    DEMO = "DEMO"
