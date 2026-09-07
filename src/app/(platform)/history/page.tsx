@@ -1,0 +1,6 @@
+"use client";
+import { useState } from "react";
+import { MessageSquare, Search } from "lucide-react";
+import { conversations } from "@/data/mock";
+import { PageHeader, RiskBadge } from "@/components/ui";
+export default function HistoryPage(){const [search,setSearch]=useState("");const items=conversations.filter(x=>x.title.toLowerCase().includes(search.toLowerCase()));return <div className="page"><PageHeader eyebrow="CONVERSATION ARCHIVE" title="History" subtitle="Local demonstration conversations—persistence will be added later."/><div className="history-toolbar"><label className="search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search conversations"/></label><select aria-label="Filter history"><option>All query types</option><option>Safety check</option><option>Fishing zone</option></select></div><section className="history-list">{items.map(item=><article className="history-card" key={item.id}><span className="history-icon"><MessageSquare size={18}/></span><div><h3>{item.title}</h3><p>{item.location} · {item.type}</p></div><div className="history-meta"><span>{item.date}</span>{item.risk&&<RiskBadge level={item.risk}/>}</div></article>)}</section></div>}

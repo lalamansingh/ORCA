@@ -1,0 +1,5 @@
+"use client";
+import { useCallback, useState } from "react";
+import type { SelectedLocation } from "@/features/map/types";
+export type GeolocationStatus="idle"|"requesting"|"success"|"permission_denied"|"position_unavailable"|"timeout"|"unsupported";
+export function useGeolocation(){const [status,setStatus]=useState<GeolocationStatus>("idle");const [location,setLocation]=useState<SelectedLocation|null>(null);const requestLocation=useCallback(()=>{if(!navigator.geolocation){setStatus("unsupported");return;}setStatus("requesting");navigator.geolocation.getCurrentPosition(position=>{setLocation({latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy:position.coords.accuracy,timestamp:position.timestamp,source:"gps"});setStatus("success");},error=>setStatus(error.code===error.PERMISSION_DENIED?"permission_denied":error.code===error.TIMEOUT?"timeout":"position_unavailable"),{enableHighAccuracy:true,timeout:12_000,maximumAge:120_000});},[]);return{status,location,requestLocation};}

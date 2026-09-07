@@ -1,12 +1,15 @@
 {
-  "name": "orca-web-seed",
+  "name": "orca-marine-intelligence",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "dev:web": "next dev",
+    "dev:api": "cd apps/api && uv run uvicorn app.main:app --reload --port 8000",
+    "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "next": "16.3.4",
@@ -15,11 +18,15 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/geojson": "^7946.0.16",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "lucide-react": "^1.41.0",
+    "maplibre-gl": "^6.7.0",
+    "recharts": "^3.10.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
