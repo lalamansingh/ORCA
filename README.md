@@ -9,6 +9,8 @@ Browser → Next.js frontend → FastAPI /api/v1
 
 User query → QueryUnderstandingService → validated structured query
 ORCA facts → AIResponseService → fact-only natural-language draft
+
+User → QueryUnderstanding → IntentClassifier → QueryPlanner → ExecutionPlan → future Orchestrator
 ```
 
 - Frontend: Next.js, TypeScript, Tailwind, MapLibre, Recharts
@@ -48,6 +50,8 @@ PFZ advisories use the official INCOIS WebGIS WFS and are stored in PostGIS. Ref
 Ocean-product metadata and point samples are available at `/api/v1/ocean-products`. The current development grid is explicitly DEMO because the investigated public INCOIS historical SST/chlorophyll datasets are stale. See [ocean products](docs/ocean-products.md).
 
 The optional AI language layer is disabled by default (`LLM_ENABLED=false`). It extracts language and intent candidates but never computes marine risk or invents environmental facts. See [llm-layer.md](docs/llm-layer.md).
+
+The deterministic planner endpoint is `POST /api/v1/ai/plan`; it only returns an allowlisted execution plan and never executes tools. See [query-planner.md](docs/query-planner.md).
 
 From the project root, `npm run dev:web` and `npm run dev:api` provide equivalent service commands.
 
