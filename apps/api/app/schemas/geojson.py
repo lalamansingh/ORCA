@@ -25,8 +25,13 @@ class LineStringGeometry(BaseModel):
     coordinates: list[tuple[float, float]]
 
 
+class MultiLineStringGeometry(BaseModel):
+    type: Literal["MultiLineString"] = "MultiLineString"
+    coordinates: list[list[tuple[float, float]]]
+
+
 GeoJSONGeometry = Annotated[
-    PointGeometry | PolygonGeometry | MultiPolygonGeometry | LineStringGeometry,
+    PointGeometry | PolygonGeometry | MultiPolygonGeometry | LineStringGeometry | MultiLineStringGeometry,
     Field(discriminator="type"),
 ]
 

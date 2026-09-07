@@ -9,6 +9,10 @@ from app.api.v1.endpoints.conditions import router as conditions_router
 from app.api.v1.endpoints.data_sources import router as data_sources_router
 from app.api.v1.endpoints.alerts import router as alerts_router
 from app.api.v1.endpoints.alert_subscriptions import router as alert_subscriptions_router
+from app.api.v1.endpoints.risk import router as risk_router
+from app.api.v1.endpoints.pfz import router as pfz_router
+from app.api.v1.endpoints.ocean_products import router as ocean_products_router
+from app.api.v1.endpoints.ai import router as ai_router
 
 router = APIRouter()
 router.include_router(health_router, tags=["system"])
@@ -18,3 +22,7 @@ router.include_router(conditions_router, tags=["conditions"])
 router.include_router(data_sources_router, tags=["system"])
 router.include_router(alerts_router, tags=["marine alerts"])
 router.include_router(alert_subscriptions_router, tags=["alert subscriptions"])
+router.include_router(risk_router, tags=["marine risk"])
+router.include_router(pfz_router, tags=["potential fishing zones"])
+router.include_router(ocean_products_router, tags=["ocean products"])
+router.include_router(ai_router, tags=["AI language layer"])

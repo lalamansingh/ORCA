@@ -16,6 +16,10 @@ import { useAlerts } from "@/features/alerts/hooks/use-alerts";
 import { getAlert } from "@/lib/api/alerts";
 import type { MarineAlert } from "@/features/alerts/types";
 import type { MapFeatureDetails, SelectedLocation } from "@/features/map/types";
+import { MapRiskPanel } from "@/components/risk-components";
+import { useRiskAssessment } from "@/features/risk/hooks/use-risk-assessment";
+import { getPFZGeoJSON } from "@/lib/api/pfz";
+import type { PFZGeoJSON } from "@/features/pfz/types";
 import {
   createSavedLocation,
   deleteSavedLocation,
@@ -45,8 +49,12 @@ export default function MapPage() {
   const [saving, setSaving] = useState(false);
   const [requestedAlertId,setRequestedAlertId]=useState("");
   const [focusedAlert,setFocusedAlert]=useState<MarineAlert|null>(null);
+  const [riskAssessmentTime,setRiskAssessmentTime]=useState<string|null>(null);
+  const [pfzGeojson,setPfzGeojson]=useState<PFZGeoJSON|null>(null);
   const conditions = useConditions(selected);
   const alertData = useAlerts(selected, 250, true);
+  const risk=useRiskAssessment(selected,riskAssessmentTime,{auto:false});
+  useEffect(()=>{let active=true;void getPFZGeoJSON().then(data=>{if(active)setPfzGeojson(data);},()=>{if(active)setPfzGeojson(null);});return()=>{active=false;};},[]);
   useEffect(()=>{const timer=window.setTimeout(()=>setRequestedAlertId(new URLSearchParams(window.location.search).get("alert")??""),0);return()=>window.clearTimeout(timer);},[]);
   useEffect(()=>{if(!requestedAlertId)return;let active=true;void getAlert(requestedAlertId,selected?.latitude,selected?.longitude).then(item=>{if(active)setFocusedAlert(item);},()=>{if(active)setFocusedAlert(null);});return()=>{active=false;};},[requestedAlertId,selected?.latitude,selected?.longitude]);
   const mapAlerts=useMemo(()=>{const items=alertData.data?.alerts??[];return focusedAlert&&items.every(item=>item.id!==focusedAlert.id)?[focusedAlert,...items]:items;},[alertData.data?.alerts,focusedAlert]);
@@ -239,7 +247,7 @@ export default function MapPage() {
         </aside>
 
         <section className="map-canvas-v2">
-          <MarineMap large layers={displayedLayers} selectedLocation={selected} savedLocations={saved} alerts={mapAlerts} focusAlertId={requestedAlertId} selectMode={selectMode} onSelectLocation={onSelect} onFeatureSelect={setDetails} />
+          <MarineMap large layers={displayedLayers} selectedLocation={selected} savedLocations={saved} alerts={mapAlerts} pfzs={pfzGeojson} focusAlertId={requestedAlertId} selectMode={selectMode} onSelectLocation={onSelect} onFeatureSelect={setDetails} riskLevel={risk.data?.level}/>
         </section>
 
         <aside className="feature-panel-v2">
@@ -256,6 +264,7 @@ export default function MapPage() {
               </div>
             </>
           )}
+          <MapRiskPanel location={selected} assessment={risk.data} loading={risk.loading} error={risk.error} onAssess={()=>{void risk.evaluate(false);}} assessmentTime={riskAssessmentTime} onAssessmentTimeChange={setRiskAssessmentTime}/>
         </aside>
       </div>
 

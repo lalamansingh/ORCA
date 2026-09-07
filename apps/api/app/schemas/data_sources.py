@@ -15,3 +15,6 @@ class DataSourcesResponse(BaseModel):
     weather: DataSourceStatus
     marine: DataSourceStatus
     alerts: list[DataSourceStatus]
+    pfz: DataSourceStatus
+    risk_engine: DataSourceStatus
+    llm: DataSourceStatus

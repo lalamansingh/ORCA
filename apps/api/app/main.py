@@ -19,6 +19,8 @@ from app.core.logging import configure_logging, request_id_context
 from app.db.session import create_database_engine, create_session_factory
 from app.schemas.common import APIError, ErrorEnvelope
 from app.schemas.health import APIInfoResponse
+from app.risk.config import DEFAULT_RISK_CONFIG
+from app.risk.engine import MarineRiskEngine
 from app.services.forecast_cache import TTLCache
 from app.services.provider_status import ProviderStatusRegistry
 
@@ -64,6 +66,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.db_session_factory = create_session_factory(app.state.db_engine)
     app.state.forecast_cache = TTLCache()
     app.state.provider_status = ProviderStatusRegistry()
+    app.state.risk_config = DEFAULT_RISK_CONFIG
+    app.state.risk_engine = MarineRiskEngine(DEFAULT_RISK_CONFIG)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=app_settings.cors_origin_list,

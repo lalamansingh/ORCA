@@ -1,0 +1,2 @@
+export interface LanguageDetection {language_code:string;language_name:string;confidence:number;script:string|null}
+export interface QueryExtraction {raw_query:string;normalized_query:string;language:LanguageDetection;requested_location_text:string|null;latitude:number|null;longitude:number|null;requested_time_text:string|null;requested_datetime:string|null;resolution_notes:string[];entities:string[];possible_intents:string[];tool_needs:string[];requires_location:boolean;ambiguities:string[];needs_clarification:boolean;clarification_questions:string[];confidence:number}

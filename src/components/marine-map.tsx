@@ -8,6 +8,8 @@ import { INDIA_MARINE_VIEW, LOCATION_ZOOM, MAP_STYLE_URL } from "@/features/map/
 import { demoFeatures } from "@/features/map/mock-layers";
 import type { MapFeatureDetails, MarineMapLayer, SelectedLocation } from "@/features/map/types";
 import type { MarineAlert } from "@/features/alerts/types";
+import type { MarineRiskLevel } from "@/features/risk/types";
+import type { PFZGeoJSON } from "@/features/pfz/types";
 
 type Props = {
   large?: boolean;
@@ -21,9 +23,11 @@ type Props = {
   alerts?: MarineAlert[];
   showDemoFeatures?: boolean;
   focusAlertId?: string;
+  riskLevel?: MarineRiskLevel;
+  pfzs?: PFZGeoJSON | null;
 };
 
-const interactiveLayerIds = ["orca-pfz", "orca-alert-fill", "orca-alert-line", "orca-alert-point", "orca-alert-label", "orca-cyclone-track", "orca-cyclone-points", "orca-cyclone-label", "orca-restricted", "orca-route", "orca-saved"];
+const interactiveLayerIds = ["orca-pfz", "orca-pfz-live-line", "orca-pfz-live-fill", "orca-alert-fill", "orca-alert-line", "orca-alert-point", "orca-alert-label", "orca-cyclone-track", "orca-cyclone-points", "orca-cyclone-label", "orca-restricted", "orca-route", "orca-saved"];
 
 export function MarineMap({
   large = false,
@@ -37,6 +41,8 @@ export function MarineMap({
   alerts = [],
   showDemoFeatures = true,
   focusAlertId,
+  riskLevel,
+  pfzs,
 }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -73,8 +79,8 @@ export function MarineMap({
           if (cancelled || !map) return;
           map.addSource("orca-demo", { type: "geojson", data: showDemoFeatures ? demoFeatures : { type: "FeatureCollection", features: [] } });
 
-          ["pfz", "restricted"].forEach((id) => {
-            const color = id === "pfz" ? "#16a085" : "#c53030";
+          ["pfz", "restricted", "sst", "chlorophyll"].forEach((id) => {
+            const color = id === "pfz" ? "#16a085" : id === "restricted" ? "#c53030" : id === "sst" ? "#e27841" : "#79a951";
             map?.addLayer({
               id: `orca-${id}`,
               type: "fill",
@@ -90,6 +96,9 @@ export function MarineMap({
             filter: ["==", ["get", "layer"], "route"],
             paint: { "line-color": "#f6c452", "line-width": 3, "line-dasharray": [2, 1] },
           });
+          map.addSource("orca-pfz-live", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+          map.addLayer({id:"orca-pfz-live-fill",type:"fill",source:"orca-pfz-live",filter:["==",["geometry-type"],"Polygon"],paint:{"fill-color":"#16a085","fill-opacity":0.26,"fill-outline-color":"#0e756b"}});
+          map.addLayer({id:"orca-pfz-live-line",type:"line",source:"orca-pfz-live",paint:{"line-color":"#16a085","line-width":3}});
           map.addSource("orca-alert-data", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
           const severityColor = ["match", ["get", "severity"], "CRITICAL", "#811c32", "SEVERE", "#c9413c", "WARNING", "#e17a2c", "WATCH", "#d3a42e", "#5a8ca5"] as import("maplibre-gl").ExpressionSpecification;
           map.addLayer({id:"orca-alert-fill",type:"fill",source:"orca-alert-data",filter:["==",["geometry-type"],"Polygon"],paint:{"fill-color":severityColor,"fill-opacity":0.22,"fill-outline-color":severityColor}});
@@ -154,7 +163,7 @@ export function MarineMap({
     const map = mapRef.current;
     if (!map || state !== "ready") return;
     for (const layer of layers) {
-      const ids=layer.id==="alerts"?["orca-alert-fill","orca-alert-line","orca-alert-point","orca-alert-label","orca-cyclone-track","orca-cyclone-points","orca-cyclone-label"]:[`orca-${layer.id}`];
+      const ids=layer.id==="alerts"?["orca-alert-fill","orca-alert-line","orca-alert-point","orca-alert-label","orca-cyclone-track","orca-cyclone-points","orca-cyclone-label"]:layer.id==="pfz"?["orca-pfz","orca-pfz-live-fill","orca-pfz-live-line"]:[`orca-${layer.id}`];
       for(const id of ids)if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", layer.enabled ? "visible" : "none");
     }
   }, [layers, state]);
@@ -188,6 +197,8 @@ export function MarineMap({
     source.setData({type:"FeatureCollection",features});
   },[alerts,state]);
 
+  useEffect(()=>{const map=mapRef.current;const source=map?.getSource("orca-pfz-live") as import("maplibre-gl").GeoJSONSource|undefined;if(!source||state!=="ready")return;source.setData((pfzs??{type:"FeatureCollection",features:[]}) as unknown as import("geojson").FeatureCollection);},[pfzs,state]);
+
   useEffect(()=>{
     const map=mapRef.current;if(!map||state!=="ready"||!focusAlertId)return;const alert=alerts.find(item=>item.id===focusAlertId);const focusGeometry=alert?.geometry??alert?.forecast_track;if(!focusGeometry)return;
     const points:[number,number][]=[];const collect=(value:unknown)=>{if(Array.isArray(value)&&value.length>=2&&typeof value[0]==="number"&&typeof value[1]==="number")points.push([value[0],value[1]]);else if(Array.isArray(value))value.forEach(collect);};collect(focusGeometry.coordinates);
@@ -196,18 +207,23 @@ export function MarineMap({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !selectedLocation || state !== "ready") return;
+    if (!map || state !== "ready") return;
+
+    const sourceId = "orca-selected-location";
+    const existingSource = map.getSource(sourceId) as import("maplibre-gl").GeoJSONSource | undefined;
+    if (!selectedLocation) {
+      existingSource?.setData({ type: "FeatureCollection", features: [] });
+      return;
+    }
 
     map.flyTo({ center: [selectedLocation.longitude, selectedLocation.latitude], zoom: LOCATION_ZOOM, essential: true });
-    const sourceId = "orca-selected-location";
     const feature = {
       type: "Feature" as const,
-      properties: {},
+      properties: { risk_label: riskLevel && riskLevel !== "UNAVAILABLE" ? riskLevel : "" },
       geometry: { type: "Point" as const, coordinates: [selectedLocation.longitude, selectedLocation.latitude] },
     };
-    const source = map.getSource(sourceId) as import("maplibre-gl").GeoJSONSource | undefined;
-    if (source) {
-      source.setData(feature);
+    if (existingSource) {
+      existingSource.setData(feature);
     } else {
       map.addSource(sourceId, { type: "geojson", data: feature });
       map.addLayer({
@@ -222,8 +238,16 @@ export function MarineMap({
           "circle-stroke-color": "#fff",
         },
       });
+      map.addLayer({
+        id: "orca-selected-risk",
+        type: "symbol",
+        source: sourceId,
+        filter: ["!=", ["get", "risk_label"], ""],
+        layout: { "text-field": ["get", "risk_label"], "text-size": 10, "text-offset": [0, -1.8], "text-allow-overlap": true },
+        paint: { "text-color": ["match", ["get", "risk_label"], "LOW", "#166534", "MODERATE", "#8a5a05", "HIGH", "#b54708", "EXTREME", "#a61b2b", "#425466"], "text-halo-color": "#ffffff", "text-halo-width": 3 },
+      });
     }
-  }, [selectedLocation, state]);
+  }, [riskLevel, selectedLocation, state]);
 
   return (
     <div className={`marine-map ${large ? "large" : ""} ${selectMode ? "select-mode" : ""}`}>

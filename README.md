@@ -6,6 +6,9 @@ ORCA is a marine-intelligence platform foundation for safer, evidence-aware deci
 
 ```text
 Browser → Next.js frontend → FastAPI /api/v1
+
+User query → QueryUnderstandingService → validated structured query
+ORCA facts → AIResponseService → fact-only natural-language draft
 ```
 
 - Frontend: Next.js, TypeScript, Tailwind, MapLibre, Recharts
@@ -35,6 +38,16 @@ uv run uvicorn app.main:app --reload --port 8000
 ```
 
 API documentation is available at `http://localhost:8000/docs`; the health endpoint is `http://localhost:8000/api/v1/health`.
+
+### Potential Fishing Zones
+
+PFZ advisories use the official INCOIS WebGIS WFS and are stored in PostGIS. Refresh them explicitly with `uv run python -m app.scripts.refresh_pfz`; the nearest-zone endpoint is `/api/v1/pfz/nearest`. INCOIS does not publish a validity end in this feed, so ORCA exposes source date and configured freshness rather than inventing expiry. See [PFZ intelligence](docs/pfz-intelligence.md).
+
+### Ocean products
+
+Ocean-product metadata and point samples are available at `/api/v1/ocean-products`. The current development grid is explicitly DEMO because the investigated public INCOIS historical SST/chlorophyll datasets are stale. See [ocean products](docs/ocean-products.md).
+
+The optional AI language layer is disabled by default (`LLM_ENABLED=false`). It extracts language and intent candidates but never computes marine risk or invents environmental facts. See [llm-layer.md](docs/llm-layer.md).
 
 From the project root, `npm run dev:web` and `npm run dev:api` provide equivalent service commands.
 
@@ -185,6 +198,23 @@ uv run python -m app.scripts.refresh_alerts
 
 `ALERT_REFRESH_INTERVAL_MINUTES` documents the production polling interval for a future scheduler/worker; the API does not create an uncontrolled background loop. See `docs/alerts.md` for the full provider, data, safety, and demo contract.
 
+## Deterministic marine risk engine
+
+Step 8 adds `RiskInputBuilder → MarineRiskEngine → MarineRiskAssessment` as a provider-independent, versioned, explainable decision-support layer. Weather, marine-model, and spatially relevant active alerts are collected through the existing normalized services. No LLM, prompt, OpenAI/Gemini service, LangGraph flow, or AI agent calculates risk.
+
+The engine returns a 0–100 score with `LOW`, `MODERATE`, `HIGH`, or `EXTREME`, or `UNAVAILABLE` with a null score when required wave/wind information is missing or too stale. Correlated hazards use category caps and diminishing-return aggregation; relevant official alerts apply configurable minimums and cyclone/storm-surge/tsunami overrides. Every result includes factor contributions, sources, timestamps, freshness, data quality, provenance, limitations, and `orca-risk-v1`.
+
+Risk endpoints:
+
+- `POST /api/v1/risk/evaluate`
+- `GET /api/v1/risk`
+- `GET /api/v1/risk/timeline`
+- `GET /api/v1/risk/history`
+
+The dashboard now uses the live deterministic assessment, the map evaluates only after deliberate user action and shows a location risk badge, and analytics evaluates a forecast timeline locally after one provider fetch. Assessment persistence is authenticated, owner-scoped, and opt-in; normal views do not create continuous location history.
+
+All thresholds are ORCA prototype decision-support settings. They require vessel-specific calibration and validation with relevant maritime authorities before production use. See `docs/risk-engine.md` for the exact formula, configuration, alert rules, missing-data policy, and reviewed public reference points.
+
 ## Current project status
 
 - Step 1 complete: responsive frontend UI, mock data, maps, charts, and navigation.
@@ -194,6 +224,7 @@ uv run python -m app.scripts.refresh_alerts
 - Step 5 complete: reusable MapLibre map, explicit GPS/manual location state, typed demo map layers, and authenticated saved-location CRUD.
 - Step 6 complete: provider-independent weather/marine forecasts, normalized evidence, caching, partial responses, and dashboard/map/analytics integration.
 - Step 7 complete: normalized IMD CAP alerts, provider status, PostGIS ingestion/querying, alert UX/map, and preference CRUD.
-- Future work: additional authorized advisory feeds, risk rules, route intelligence, and AI-agent orchestration.
+- Step 8 complete: deterministic, versioned marine operational risk scoring, official-alert escalation, evidence UI, map assessment, and forecast timeline.
+- Future work: additional authorized advisory feeds, vessel-aware calibration, route intelligence, and AI-agent orchestration.
 
-Open-Meteo model forecasts and the public IMD CAP advisory feed are integrated. No deterministic risk engine, fishing-safety recommendation, push delivery, route optimization, or AI agent is implemented yet.
+Open-Meteo model forecasts, the public IMD CAP advisory feed, and deterministic ORCA Risk v1 are integrated. No vessel-specific safety clearance, fishing permission, push delivery, route optimization, or AI agent is implemented yet.

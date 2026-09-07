@@ -9,6 +9,9 @@ from app.providers.alerts.base import AlertProvider
 from app.providers.alerts.demo import DemoAlertProvider
 from app.providers.alerts.imd_cap import ImdCapAlertProvider
 from app.providers.alerts.incois import IncoisAlertProvider
+from app.providers.pfz.base import PFZProvider
+from app.providers.pfz.demo import DemoPFZProvider
+from app.providers.pfz.incois import IncoisPFZProvider
 
 
 def get_weather_provider(settings: Settings, client: httpx.AsyncClient) -> WeatherProvider:
@@ -36,4 +39,18 @@ def get_alert_providers(settings: Settings, client: httpx.AsyncClient) -> list[A
             raise ValueError(f"Unsupported or disabled alert provider: {name}")
     if settings.orca_demo_mode and "demo" not in settings.alert_provider_list:
         providers.append(DemoAlertProvider())
+    return providers
+
+
+def get_pfz_providers(settings: Settings, client: httpx.AsyncClient) -> list[PFZProvider]:
+    providers: list[PFZProvider] = []
+    for name in settings.pfz_provider_list:
+        if name == "incois_wfs":
+            providers.append(IncoisPFZProvider(client, settings.incois_pfz_wfs_url, settings.pfz_request_timeout, settings.pfz_max_advisory_age_hours, settings.pfz_max_features))
+        elif name == "demo" and settings.orca_demo_mode:
+            providers.append(DemoPFZProvider())
+        else:
+            raise ValueError(f"Unsupported or disabled PFZ provider: {name}")
+    if settings.orca_demo_mode and "demo" not in settings.pfz_provider_list:
+        providers.append(DemoPFZProvider())
     return providers

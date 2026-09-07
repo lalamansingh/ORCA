@@ -14,12 +14,19 @@ if config.config_file_name is not None:
 config.set_main_option("sqlalchemy.url", get_settings().database_url)
 target_metadata = Base.metadata
 
+
+def include_object(object_, name: str | None, type_: str, reflected: bool, compare_to: object | None) -> bool:
+    """Ignore PostGIS-owned tables while still checking every ORCA model table."""
+    if type_ == "table" and reflected and compare_to is None:
+        return bool(name and name in target_metadata.tables)
+    return True
+
 def run_migrations_offline() -> None:
-    context.configure(url=config.get_main_option("sqlalchemy.url"), target_metadata=target_metadata, literal_binds=True, dialect_opts={"paramstyle": "named"})
+    context.configure(url=config.get_main_option("sqlalchemy.url"), target_metadata=target_metadata, literal_binds=True, dialect_opts={"paramstyle": "named"}, include_object=include_object)
     with context.begin_transaction(): context.run_migrations()
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+    context.configure(connection=connection, target_metadata=target_metadata, compare_type=True, include_object=include_object)
     with context.begin_transaction(): context.run_migrations()
 
 async def run_migrations_online() -> None:

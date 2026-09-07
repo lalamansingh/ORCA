@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { buildRiskEvaluationPayload, resolveRiskPreset, riskFactorValue, riskLevelLabel, riskUiState, topRiskFactors } from "../src/features/risk/presentation.ts";
+import type { MarineRiskAssessment, MarineRiskLevel, RiskFactor } from "../src/features/risk/types.ts";
+
+const factor:RiskFactor={type:"WAVE_HEIGHT",category:"SEA_STATE",label:"Wave height",observed_value:2.5,unit:"m",severity:"HIGH",score_contribution:50,reason:"Configured band crossed.",source:"Marine provider",source_url:null,observed_at:"2026-09-07T06:00:00Z",alert_id:null};
+const assessment=(level:MarineRiskLevel,quality:MarineRiskAssessment["data_quality"]="GOOD"):MarineRiskAssessment=>({score:level==="UNAVAILABLE"?null:level==="LOW"?0:level==="MODERATE"?25:level==="HIGH"?50:75,level,assessment_time:"2026-09-07T06:00:00Z",location:{latitude:13.08,longitude:80.27},recommendation:"Template",summary:"Summary",factors:[factor],critical_factors:[factor],data_quality:quality,missing_inputs:level==="UNAVAILABLE"?["wave_height_m"]:[],evidence:[],sources:[],provenance_mode:"LIVE",risk_model_version:"orca-risk-v1",calculated_at:"2026-09-07T06:00:00Z",limitations:[]});
+
+test("risk UI distinguishes loading, provider failure, unavailable, and ready",()=>{assert.equal(riskUiState(true,null,null),"loading");assert.equal(riskUiState(false,"provider failed",null),"error");assert.equal(riskUiState(false,null,assessment("UNAVAILABLE")),"unavailable");assert.equal(riskUiState(false,null,assessment("LOW")),"ready");});
+test("all risk levels have explicit text labels",()=>{assert.deepEqual((["LOW","MODERATE","HIGH","EXTREME","UNAVAILABLE"] as const).map(riskLevelLabel),["Low","Moderate","High","Extreme","Unavailable"]);});
+test("limited data remains visible and factors retain explainable values",()=>{const item=assessment("HIGH","LIMITED");assert.equal(item.data_quality,"LIMITED");assert.equal(topRiskFactors(item)[0].label,"Wave height");assert.equal(riskFactorValue(factor),"2.5 m");});
+test("refresh payload is explicit and never silently persists",()=>{assert.deepEqual(buildRiskEvaluationPayload(13.08,80.27,null,true),{latitude:13.08,longitude:80.27,assessment_time:null,refresh:true,persist:false});});
+test("future presets resolve deterministically from the supplied instant",()=>{const now=new Date("2026-09-07T06:00:00Z");assert.equal(resolveRiskPreset("now",now),null);assert.equal(resolveRiskPreset("3h",now),"2026-09-07T09:00:00.000Z");assert.equal(resolveRiskPreset("6h",now),"2026-09-07T12:00:00.000Z");assert.equal(resolveRiskPreset("12h",now),"2026-09-07T18:00:00.000Z");});

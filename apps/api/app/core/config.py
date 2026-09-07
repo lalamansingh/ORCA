@@ -55,9 +55,25 @@ class Settings(BaseSettings):
     alert_cache_ttl: int = Field(900, ge=60, validation_alias="ALERT_CACHE_TTL")
     alert_max_feed_items: int = Field(20, ge=1, le=100, validation_alias="ALERT_MAX_FEED_ITEMS")
     alert_refresh_interval_minutes: int = Field(15, ge=5, le=1440, validation_alias="ALERT_REFRESH_INTERVAL_MINUTES")
+    pfz_providers: str = Field("incois_wfs", validation_alias="PFZ_PROVIDERS")
+    incois_pfz_wfs_url: str = Field("https://incois.gov.in/geoserver/PFZ_Automation/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=PFZ_Automation%3Apfzlines&outputFormat=application%2Fjson", validation_alias="INCOIS_PFZ_WFS_URL")
+    pfz_request_timeout: float = Field(20.0, gt=0, validation_alias="PFZ_REQUEST_TIMEOUT")
+    pfz_refresh_interval_minutes: int = Field(360, ge=15, le=1440, validation_alias="PFZ_REFRESH_INTERVAL_MINUTES")
+    pfz_max_advisory_age_hours: int = Field(48, ge=1, le=336, validation_alias="PFZ_MAX_ADVISORY_AGE_HOURS")
+    pfz_max_features: int = Field(500, ge=1, le=2000, validation_alias="PFZ_MAX_FEATURES")
     orca_demo_mode: bool = Field(False, validation_alias="ORCA_DEMO_MODE")
+    llm_enabled: bool = Field(False, validation_alias="LLM_ENABLED")
+    llm_provider: str = Field("openai", validation_alias="LLM_PROVIDER")
+    openai_api_key: str = Field("", validation_alias="OPENAI_API_KEY")
+    openai_model: str = Field("gpt-5-mini", validation_alias="OPENAI_MODEL")
+    llm_timeout_seconds: float = Field(20, gt=0, le=120, validation_alias="LLM_TIMEOUT_SECONDS")
+    llm_max_retries: int = Field(1, ge=0, le=2, validation_alias="LLM_MAX_RETRIES")
+    llm_temperature: float = Field(0, ge=0, le=1, validation_alias="LLM_TEMPERATURE")
+    llm_max_input_chars: int = Field(4000, ge=100, le=16000, validation_alias="LLM_MAX_INPUT_CHARS")
+    llm_max_output_tokens: int = Field(800, ge=64, le=4000, validation_alias="LLM_MAX_OUTPUT_TOKENS")
+    ai_rate_limit_per_minute: int = Field(10, ge=1, le=120, validation_alias="AI_RATE_LIMIT_PER_MINUTE")
 
-    @field_validator("debug", "orca_demo_mode", mode="before")
+    @field_validator("debug", "orca_demo_mode", "llm_enabled", mode="before")
     @classmethod
     def parse_debug_value(cls, value: object) -> bool:
         """Accept common deployment values while keeping DEBUG a boolean in-app."""
@@ -73,6 +89,10 @@ class Settings(BaseSettings):
     @property
     def alert_provider_list(self) -> list[str]:
         return [provider.strip().lower() for provider in self.alert_providers.split(",") if provider.strip()]
+
+    @property
+    def pfz_provider_list(self) -> list[str]:
+        return [provider.strip().lower() for provider in self.pfz_providers.split(",") if provider.strip()]
 
 
 @lru_cache

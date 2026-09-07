@@ -15,8 +15,8 @@ class DemoAlertProvider(AlertProvider):
         alert = NormalizedMarineAlert(
             external_id="demo-high-waves-chennai-01",
             type=AlertType.HIGH_WAVES,
-            severity=AlertSeverity.SEVERE,
-            title="DEMO DATA — High-wave advisory",
+            severity=AlertSeverity.CRITICAL,
+            title="DEMO DATA — Critical high-wave warning",
             summary="DEMO DATA for interface and integration testing only.",
             description="This is not an official warning and must not be used for navigation or safety decisions.",
             affected_area="Demo coastal area near Chennai",

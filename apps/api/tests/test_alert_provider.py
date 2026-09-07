@@ -94,4 +94,5 @@ async def test_demo_provider_is_unmistakably_labeled() -> None:
     result = await DemoAlertProvider().get_alerts()
     assert result.status == ProviderAvailability.DEMO
     assert result.alerts[0].source_type == AlertSourceType.DEMO
+    assert result.alerts[0].severity == AlertSeverity.CRITICAL
     assert "DEMO DATA" in result.alerts[0].title

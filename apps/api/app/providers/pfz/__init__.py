@@ -1,0 +1,1 @@
+"""Potential fishing zone providers."""

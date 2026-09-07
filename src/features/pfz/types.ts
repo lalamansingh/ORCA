@@ -1,0 +1,5 @@
+export type PFZStatus="CURRENT"|"STALE"|"EXPIRED"|"DEMO"|"UPCOMING";
+export type PFZGeometry={type:"Point"|"LineString"|"MultiLineString"|"Polygon"|"MultiPolygon";coordinates:unknown};
+export interface PotentialFishingZone {id:string;external_id:string;name:string;geometry:PFZGeometry;sector:string|null;source:string;provider:string;source_url:string|null;advisory_date:string|null;valid_from:string|null;valid_until:string|null;retrieved_at:string;status:PFZStatus;confidence:string|null;distance_km:number|null;bearing_degrees:number|null;bearing_cardinal:string|null;nearest_point:{latitude:number;longitude:number}|null;}
+export interface PFZResponse {status:string;result_state:string;pfzs:PotentialFishingZone[];sources:Array<{provider:string;status:string;source_url:string|null;retrieved_at:string;advisory_count:number;message:string|null}>;retrieved_at:string;limitations:string[];}
+export interface PFZGeoJSON {type:"FeatureCollection";features:Array<{type:"Feature";id:string;geometry:PFZGeometry;properties:Record<string,unknown>}>}
