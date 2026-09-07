@@ -75,6 +75,9 @@ class Settings(BaseSettings):
     orchestration_timeout_seconds: float = Field(45, gt=1, le=180, validation_alias="ORCHESTRATION_TIMEOUT_SECONDS")
     orchestration_max_parallel_steps: int = Field(3, ge=1, le=10, validation_alias="ORCHESTRATION_MAX_PARALLEL_STEPS")
     geofence_boundary_caution_km: float = Field(5, gt=0, le=100, validation_alias="GEOFENCE_BOUNDARY_CAUTION_KM")
+    route_grid_size: int = Field(11, ge=3, le=49, validation_alias="ROUTE_GRID_SIZE")
+    route_max_grid_cells: int = Field(2500, ge=9, le=10000, validation_alias="ROUTE_MAX_GRID_CELLS")
+    route_timeout_seconds: float = Field(20, gt=1, le=120, validation_alias="ROUTE_TIMEOUT_SECONDS")
 
     @field_validator("debug", "orca_demo_mode", "llm_enabled", mode="before")
     @classmethod

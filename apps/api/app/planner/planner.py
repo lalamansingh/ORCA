@@ -19,14 +19,14 @@ class QueryPlanner:
         elif PlannerIntent.WEATHER_QUERY in intents:add("weather",PlannerTool.WEATHER,"forecast","REQUESTED_WEATHER",parallel=True)
         if pfz:
             add("pfz",PlannerTool.PFZ,"nearest","REQUIRED_FOR_PFZ_DISTANCE",inputs={"location_ref":"$context.user_location"},parallel=True)
-            add("geospatial",PlannerTool.GEOSPATIAL,"nearest_geometry","REQUIRED_FOR_PFZ_DISTANCE",["pfz"],{"target_ref":"$steps.pfz.location"})
+            add("geospatial",PlannerTool.GEOSPATIAL,"nearest_geometry","REQUIRED_FOR_PFZ_DISTANCE",["pfz"],{"target_ref":"$steps.pfz.pfzs.0.nearest_point"})
         if PlannerIntent.MARINE_CONDITIONS_QUERY in intents and not risk:add("marine",PlannerTool.MARINE,"forecast","REQUESTED_MARINE_CONDITIONS",parallel=True,inputs={"location_ref":"$context.user_location"})
         if PlannerIntent.ALERT_QUERY in intents and not risk:add("alerts",PlannerTool.ALERTS,"active","REQUESTED_ALERTS",parallel=True)
         if PlannerIntent.OCEAN_PRODUCTIVITY_QUERY in intents:add("ocean_products",PlannerTool.OCEAN_PRODUCTS,"sample","REQUESTED_OCEAN_PRODUCTS",parallel=True)
         if PlannerIntent.GEOFENCE_QUERY in intents:add("geofence",PlannerTool.GEOFENCE,"check_point","REQUESTED_GEOFENCE_CHECK",inputs={"location_ref":"$context.user_location"},parallel=True)
         if PlannerIntent.MAP_QUERY in intents:add("map",PlannerTool.MAP,"display","REQUESTED_MAP_DISPLAY",["pfz"] if pfz else [],required=False,parallel=False)
-        capability=CapabilityStatus.NOT_IMPLEMENTED if PlannerIntent.ROUTE_QUERY in intents else CapabilityStatus.AVAILABLE
-        if capability == CapabilityStatus.NOT_IMPLEMENTED:add("route","MAP","route_optimization","ROUTE_ENGINE_NOT_IMPLEMENTED",required=False,status=PlanStepStatus.UNSUPPORTED)
+        capability=CapabilityStatus.AVAILABLE
+        if PlannerIntent.ROUTE_QUERY in intents:add("route",PlannerTool.ROUTE,"calculate","REQUESTED_SAFE_ROUTE",["geospatial"] if pfz else [],{"start":"$context.user_location","destination":"$steps.pfz.pfzs.0.nearest_point"} if pfz else {"start":"$context.user_location"})
         if pfz and risk:
             by_id={step.id:step for step in steps}
             by_id["geospatial"].depends_on=["pfz"]
@@ -38,6 +38,7 @@ class QueryPlanner:
         needs_location=bool(extraction.requires_location or risk or pfz or any(step.tool in {PlannerTool.WEATHER,PlannerTool.MARINE,PlannerTool.ALERTS,PlannerTool.RISK,PlannerTool.GEOSPATIAL,PlannerTool.GEOFENCE} for step in steps))
         if needs_location and location is None:clarifications.append(ClarificationRequest(type=ClarificationType.MISSING_LOCATION,question="Which coastal location or coordinates should ORCA assess?",required_field="location"))
         if extraction.needs_clarification and extraction.requested_time_text:clarifications.append(ClarificationRequest(type=ClarificationType.AMBIGUOUS_TIME,question="What exact time should ORCA use?",required_field="requested_time"))
+        if PlannerIntent.ROUTE_QUERY in intents and not pfz:clarifications.append(ClarificationRequest(type=ClarificationType.AMBIGUOUS_TARGET,question="Which structured marine destination should ORCA route to?",required_field="destination"))
         for step in steps:step.inputs.setdefault("location",location) if location else None
         groups=[];parallel=[step.id for step in steps if step.parallelizable];
         if parallel:groups.append(parallel)

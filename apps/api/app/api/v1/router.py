@@ -14,6 +14,7 @@ from app.api.v1.endpoints.pfz import router as pfz_router
 from app.api.v1.endpoints.ocean_products import router as ocean_products_router
 from app.api.v1.endpoints.ai import router as ai_router
 from app.api.v1.endpoints.geofence import router as geofence_router
+from app.api.v1.endpoints.routes import router as routes_router
 
 router = APIRouter()
 router.include_router(health_router, tags=["system"])
@@ -28,3 +29,4 @@ router.include_router(pfz_router, tags=["potential fishing zones"])
 router.include_router(ocean_products_router, tags=["ocean products"])
 router.include_router(ai_router, tags=["AI language layer"])
 router.include_router(geofence_router, tags=["maritime geofencing"])
+router.include_router(routes_router, tags=["marine routes"])

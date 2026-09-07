@@ -31,11 +31,12 @@ def test_pfz_safety_chains_target_and_risk() -> None:
     assert plan.steps[-1].depends_on == ["weather","marine","alerts"]
 
 
-def test_route_is_marked_unsupported_and_no_arbitrary_tool_is_allowed() -> None:
+def test_route_uses_allowlisted_tool_and_requires_location() -> None:
     plan=QueryPlanner().plan(extraction("Give me the safest route to the fishing zone?"))
-    assert plan.capability_status.value == "NOT_IMPLEMENTED"
+    assert plan.capability_status.value == "AVAILABLE"
     assert all(step.tool in PlannerTool for step in plan.steps)
-    assert any(step.status.value == "UNSUPPORTED" for step in plan.steps)
+    assert any(step.tool == PlannerTool.ROUTE for step in plan.steps)
+    assert plan.needs_clarification
 
 
 def test_general_information_has_no_provider_steps() -> None:
