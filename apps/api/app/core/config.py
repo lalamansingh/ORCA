@@ -95,6 +95,22 @@ class Settings(BaseSettings):
     metrics_enabled: bool = Field(False, validation_alias="METRICS_ENABLED")
     orca_allow_demo_fallback: bool = Field(False, validation_alias="ORCA_ALLOW_DEMO_FALLBACK")
 
+    @model_validator(mode="before")
+    @classmethod
+    def assemble_database_url(cls, values: dict) -> dict:
+        if isinstance(values, dict):
+            db_url = values.get("DATABASE_URL") or values.get("DATABASE_PUBLIC_URL")
+            if (not db_url or "localhost:5432" in str(db_url)) and values.get("PGHOST"):
+                pghost = values.get("PGHOST")
+                pgport = values.get("PGPORT", "5432")
+                pguser = values.get("PGUSER", "postgres")
+                pgpass = values.get("PGPASSWORD", "")
+                pgdb = values.get("PGDATABASE", "railway")
+                values["DATABASE_URL"] = f"postgresql+asyncpg://{pguser}:{pgpass}@{pghost}:{pgport}/{pgdb}"
+            elif db_url:
+                values["DATABASE_URL"] = str(db_url)
+        return values
+
     @field_validator("debug", "orca_demo_mode", "llm_enabled", "metrics_enabled", "orca_allow_demo_fallback", mode="before")
     @classmethod
     def parse_debug_value(cls, value: object) -> bool:
@@ -127,9 +143,8 @@ class Settings(BaseSettings):
     def normalize_database_url(cls, value: str) -> str:
         for prefix in ("postgres://", "postgresql://"):
             if value.startswith(prefix): return value.replace(prefix, "postgresql+asyncpg://", 1)
-        if not value.startswith("postgresql+asyncpg://"):
-            raise ValueError("DATABASE_URL must use PostgreSQL")
         return value
+
 
     @property
     def cors_origin_list(self) -> list[str]:
