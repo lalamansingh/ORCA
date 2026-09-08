@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
       "https://server.arcgisonline.com",
       "https://services.arcgisonline.com",
       "https://*.basemaps.cartocdn.com",
+      "https://basemaps.cartocdn.com",
+      "https://*.cartocdn.com",
       "https://*.tile.openstreetmap.org",
       "https://demotiles.maplibre.org",
     ].join(" ");

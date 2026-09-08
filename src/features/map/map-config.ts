@@ -9,7 +9,6 @@ export const COMPOSITE_BASE_STYLE: import("maplibre-gl").StyleSpecification = {
       type: "raster",
       tiles: [
         "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       ],
       tileSize: 256,
       attribution: "© Esri, Maxar, Earthstar Geographics, CNES/Airbus DS",
@@ -17,8 +16,7 @@ export const COMPOSITE_BASE_STYLE: import("maplibre-gl").StyleSpecification = {
     "ocean-tiles": {
       type: "raster",
       tiles: [
-        "https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
-        "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
       ],
       tileSize: 256,
       attribution: "© Esri, GEBCO, NOAA, National Geographic",
@@ -26,8 +24,7 @@ export const COMPOSITE_BASE_STYLE: import("maplibre-gl").StyleSpecification = {
     "ocean-ref-tiles": {
       type: "raster",
       tiles: [
-        "https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}",
-        "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}",
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}",
       ],
       tileSize: 256,
       attribution: "© Esri, GEBCO, NOAA",
@@ -35,24 +32,26 @@ export const COMPOSITE_BASE_STYLE: import("maplibre-gl").StyleSpecification = {
     "dark-tiles": {
       type: "raster",
       tiles: [
-        "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-        "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-        "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-        "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
       ],
       tileSize: 256,
-      attribution: "© CARTO, © OpenStreetMap contributors",
+      attribution: "© Esri, DeLorme, NAVTEQ",
+    },
+    "dark-ref-tiles": {
+      type: "raster",
+      tiles: [
+        "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+      ],
+      tileSize: 256,
+      attribution: "© Esri, DeLorme, NAVTEQ",
     },
     "vector-tiles": {
       type: "raster",
       tiles: [
-        "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-        "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-        "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-        "https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+        "https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
       ],
       tileSize: 256,
-      attribution: "© CARTO, © OpenStreetMap contributors",
+      attribution: "© Esri, HERE, Garmin, USGS, NGA",
     },
   },
   layers: [
@@ -89,6 +88,14 @@ export const COMPOSITE_BASE_STYLE: import("maplibre-gl").StyleSpecification = {
       layout: { visibility: "none" },
     },
     {
+      id: "dark-ref-layer",
+      type: "raster",
+      source: "dark-ref-tiles",
+      minzoom: 0,
+      maxzoom: 19,
+      layout: { visibility: "none" },
+    },
+    {
       id: "voyager-base-layer",
       type: "raster",
       source: "vector-tiles",
@@ -103,4 +110,5 @@ export const SATELLITE_STYLE = COMPOSITE_BASE_STYLE;
 export const OCEAN_STYLE = COMPOSITE_BASE_STYLE;
 export const DARK_OCEAN_STYLE = COMPOSITE_BASE_STYLE;
 export const VECTOR_STYLE = COMPOSITE_BASE_STYLE;
+
 

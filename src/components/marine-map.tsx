@@ -397,7 +397,7 @@ export function MarineMap({
     const BASEMAP_GROUPS: Record<"satellite" | "ocean" | "dark" | "vector", string[]> = {
       satellite: ["satellite-base-layer"],
       ocean: ["ocean-base-layer", "ocean-ref-layer"],
-      dark: ["dark-base-layer"],
+      dark: ["dark-base-layer", "dark-ref-layer"],
       vector: ["voyager-base-layer"],
     };
 
@@ -409,6 +409,7 @@ export function MarineMap({
         }
       });
     });
+    map.triggerRepaint();
   }, [baseStyle, state]);
 
   // Dynamic Layer Visibility
