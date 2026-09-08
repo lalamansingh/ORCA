@@ -15,8 +15,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.router import router as api_router
 from app.core.config import Settings, get_settings
+from app.core.logging import configure_logging, request_id_context
 from app.db.base import Base
 import app.db.models  # noqa: F401
+
 from app.db.session import create_database_engine, create_session_factory
 from app.schemas.common import APIError, ErrorEnvelope
 from app.schemas.health import APIInfoResponse
