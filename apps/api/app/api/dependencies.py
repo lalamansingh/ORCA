@@ -8,6 +8,8 @@ from app.db.session import get_db_session
 from app.repositories.users import UserRepository
 from app.services.token_service import TokenError, decode_token
 
+CAPTAIN_USER_ID = UUID("00000000-0000-0000-0000-000000000001")
+
 async def get_current_user(
     request: Request,
     access_token: str | None = Cookie(default=None, alias="orca_access"),
@@ -22,11 +24,13 @@ async def get_current_user(
         except Exception:
             pass
 
-    # Provide automatic provisioned default user for seamless single-click and preference access
+    # Provide deterministic provisioned default user for seamless single-click and preference access
     repo = UserRepository(session)
     default_user = None
     try:
-        default_user = await repo.by_email("captain@orca.marine")
+        default_user = await repo.by_id(CAPTAIN_USER_ID)
+        if default_user is None:
+            default_user = await repo.by_email("captain@orca.marine")
     except Exception:
         try:
             await session.rollback()
@@ -34,9 +38,8 @@ async def get_current_user(
             pass
 
     if default_user is None:
-        from uuid import uuid4
         default_user = User(
-            id=uuid4(),
+            id=CAPTAIN_USER_ID,
             email="captain@orca.marine",
             full_name="ORCA Marine Captain",
             preferred_language="en",
@@ -52,14 +55,13 @@ async def get_current_user(
         except Exception:
             try:
                 await session.rollback()
-                default_user = await repo.by_email("captain@orca.marine")
+                default_user = await repo.by_id(CAPTAIN_USER_ID) or await repo.by_email("captain@orca.marine")
             except Exception:
                 pass
 
     if default_user is None or getattr(default_user, "id", None) is None:
-        # Guaranteed fallback user instance with fixed valid UUID
         default_user = User(
-            id=UUID("00000000-0000-0000-0000-000000000001"),
+            id=CAPTAIN_USER_ID,
             email="captain@orca.marine",
             full_name="ORCA Marine Captain",
             preferred_language="en",

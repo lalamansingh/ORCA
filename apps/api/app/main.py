@@ -106,7 +106,12 @@ AUTH_DDL_STATEMENTS = [
         updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
     );
     """,
-    "CREATE INDEX IF NOT EXISTS ix_alert_subscriptions_user_id ON alert_subscriptions(user_id);"
+    "CREATE INDEX IF NOT EXISTS ix_alert_subscriptions_user_id ON alert_subscriptions(user_id);",
+    """
+    INSERT INTO users (id, email, full_name, preferred_language, preferred_units, default_latitude, default_longitude, is_active, created_at, updated_at)
+    VALUES ('00000000-0000-0000-0000-000000000001', 'captain@orca.marine', 'ORCA Marine Captain', 'en', 'metric', 18.92, 72.83, true, NOW(), NOW())
+    ON CONFLICT (id) DO UPDATE SET is_active = true, email = 'captain@orca.marine';
+    """
 ]
 
 
