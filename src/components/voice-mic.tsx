@@ -6,6 +6,8 @@ import { Mic, MicOff, Volume2, VolumeX, Globe } from "lucide-react";
 type VoiceMicProps = {
   onTranscript: (text: string) => void;
   disabled?: boolean;
+  selectedLang?: string;
+  onLanguageChange?: (lang: string) => void;
 };
 
 // TypeScript Web Speech API definitions
@@ -25,11 +27,17 @@ interface SpeechRecognitionInstance extends EventTarget {
   onend: (() => void) | null;
 }
 
-export function VoiceMic({ onTranscript, disabled = false }: VoiceMicProps) {
+export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN", onLanguageChange }: VoiceMicProps) {
   const [isListening, setIsListening] = useState(false);
-  const [lang, setLang] = useState<"hi-IN" | "en-IN" | "ta-IN" | "te-IN">("hi-IN");
+  const [lang, setLang] = useState<string>(selectedLang);
   const [supported, setSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+
+  useEffect(() => {
+    if (selectedLang && selectedLang !== lang) {
+      setLang(selectedLang);
+    }
+  }, [selectedLang]);
 
   useEffect(() => {
     const SpeechRecognition =
@@ -125,7 +133,10 @@ export function VoiceMic({ onTranscript, disabled = false }: VoiceMicProps) {
         <Globe size={12} />
         <select
           value={lang}
-          onChange={(e) => setLang(e.target.value as "hi-IN" | "en-IN" | "ta-IN" | "te-IN")}
+          onChange={(e) => {
+            setLang(e.target.value);
+            onLanguageChange?.(e.target.value);
+          }}
           style={{
             background: "transparent",
             border: "none",
@@ -140,14 +151,30 @@ export function VoiceMic({ onTranscript, disabled = false }: VoiceMicProps) {
           <option value="en-IN" style={{ background: "#0f172a", color: "#fff" }}>English (India)</option>
           <option value="ta-IN" style={{ background: "#0f172a", color: "#fff" }}>தமிழ் (Tamil)</option>
           <option value="te-IN" style={{ background: "#0f172a", color: "#fff" }}>తెలుగు (Telugu)</option>
+          <option value="ml-IN" style={{ background: "#0f172a", color: "#fff" }}>മലയാളം (Malayalam)</option>
+          <option value="gu-IN" style={{ background: "#0f172a", color: "#fff" }}>ગુજરાતી (Gujarati)</option>
+          <option value="mr-IN" style={{ background: "#0f172a", color: "#fff" }}>मराठी (Marathi)</option>
+          <option value="bn-IN" style={{ background: "#0f172a", color: "#fff" }}>বাংলা (Bengali)</option>
+          <option value="kn-IN" style={{ background: "#0f172a", color: "#fff" }}>ಕನ್ನಡ (Kannada)</option>
         </select>
       </div>
     </div>
   );
 }
 
-export function VoiceSpeaker({ text, lang = "hi-IN" }: { text: string; lang?: string }) {
+export function VoiceSpeaker({ text, lang }: { text: string; lang?: string }) {
   const [speaking, setSpeaking] = useState(false);
+
+  const detectTextLang = (content: string): string => {
+    if (/[\u0B80-\u0BFF]/.test(content)) return "ta-IN";
+    if (/[\u0C00-\u0C7F]/.test(content)) return "te-IN";
+    if (/[\u0D00-\u0D7F]/.test(content)) return "ml-IN";
+    if (/[\u0A80-\u0AFF]/.test(content)) return "gu-IN";
+    if (/[\u0980-\u09FF]/.test(content)) return "bn-IN";
+    if (/[\u0C80-\u0CFF]/.test(content)) return "kn-IN";
+    if (/[\u0900-\u097F]/.test(content)) return "hi-IN";
+    return "en-IN";
+  };
 
   const toggleSpeak = () => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -156,9 +183,9 @@ export function VoiceSpeaker({ text, lang = "hi-IN" }: { text: string; lang?: st
       setSpeaking(false);
     } else {
       window.speechSynthesis.cancel();
-      const cleanText = text.replace(/[#*_`]/g, "").slice(0, 300);
+      const cleanText = text.replace(/[#*_`📍🛡️🌊🐟💡⚠️❌•]/g, "").slice(0, 350);
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = lang;
+      utterance.lang = lang || detectTextLang(text);
       utterance.onend = () => setSpeaking(false);
       utterance.onerror = () => setSpeaking(false);
       window.speechSynthesis.speak(utterance);
@@ -176,7 +203,7 @@ export function VoiceSpeaker({ text, lang = "hi-IN" }: { text: string; lang?: st
       style={{
         background: "transparent",
         border: "none",
-        color: speaking ? "#16a085" : "inherit",
+        color: speaking ? "#38bdf8" : "inherit",
         cursor: "pointer",
         padding: "4px",
         display: "inline-flex",
@@ -188,3 +215,4 @@ export function VoiceSpeaker({ text, lang = "hi-IN" }: { text: string; lang?: st
     </button>
   );
 }
+
