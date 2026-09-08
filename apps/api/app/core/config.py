@@ -40,12 +40,13 @@ class Settings(BaseSettings):
     postgres_password: str = Field("orca_local_dev_password", validation_alias="POSTGRES_PASSWORD")
     postgres_host: str = Field("localhost", validation_alias="POSTGRES_HOST")
     postgres_port: int = Field(5432, validation_alias="POSTGRES_PORT")
-    jwt_secret_key: str = Field("replace-with-a-long-random-secret", validation_alias="JWT_SECRET_KEY")
+    jwt_secret_key: str = Field("orca-prod-auto-secret-jwt-key-2026-fallback-secure-512", validation_alias="JWT_SECRET_KEY")
     jwt_algorithm: str = Field("HS256", validation_alias="JWT_ALGORITHM")
     access_token_expire_minutes: int = Field(15, validation_alias="ACCESS_TOKEN_EXPIRE_MINUTES")
     refresh_token_expire_days: int = Field(14, validation_alias="REFRESH_TOKEN_EXPIRE_DAYS")
-    cookie_secure: bool = Field(False, validation_alias="COOKIE_SECURE")
-    cookie_samesite: Literal["lax", "strict", "none"] = Field("lax", validation_alias="COOKIE_SAMESITE")
+    cookie_secure: bool = Field(True, validation_alias="COOKIE_SECURE")
+    cookie_samesite: Literal["lax", "strict", "none"] = Field("none", validation_alias="COOKIE_SAMESITE")
+
     weather_provider: str = Field("open_meteo", validation_alias="WEATHER_PROVIDER")
     marine_provider: str = Field("open_meteo", validation_alias="MARINE_PROVIDER")
     open_meteo_weather_base_url: str = Field("https://api.open-meteo.com/v1/forecast", validation_alias="OPEN_METEO_WEATHER_BASE_URL")
@@ -99,17 +100,23 @@ class Settings(BaseSettings):
     @classmethod
     def assemble_database_url(cls, values: dict) -> dict:
         if isinstance(values, dict):
-            db_url = values.get("DATABASE_URL") or values.get("DATABASE_PUBLIC_URL")
-            if (not db_url or "localhost:5432" in str(db_url)) and values.get("PGHOST"):
-                pghost = values.get("PGHOST")
-                pgport = values.get("PGPORT", "5432")
-                pguser = values.get("PGUSER", "postgres")
-                pgpass = values.get("PGPASSWORD", "")
-                pgdb = values.get("PGDATABASE", "railway")
+            db_url = (
+                values.get("DATABASE_URL")
+                or values.get("DATABASE_PUBLIC_URL")
+                or values.get("POSTGRES_URL")
+                or values.get("POSTGRESQL_URL")
+            )
+            pghost = values.get("PGHOST") or values.get("POSTGRES_HOST")
+            if (not db_url or "localhost:5432" in str(db_url)) and pghost:
+                pgport = values.get("PGPORT") or values.get("POSTGRES_PORT") or "5432"
+                pguser = values.get("PGUSER") or values.get("POSTGRES_USER") or "postgres"
+                pgpass = values.get("PGPASSWORD") or values.get("POSTGRES_PASSWORD") or ""
+                pgdb = values.get("PGDATABASE") or values.get("POSTGRES_DB") or "railway"
                 values["DATABASE_URL"] = f"postgresql+asyncpg://{pguser}:{pgpass}@{pghost}:{pgport}/{pgdb}"
             elif db_url:
                 values["DATABASE_URL"] = str(db_url)
         return values
+
 
     @field_validator("debug", "orca_demo_mode", "llm_enabled", "metrics_enabled", "orca_allow_demo_fallback", mode="before")
     @classmethod

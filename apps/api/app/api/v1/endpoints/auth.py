@@ -1,3 +1,4 @@
+import logging
 from secrets import token_urlsafe
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +9,8 @@ from app.db.session import get_db_session
 from app.schemas.auth import UserLogin, UserProfileUpdate, UserRead, UserRegister
 from app.services.auth_service import AccountExistsError, AuthenticationError, AuthService
 
-router=APIRouter(prefix="/auth")
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/auth")
 
 @router.get("/csrf")
 async def csrf_token(request: Request, response: Response):
@@ -28,15 +30,36 @@ def _clear_cookies(response:Response,settings:Settings)->None:
 
 @router.post("/register",response_model=UserRead,status_code=status.HTTP_201_CREATED)
 async def register(data:UserRegister,request:Request,response:Response,session:AsyncSession=Depends(get_db_session))->User:
-    try: user,access,refresh=await AuthService(session,request.app.state.settings).register(data,request.headers.get("user-agent"))
-    except AccountExistsError as exc: raise HTTPException(status_code=409,detail="An account with this email already exists.") from exc
+    try:
+        user,access,refresh=await AuthService(session,request.app.state.settings).register(data,request.headers.get("user-agent"))
+    except AccountExistsError as exc:
+        raise HTTPException(status_code=409,detail="An account with this email already exists.") from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Registration failed: %s", exc, exc_info=True)
+        err_msg = str(exc)
+        if "connect" in err_msg.lower() or "connection" in err_msg.lower() or "refused" in err_msg.lower():
+            raise HTTPException(status_code=503, detail="Database connection is not configured or offline. Please ensure DATABASE_URL is added to Railway Variables.") from exc
+        raise HTTPException(status_code=500, detail=f"Registration failed: {err_msg}") from exc
     _set_cookies(response,access,refresh,request.app.state.settings); return user
 
 @router.post("/login",response_model=UserRead)
 async def login(data:UserLogin,request:Request,response:Response,session:AsyncSession=Depends(get_db_session))->User:
-    try: user,access,refresh=await AuthService(session,request.app.state.settings).login(data,request.headers.get("user-agent"))
-    except AuthenticationError as exc: raise HTTPException(status_code=401,detail="Invalid email or password.") from exc
+    try:
+        user,access,refresh=await AuthService(session,request.app.state.settings).login(data,request.headers.get("user-agent"))
+    except AuthenticationError as exc:
+        raise HTTPException(status_code=401,detail="Invalid email or password.") from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Login failed: %s", exc, exc_info=True)
+        err_msg = str(exc)
+        if "connect" in err_msg.lower() or "connection" in err_msg.lower() or "refused" in err_msg.lower():
+            raise HTTPException(status_code=503, detail="Database connection is not configured or offline. Please check DATABASE_URL in Railway.") from exc
+        raise HTTPException(status_code=500, detail=f"Login failed: {err_msg}") from exc
     _set_cookies(response,access,refresh,request.app.state.settings); return user
+
 
 @router.get("/me",response_model=UserRead)
 async def me(user:User=Depends(get_current_user))->User: return user
