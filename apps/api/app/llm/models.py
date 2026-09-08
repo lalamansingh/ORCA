@@ -66,6 +66,9 @@ class ORCAFactContext(BaseModel):
     risk: dict[str, Any] | None = None
     pfz: dict[str, Any] | None = None
     ocean_products: dict[str, Any] | None = None
+    geofence: dict[str, Any] | None = None
+    route: dict[str, Any] | None = None
+    pfz_recommendation: dict[str, Any] | None = None
     selected_location: dict[str, Any] | None = None
     requested_time: str | None = None
     evidence: list[FactEvidence] = Field(default_factory=list, max_length=50)

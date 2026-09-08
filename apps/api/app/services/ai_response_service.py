@@ -1,6 +1,7 @@
 import re
 from app.llm.base import LLMProvider
 from app.llm.models import ORCAFactContext,ResponseDraft
+from app.services.grounded_response_validator import GroundedResponseValidator
 from app.llm.prompts import ORCA_SYSTEM_PROMPT,RESPONSE_PROMPT
 
 NUMERIC=re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?")
@@ -16,4 +17,4 @@ class AIResponseService:
         allowed_numbers={number for item in context.evidence for number in NUMERIC.findall(item.formatted_value)}
         if any(number not in allowed_numbers for number in NUMERIC.findall(draft.answer)):
             raise ValueError("LLM_UNSUPPORTED_NUMERIC_CLAIM")
-        return draft
+        return GroundedResponseValidator().validate(draft,context)

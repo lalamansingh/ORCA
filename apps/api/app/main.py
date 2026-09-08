@@ -10,7 +10,7 @@ import httpx
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse,PlainTextResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.router import router as api_router
@@ -23,6 +23,8 @@ from app.risk.config import DEFAULT_RISK_CONFIG
 from app.risk.engine import MarineRiskEngine
 from app.services.forecast_cache import TTLCache
 from app.services.provider_status import ProviderStatusRegistry
+from app.services.rate_limiter import RateLimiter
+from app.services.metrics import Metrics
 
 logger = logging.getLogger(__name__)
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
@@ -68,6 +70,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.provider_status = ProviderStatusRegistry()
     app.state.risk_config = DEFAULT_RISK_CONFIG
     app.state.risk_engine = MarineRiskEngine(DEFAULT_RISK_CONFIG)
+    app.state.rate_limiter = RateLimiter()
+    app.state.metrics = Metrics()
     app.add_middleware(
         CORSMiddleware,
         allow_origins=app_settings.cors_origin_list,
@@ -85,7 +89,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         started_at = time.perf_counter()
         response = None
         try:
+            content_length=request.headers.get("content-length")
+            if content_length and content_length.isdigit() and int(content_length)>app_settings.max_request_body_bytes:
+                return _error_response(request,status_code=413,code="REQUEST_TOO_LARGE",message="Request body is too large.")
+            path=request.url.path;client=request.client.host if request.client else "unknown"
+            limit=app_settings.auth_rate_limit_per_minute if path.endswith(("/login","/register","/refresh")) else app_settings.expensive_rate_limit_per_minute if path.endswith(("/ai/execute","/ai/conversations/messages","/routes/calculate","/pfz/recommendations")) else None
+            if limit and not app.state.rate_limiter.allow(f"{client}:{path}",limit):return _error_response(request,status_code=429,code="RATE_LIMITED",message="Too many requests. Try again shortly.")
             response = await call_next(request)
+            app.state.metrics.increment("orca_http_requests_total",f"{request.method}:{request.url.path}:{response.status_code}")
             return response
         finally:
             duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
@@ -129,6 +140,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/", response_model=APIInfoResponse, tags=["system"])
     async def api_info() -> APIInfoResponse:
         return APIInfoResponse(name=app_settings.app_name, status="running", docs="/docs")
+
+    @app.get("/metrics",include_in_schema=False)
+    async def metrics():
+        if not app_settings.metrics_enabled:return PlainTextResponse("metrics disabled\n",status_code=404)
+        return PlainTextResponse(app.state.metrics.prometheus(),media_type="text/plain; version=0.0.4")
 
     app.include_router(api_router, prefix=app_settings.api_v1_prefix)
     return app

@@ -15,6 +15,52 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  backend:
+    build:
+      context: ./apps/api
+    environment:
+      APP_ENV: development
+      DEBUG: "false"
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-orca}:${POSTGRES_PASSWORD:-orca_local_dev_password}@db:5432/${POSTGRES_DB:-orca}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-local-compose-secret-change-before-production-123456}
+      FRONTEND_URL: http://localhost:3000
+      CORS_ORIGINS: http://localhost:3000
+      COOKIE_SECURE: "false"
+      ORCA_DEMO_MODE: ${ORCA_DEMO_MODE:-false}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/live', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  migrate:
+    build:
+      context: ./apps/api
+    command: [".venv/bin/alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-orca}:${POSTGRES_PASSWORD:-orca_local_dev_password}@db:5432/${POSTGRES_DB:-orca}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+  frontend:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
 
 volumes:
   orca-postgres-data:

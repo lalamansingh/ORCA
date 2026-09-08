@@ -2,7 +2,7 @@
 
 from functools import lru_cache
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -78,14 +78,29 @@ class Settings(BaseSettings):
     route_grid_size: int = Field(11, ge=3, le=49, validation_alias="ROUTE_GRID_SIZE")
     route_max_grid_cells: int = Field(2500, ge=9, le=10000, validation_alias="ROUTE_MAX_GRID_CELLS")
     route_timeout_seconds: float = Field(20, gt=1, le=120, validation_alias="ROUTE_TIMEOUT_SECONDS")
+    pfz_ranking_enrich_top_n: int = Field(5, ge=1, le=10, validation_alias="PFZ_RANKING_ENRICH_TOP_N")
+    pfz_ranking_timeout_seconds: float = Field(45, gt=1, le=120, validation_alias="PFZ_RANKING_TIMEOUT_SECONDS")
+    auth_rate_limit_per_minute: int = Field(20, ge=1, le=300, validation_alias="AUTH_RATE_LIMIT_PER_MINUTE")
+    expensive_rate_limit_per_minute: int = Field(10, ge=1, le=120, validation_alias="EXPENSIVE_RATE_LIMIT_PER_MINUTE")
+    max_request_body_bytes: int = Field(1_000_000, ge=1024, le=10_000_000, validation_alias="MAX_REQUEST_BODY_BYTES")
+    metrics_enabled: bool = Field(True, validation_alias="METRICS_ENABLED")
+    orca_allow_demo_fallback: bool = Field(False, validation_alias="ORCA_ALLOW_DEMO_FALLBACK")
 
-    @field_validator("debug", "orca_demo_mode", "llm_enabled", mode="before")
+    @field_validator("debug", "orca_demo_mode", "llm_enabled", "metrics_enabled", "orca_allow_demo_fallback", mode="before")
     @classmethod
     def parse_debug_value(cls, value: object) -> bool:
         """Accept common deployment values while keeping DEBUG a boolean in-app."""
         if isinstance(value, bool):
             return value
         return str(value).strip().lower() in {"1", "true", "yes", "on", "debug"}
+
+    @model_validator(mode="after")
+    def secure_production_configuration(self):
+        if self.app_env.lower()=="production":
+            if self.jwt_secret_key=="replace-with-a-long-random-secret" or len(self.jwt_secret_key)<32:raise ValueError("Production requires a unique JWT_SECRET_KEY of at least 32 characters")
+            if not self.cookie_secure:raise ValueError("Production requires COOKIE_SECURE=true")
+            if "localhost" in self.cors_origins or "*" in self.cors_origins:raise ValueError("Production requires explicit non-local CORS_ORIGINS")
+        return self
 
     @property
     def cors_origin_list(self) -> list[str]:

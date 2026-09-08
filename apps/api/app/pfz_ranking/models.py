@@ -1,0 +1,15 @@
+from datetime import date,datetime
+from enum import StrEnum
+from typing import Any
+from pydantic import BaseModel,Field
+
+class RecommendationStatus(StrEnum):SUCCESS="SUCCESS";PARTIAL="PARTIAL";NO_CURRENT_PFZ="NO_CURRENT_PFZ";NO_ELIGIBLE_PFZ="NO_ELIGIBLE_PFZ";INSUFFICIENT_DATA="INSUFFICIENT_DATA";OUTSIDE_SUPPORTED_REGION="OUTSIDE_SUPPORTED_REGION";UNAVAILABLE="UNAVAILABLE";DEMO="DEMO"
+class RecommendationBand(StrEnum):STRONG_CANDIDATE="STRONG_CANDIDATE";GOOD_CANDIDATE="GOOD_CANDIDATE";CAUTION="CAUTION";LOW_PREFERENCE="LOW_PREFERENCE"
+class PFZRankingConfig(BaseModel):
+    risk_weight:float=0.40;distance_weight:float=0.20;route_weight:float=0.15;data_quality_weight:float=0.10;freshness_weight:float=0.10;environment_context_weight:float=0.05;max_distance_km:float=500;extreme_risk_ineligible:bool=True;high_risk_score:float=25;unknown_geofence_score:float=30;methodology_version:str="orca-pfz-rank-v1"
+class PFZCandidate(BaseModel):
+    pfz_id:str;name:str;geometry:dict[str,Any]|None=None;target_point:dict[str,float]|None=None;validity_status:str;advisory_date:date|None=None;valid_until:datetime|None=None;distance_km:float;bearing_degrees:float|None=None;bearing_compass:str|None=None;marine_risk:dict[str,Any]|None=None;alerts:list[dict[str,Any]]=Field(default_factory=list);geofence:dict[str,Any]|None=None;route:dict[str,Any]|None=None;sst:dict[str,Any]|None=None;chlorophyll:dict[str,Any]|None=None;data_quality:str="INSUFFICIENT";data_freshness:str="UNKNOWN";evidence:list[dict[str,Any]]=Field(default_factory=list);geometry_valid:bool=True;inside_supported_domain:bool=True
+class PFZScoreComponent(BaseModel):name:str;raw_value:Any;normalized_score:float;weight:float;weighted_contribution:float;reason:str;evidence_refs:list[str]=Field(default_factory=list)
+class PFZRecommendationExplanation(BaseModel):why_ranked_here:str="";positive_factors:list[str]=Field(default_factory=list);negative_factors:list[str]=Field(default_factory=list);safety_constraints:list[str]=Field(default_factory=list);tradeoffs:list[str]=Field(default_factory=list);data_gaps:list[str]=Field(default_factory=list)
+class RankedPFZCandidate(BaseModel):rank:int=0;pfz:PFZCandidate;recommendation_score:float;recommendation_band:RecommendationBand;eligible:bool;exclusion_reasons:list[str]=Field(default_factory=list);score_components:list[PFZScoreComponent]=Field(default_factory=list);strengths:list[str]=Field(default_factory=list);tradeoffs:list[str]=Field(default_factory=list);warnings:list[str]=Field(default_factory=list);evidence_refs:list[str]=Field(default_factory=list);explanation:PFZRecommendationExplanation
+class PFZRecommendationResult(BaseModel):status:RecommendationStatus;origin:dict[str,float];requested_time:datetime|None=None;ranked_candidates:list[RankedPFZCandidate]=Field(default_factory=list);recommended_candidate:RankedPFZCandidate|None=None;candidate_count:int;eligible_count:int;excluded_count:int;methodology_version:str="orca-pfz-rank-v1";warnings:list[str]=Field(default_factory=list);evidence:list[dict[str,Any]]=Field(default_factory=list);generated_at:datetime;limitations:list[str]=Field(default_factory=list)

@@ -15,6 +15,7 @@ from app.services.risk_service import RiskService
 from app.services.geofence_service import GeofenceService
 from app.services.route_planning_service import RoutePlanningService
 from app.routing.models import RouteRequest
+from app.services.pfz_recommendation_service import PFZRecommendationService
 from app.domain.ocean_products import OceanProduct
 from app.planner.models import PlannerTool
 from app.orchestrator.registry import ORCAToolRegistry
@@ -52,5 +53,14 @@ def build_default_registry(request:Any)->ORCAToolRegistry:
     async def route_adapter(step,inputs,steps):
         payload=RouteRequest(start=inputs["start"],destination=inputs["destination"],departure_time=None)
         return (await RoutePlanningService(settings.orca_demo_mode,settings.route_grid_size,settings.route_max_grid_cells).calculate(payload)).model_dump(mode="json")
+    async def recommendation_adapter(step,inputs,steps):
+        lat,lon=await location(inputs);origin={"latitude":lat,"longitude":lon};route_service=RoutePlanningService(settings.orca_demo_mode,settings.route_grid_size,settings.route_max_grid_cells)
+        async def risk_at(point):return (await risk.evaluate(latitude=point["latitude"],longitude=point["longitude"],persist=False)).model_dump(mode="json")
+        async def geofence_at(point):
+            async with request.app.state.db_session_factory() as session:return (await GeofenceService(session,settings.geofence_boundary_caution_km).check_point(point["latitude"],point["longitude"],"FISHING")).model_dump(mode="json")
+        async def route_to(payload):return (await route_service.calculate(payload)).model_dump(mode="json")
+        async def ocean_at(point):return (await ocean.sample(point["latitude"],point["longitude"],[OceanProduct.SEA_SURFACE_TEMPERATURE,OceanProduct.CHLOROPHYLL_A])).model_dump(mode="json")
+        service=PFZRecommendationService(pfz,risk_at,geofence_at,route_to,ocean_at,top_n=settings.pfz_ranking_enrich_top_n)
+        return (await service.recommend(origin)).model_dump(mode="json")
     async def map_adapter(step,inputs,steps):return {"action":"SHOW_LAYER","layer":"pfz"}
-    return ORCAToolRegistry({PlannerTool.WEATHER:weather_adapter,PlannerTool.MARINE:marine_adapter,PlannerTool.ALERTS:alert_adapter,PlannerTool.PFZ:pfz_adapter,PlannerTool.GEOSPATIAL:geo_adapter,PlannerTool.GEOFENCE:geofence_adapter,PlannerTool.ROUTE:route_adapter,PlannerTool.OCEAN_PRODUCTS:ocean_adapter,PlannerTool.RISK:risk_adapter,PlannerTool.MAP:map_adapter})
+    return ORCAToolRegistry({PlannerTool.WEATHER:weather_adapter,PlannerTool.MARINE:marine_adapter,PlannerTool.ALERTS:alert_adapter,PlannerTool.PFZ:pfz_adapter,PlannerTool.PFZ_RECOMMENDATION:recommendation_adapter,PlannerTool.GEOSPATIAL:geo_adapter,PlannerTool.GEOFENCE:geofence_adapter,PlannerTool.ROUTE:route_adapter,PlannerTool.OCEAN_PRODUCTS:ocean_adapter,PlannerTool.RISK:risk_adapter,PlannerTool.MAP:map_adapter})

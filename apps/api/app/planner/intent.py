@@ -9,6 +9,8 @@ def classify(extraction: QueryExtractionResult) -> IntentClassification:
     candidates=[]
     if re.match(r"\s*(what is|what's|define|meaning of)\s+(a\s+)?pfz", text):
         return IntentClassification(primary_intent=PlannerIntent.GENERAL_INFORMATION,confidence=.9,signals=signals,safety_sensitive=False,classification_source="RULES",conflicts=[])
+    if signals.mentions_pfz and re.search(r"\b(best|recommended|recommend|choose|safer|compare|nearest safe|which pfz)\b",text):
+        return IntentClassification(primary_intent=PlannerIntent.PFZ_RECOMMENDATION_QUERY,confidence=.92,signals=signals,safety_sensitive=True,classification_source="RULES",conflicts=[])
     if signals.mentions_safe:candidates.append(PlannerIntent.MARINE_RISK_QUERY)
     if signals.mentions_pfz:candidates.append(PlannerIntent.PFZ_QUERY)
     if signals.mentions_alert:candidates.append(PlannerIntent.ALERT_QUERY)

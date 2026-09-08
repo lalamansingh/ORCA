@@ -7,6 +7,14 @@ from app.services.database_health import check_database_health
 
 router = APIRouter()
 
+@router.get("/health/live")
+async def liveness()->dict[str,str]:return {"status":"alive","service":"orca-api"}
+
+@router.get("/health/ready")
+async def readiness(request:Request)->dict[str,object]:
+    database=await check_database_health(request.app.state.db_engine)
+    return {"status":"ready" if database.status=="healthy" else "not_ready","database":database.status,"postgis":database.postgis}
+
 
 @router.get("/health", response_model=HealthResponse, summary="Get API health")
 async def health_check(request: Request) -> HealthResponse:

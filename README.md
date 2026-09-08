@@ -10,7 +10,7 @@ Browser → Next.js frontend → FastAPI /api/v1
 User query → QueryUnderstandingService → validated structured query
 ORCA facts → AIResponseService → fact-only natural-language draft
 
-User → QueryUnderstanding → IntentClassifier → QueryPlanner → ExecutionPlan → future Orchestrator
+User → QueryUnderstanding → IntentClassifier → QueryPlanner → LangGraph agents → deterministic services → evidence-backed response
 ```
 
 - Frontend: Next.js, TypeScript, Tailwind, MapLibre, Recharts
@@ -54,6 +54,11 @@ The optional AI language layer is disabled by default (`LLM_ENABLED=false`). It 
 The deterministic planner endpoint is `POST /api/v1/ai/plan`; it only returns an allowlisted execution plan and never executes tools. See [query-planner.md](docs/query-planner.md).
 
 From the project root, `npm run dev:web` and `npm run dev:api` provide equivalent service commands.
+
+For the complete containerized stack, run `docker compose up --build`. PostGIS is
+health-checked, Alembic runs once through the migration job, and the backend and
+frontend start only after their dependencies are ready. Production uses the
+documented Vercel + Railway architecture in [deployment.md](docs/deployment.md).
 
 ### Environment
 
@@ -123,7 +128,7 @@ openssl rand -hex 32
 
 ### Security notes
 
-Development uses `COOKIE_SECURE=false` only for local HTTP. Production requires HTTPS, a unique long JWT secret, `COOKIE_SECURE=true`, and explicitly configured frontend CORS origins. State-changing cookie-authenticated requests include a double-submit CSRF header sourced from the `orca_csrf` cookie. The in-memory absence of rate limiting is intentional for this foundation; production login and registration should use a shared store-backed limiter.
+Development uses `COOKIE_SECURE=false` only for local HTTP. Production requires HTTPS, a unique long JWT secret, `COOKIE_SECURE=true`, and explicitly configured frontend CORS origins. State-changing cookie-authenticated requests include a double-submit CSRF header sourced from the `orca_csrf` cookie. Authentication and expensive endpoints have configurable in-process rate limits; horizontally scaled production should replace these with a shared store-backed limiter.
 
 ### Development user
 

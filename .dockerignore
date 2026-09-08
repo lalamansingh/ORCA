@@ -1,0 +1,16 @@
+.git
+.github
+.next
+node_modules
+apps/api/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+.env
+.env.*
+!.env.example
+coverage
+htmlcov
+*.log
+strix_runs

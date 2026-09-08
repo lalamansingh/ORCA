@@ -13,6 +13,8 @@ class QueryPlanner:
         def add(id:str,tool:PlannerTool,operation:str,reason:str,depends:list[str]=[],inputs:dict|None=None,required=True,parallel=False,status=PlanStepStatus.PENDING):steps.append(PlanStep(id=id,tool=tool,operation=operation,reason_code=reason,depends_on=depends,inputs=inputs or {},required=required,parallelizable=parallel,status=status))
         risk=classification.safety_sensitive or PlannerIntent.MARINE_RISK_QUERY in intents
         pfz=PlannerIntent.PFZ_QUERY in intents
+        recommendation=PlannerIntent.PFZ_RECOMMENDATION_QUERY in intents
+        if recommendation:add("pfz_recommendation",PlannerTool.PFZ_RECOMMENDATION,"recommend","REQUESTED_PFZ_RECOMMENDATION",inputs={"location_ref":"$context.user_location"})
         if risk:
             add("weather",PlannerTool.WEATHER,"forecast","REQUIRED_FOR_MARINE_RISK",parallel=True);add("marine",PlannerTool.MARINE,"forecast","REQUIRED_FOR_MARINE_RISK",parallel=True);add("alerts",PlannerTool.ALERTS,"active","REQUIRED_FOR_ALERT_RELEVANCE",parallel=True)
             add("risk",PlannerTool.RISK,"evaluate","REQUIRED_FOR_MARINE_RISK",["weather","marine","alerts"],{"location_ref":"$context.user_location"})
@@ -35,7 +37,7 @@ class QueryPlanner:
             by_id["risk"].depends_on=["weather","marine","alerts"]
             steps=[by_id[identifier] for identifier in ("pfz","geospatial","weather","marine","alerts","risk")]+[step for step in steps if step.id not in {"pfz","geospatial","weather","marine","alerts","risk"}]
         clarifications=[]
-        needs_location=bool(extraction.requires_location or risk or pfz or any(step.tool in {PlannerTool.WEATHER,PlannerTool.MARINE,PlannerTool.ALERTS,PlannerTool.RISK,PlannerTool.GEOSPATIAL,PlannerTool.GEOFENCE} for step in steps))
+        needs_location=bool(extraction.requires_location or risk or pfz or recommendation or any(step.tool in {PlannerTool.WEATHER,PlannerTool.MARINE,PlannerTool.ALERTS,PlannerTool.RISK,PlannerTool.GEOSPATIAL,PlannerTool.GEOFENCE} for step in steps))
         if needs_location and location is None:clarifications.append(ClarificationRequest(type=ClarificationType.MISSING_LOCATION,question="Which coastal location or coordinates should ORCA assess?",required_field="location"))
         if extraction.needs_clarification and extraction.requested_time_text:clarifications.append(ClarificationRequest(type=ClarificationType.AMBIGUOUS_TIME,question="What exact time should ORCA use?",required_field="requested_time"))
         if PlannerIntent.ROUTE_QUERY in intents and not pfz:clarifications.append(ClarificationRequest(type=ClarificationType.AMBIGUOUS_TARGET,question="Which structured marine destination should ORCA route to?",required_field="destination"))
