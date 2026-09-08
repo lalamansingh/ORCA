@@ -7,10 +7,7 @@ import { formatCoordinate } from "@/features/map/coordinates";
 import {
   INDIA_MARINE_VIEW,
   LOCATION_ZOOM,
-  SATELLITE_STYLE,
-  OCEAN_STYLE,
-  DARK_OCEAN_STYLE,
-  VECTOR_STYLE,
+  COMPOSITE_BASE_STYLE,
 } from "@/features/map/map-config";
 import { demoFeatures } from "@/features/map/mock-layers";
 import type { MapFeatureDetails, MarineMapLayer, SelectedLocation } from "@/features/map/types";
@@ -87,12 +84,7 @@ export function MarineMap({
     featureSelectRef.current = onFeatureSelect;
   }, [onFeatureSelect, onSelectLocation, selectMode]);
 
-  const getStyleObject = useCallback((type: "satellite" | "ocean" | "dark" | "vector") => {
-    if (type === "satellite") return SATELLITE_STYLE;
-    if (type === "ocean") return OCEAN_STYLE;
-    if (type === "dark") return DARK_OCEAN_STYLE;
-    return VECTOR_STYLE;
-  }, []);
+
 
   const setupMapLayers = useCallback((map: MapLibreMap) => {
     if (!map) return;
@@ -333,7 +325,7 @@ export function MarineMap({
 
         mapInstance = new maplibre.Map({
           container: container.current,
-          style: getStyleObject(baseStyle),
+          style: COMPOSITE_BASE_STYLE,
           center: INDIA_MARINE_VIEW.center,
           zoom: INDIA_MARINE_VIEW.zoom,
           attributionControl: false,
@@ -397,23 +389,27 @@ export function MarineMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Handle Basemap Switcher Dynamically
-  const isFirstMount = useRef(true);
+  // Handle Basemap Switcher Dynamically without destroying custom GeoJSON layers!
   useEffect(() => {
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-      return;
-    }
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || state !== "ready") return;
 
-    map.setStyle(getStyleObject(baseStyle));
-    const handleStyleLoad = () => {
-      setupMapLayers(map);
-      setStyleRevision((r) => r + 1);
+    const BASEMAP_GROUPS: Record<"satellite" | "ocean" | "dark" | "vector", string[]> = {
+      satellite: ["satellite-base-layer"],
+      ocean: ["ocean-base-layer", "ocean-ref-layer"],
+      dark: ["dark-base-layer"],
+      vector: ["voyager-base-layer"],
     };
-    map.once("styledata", handleStyleLoad);
-  }, [baseStyle, getStyleObject, setupMapLayers]);
+
+    Object.entries(BASEMAP_GROUPS).forEach(([groupKey, layerIds]) => {
+      const isTarget = groupKey === baseStyle;
+      layerIds.forEach((layerId) => {
+        if (map.getLayer(layerId)) {
+          map.setLayoutProperty(layerId, "visibility", isTarget ? "visible" : "none");
+        }
+      });
+    });
+  }, [baseStyle, state]);
 
   // Dynamic Layer Visibility
   useEffect(() => {

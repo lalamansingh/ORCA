@@ -2,55 +2,36 @@ export const INDIA_MARINE_VIEW = { center: [78.9, 15.7] as [number, number], zoo
 export const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 export const LOCATION_ZOOM = 11;
 
-export const SATELLITE_STYLE: import("maplibre-gl").StyleSpecification = {
+export const COMPOSITE_BASE_STYLE: import("maplibre-gl").StyleSpecification = {
   version: 8,
   sources: {
     "satellite-tiles": {
       type: "raster",
       tiles: [
+        "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       ],
       tileSize: 256,
       attribution: "© Esri, Maxar, Earthstar Geographics, CNES/Airbus DS",
     },
-  },
-  layers: [
-    {
-      id: "satellite-base-layer",
-      type: "raster",
-      source: "satellite-tiles",
-      minzoom: 0,
-      maxzoom: 19,
-    },
-  ],
-};
-
-export const OCEAN_STYLE: import("maplibre-gl").StyleSpecification = {
-  version: 8,
-  sources: {
     "ocean-tiles": {
       type: "raster",
       tiles: [
+        "https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
         "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
       ],
       tileSize: 256,
       attribution: "© Esri, GEBCO, NOAA, National Geographic",
     },
-  },
-  layers: [
-    {
-      id: "ocean-base-layer",
+    "ocean-ref-tiles": {
       type: "raster",
-      source: "ocean-tiles",
-      minzoom: 0,
-      maxzoom: 18,
+      tiles: [
+        "https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}",
+        "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}",
+      ],
+      tileSize: 256,
+      attribution: "© Esri, GEBCO, NOAA",
     },
-  ],
-};
-
-export const DARK_OCEAN_STYLE: import("maplibre-gl").StyleSpecification = {
-  version: 8,
-  sources: {
     "dark-tiles": {
       type: "raster",
       tiles: [
@@ -62,21 +43,6 @@ export const DARK_OCEAN_STYLE: import("maplibre-gl").StyleSpecification = {
       tileSize: 256,
       attribution: "© CARTO, © OpenStreetMap contributors",
     },
-  },
-  layers: [
-    {
-      id: "dark-base-layer",
-      type: "raster",
-      source: "dark-tiles",
-      minzoom: 0,
-      maxzoom: 19,
-    },
-  ],
-};
-
-export const VECTOR_STYLE: import("maplibre-gl").StyleSpecification = {
-  version: 8,
-  sources: {
     "vector-tiles": {
       type: "raster",
       tiles: [
@@ -91,11 +57,50 @@ export const VECTOR_STYLE: import("maplibre-gl").StyleSpecification = {
   },
   layers: [
     {
+      id: "satellite-base-layer",
+      type: "raster",
+      source: "satellite-tiles",
+      minzoom: 0,
+      maxzoom: 19,
+      layout: { visibility: "visible" },
+    },
+    {
+      id: "ocean-base-layer",
+      type: "raster",
+      source: "ocean-tiles",
+      minzoom: 0,
+      maxzoom: 18,
+      layout: { visibility: "none" },
+    },
+    {
+      id: "ocean-ref-layer",
+      type: "raster",
+      source: "ocean-ref-tiles",
+      minzoom: 0,
+      maxzoom: 18,
+      layout: { visibility: "none" },
+    },
+    {
+      id: "dark-base-layer",
+      type: "raster",
+      source: "dark-tiles",
+      minzoom: 0,
+      maxzoom: 19,
+      layout: { visibility: "none" },
+    },
+    {
       id: "voyager-base-layer",
       type: "raster",
       source: "vector-tiles",
       minzoom: 0,
       maxzoom: 19,
+      layout: { visibility: "none" },
     },
   ],
 };
+
+export const SATELLITE_STYLE = COMPOSITE_BASE_STYLE;
+export const OCEAN_STYLE = COMPOSITE_BASE_STYLE;
+export const DARK_OCEAN_STYLE = COMPOSITE_BASE_STYLE;
+export const VECTOR_STYLE = COMPOSITE_BASE_STYLE;
+
