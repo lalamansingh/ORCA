@@ -26,6 +26,9 @@ async def get_current_user_optional(request:Request,access_token:str|None=Cookie
     except Exception: return None
 
 def csrf_protect(request:Request,csrf_cookie:str|None=Cookie(default=None,alias="orca_csrf"))->None:
-    if not csrf_cookie or request.headers.get("X-CSRF-Token") != csrf_cookie: raise HTTPException(status_code=403,detail="CSRF validation failed.")
+    if not request.cookies.get("orca_access"):
+        return
+    if not csrf_cookie or request.headers.get("X-CSRF-Token") != csrf_cookie:
+        raise HTTPException(status_code=403,detail="CSRF validation failed.")
 
 

@@ -33,7 +33,8 @@ export default function DashboardPage(){
   const {user}=useAuth();
   const sharedLocation=useSharedSelectedLocation();
   const profileLocation:SelectedLocation|null=user?.default_latitude!=null&&user.default_longitude!=null?{latitude:user.default_latitude,longitude:user.default_longitude,source:"default",label:"Profile Default Location"}:null;
-  const location=sharedLocation??profileLocation;
+  const defaultCoastalLocation:SelectedLocation = { latitude: COASTAL_SECTORS[0].latitude, longitude: COASTAL_SECTORS[0].longitude, source: "default", label: COASTAL_SECTORS[0].name };
+  const location=sharedLocation??profileLocation??defaultCoastalLocation;
   const conditions=useConditions(location);
   const alertData=useAlerts(location,100,true);
   const [assessmentTime,setAssessmentTime]=useState<string|null>(null);

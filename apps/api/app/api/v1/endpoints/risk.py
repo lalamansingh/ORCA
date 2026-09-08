@@ -4,7 +4,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from app.api.dependencies import csrf_protect, get_current_user
+from app.api.dependencies import get_current_user, get_current_user_optional
 from app.db.models import User
 from app.providers.factory import get_alert_providers, get_marine_provider, get_weather_provider
 from app.risk.models import MarineRiskAssessment, RiskAssessmentRecordRead, RiskEvaluationRequest, RiskTimelineResponse
@@ -26,12 +26,21 @@ def risk_service(request: Request) -> RiskService:
     return RiskService(weather, marine, alerts, request.app.state.risk_engine, request.app.state.risk_config, request.app.state.db_session_factory)
 
 
-@router.post("/evaluate", response_model=MarineRiskAssessment, dependencies=[Depends(csrf_protect)])
-async def evaluate_risk(data: RiskEvaluationRequest, request: Request, user: User = Depends(get_current_user)) -> MarineRiskAssessment:
+@router.post("/evaluate", response_model=MarineRiskAssessment)
+async def evaluate_risk(
+    data: RiskEvaluationRequest,
+    request: Request,
+    user: User | None = Depends(get_current_user_optional),
+) -> MarineRiskAssessment:
     try:
+        user_id = user.id if (user and data.persist) else None
         return await risk_service(request).evaluate(
-            latitude=data.latitude, longitude=data.longitude, assessment_time=data.assessment_time,
-            refresh=data.refresh, persist=data.persist, user_id=user.id,
+            latitude=data.latitude,
+            longitude=data.longitude,
+            assessment_time=data.assessment_time,
+            refresh=data.refresh,
+            persist=bool(user_id and data.persist),
+            user_id=user_id,
         )
     except RiskRequestError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
