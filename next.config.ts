@@ -42,8 +42,9 @@ const nextConfig: NextConfig = {
     const backendUrl = (
       process.env.BACKEND_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
-      "https://orca-production-41a6.up.railway.app"
+      "https://orca-production-eef7.up.railway.app"
     ).replace(/\/$/, "");
+
     return [
       {
         source: "/api/v1/:path*",
