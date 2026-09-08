@@ -55,7 +55,9 @@ async def synthesize_answer(result, raw_query: str, language: str, provider) -> 
     status_val = result.status.value
     if status_val == "NEEDS_CLARIFICATION":
         warnings_str = " ".join(result.warnings) if result.warnings else ""
-        if language.startswith("hi"):
+        if language.startswith("hi-Latn"):
+            return f"⚠️ **Clarification required**: {warnings_str or 'Kripya koi coastal sector (jaise Mumbai, Chennai, Kochi) batayein.'}"
+        elif language.startswith("hi"):
             return f"⚠️ **कृपया स्पष्ट करें**: {warnings_str or 'कृपया कोई तटीय स्थान (जैसे मुंबई, चेन्नई, कोच्चि) निर्दिष्ट करें।'}"
         elif language.startswith("ta"):
             return f"⚠️ **விளக்கம் தேவை**: {warnings_str or 'தயவுசெய்து கடலோர இருப்பிடத்தை (சென்னை, கொச்சி, தூத்துக்குடி) குறிப்பிடவும்.'}"
@@ -76,11 +78,28 @@ async def synthesize_answer(result, raw_query: str, language: str, provider) -> 
         return f"⚠️ **Clarification needed**: {warnings_str or 'Please specify a coastal sector (e.g. Mumbai, Chennai, Kochi).'}"
 
     if status_val in {"FAILED", "UNSUPPORTED"}:
-        if language.startswith("hi"):
+        if language.startswith("hi-Latn"):
+            return "❌ Yeh request execute nahi ho saki. Kripya coastal mausam, PFZ machli zone, ya marine risk ke baare me puchen."
+        elif language.startswith("hi"):
             return "❌ यह अनुरोध अभी निष्पादित नहीं किया जा सका। कृपया तटीय मौसम, मछली पकड़ने के क्षेत्र (PFZ), या समुद्री जोखिम के बारे में पूछें।"
         elif language.startswith("ta"):
             return "❌ கோரிக்கை நிறைவேற்றப்படவில்லை. கடல் வானிலை அல்லது மீன்பிடி மண்டலங்கள் பற்றி கேட்கவும்."
+        elif language.startswith("te"):
+            return "❌ అభ్యర్థన విజయవంతం కాలేదు. దయచేసి తీరప్రాంత వాతావరణం లేదా చేపల వేట ప్రాంతాల గురించి అడగండి."
+        elif language.startswith("ml"):
+            return "❌ ഈ അഭ്യർത്ഥന പൂർത്തിയാക്കാൻ കഴിഞ്ഞില്ല. ദയവായി തീരദേശ കാലാവസ്ഥയെക്കുറിച്ചോ മത്സ്യബന്ധന മേഖലകളെക്കുറിച്ചോ ചോദിക്കുക."
+        elif language.startswith("gu"):
+            return "❌ વિનંતી પૂર્ણ થઈ શકી નથી. કૃપા કરીને દરિયાઈ હવામાન અથવા PFZ માછીમારી ઝોન વિશે પૂછો."
+        elif language.startswith("mr"):
+            return "❌ विनंती पूर्ण होऊ शकली नाही. कृपया सागरी हवामान किंवा PFZ मासेमारी क्षेत्राबद्दल विचारा."
+        elif language.startswith("bn"):
+            return "❌ অনুরোধ সম্পন্ন করা যায়নি। অনুগ্রহ করে উপকূলীয় আবহাওয়া বা PFZ মাছ ধরার অঞ্চল সম্পর্কে জিজ্ঞাসা করুন।"
+        elif language.startswith("or"):
+            return "❌ ଅନୁରୋଧ ସମ୍ପନ୍ନ ହୋଇପାରିଲା ନାହିଁ। ଦୟାକରି ଉପକୂଳ ପାଣିପାଗ କିମ୍ବା PFZ ମତ୍ସ୍ୟ କ୍ଷେତ୍ର ବିଷୟରେ ପଚାରନ୍ତୁ।"
+        elif language.startswith("kn"):
+            return "❌ ವಿನಂತಿಯನ್ನು ಪೂರ್ಣಗೊಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಕರಾವಳಿ ಹವಾಮಾನ ಅಥವಾ PFZ ಮೀನುಗಾರಿಕಾ ವಲಯದ ಬಗ್ಗೆ ಕೇಳಿ."
         return "❌ Request could not be executed safely. Please ask about coastal weather, PFZ fishing zones, or marine risk."
+
 
     data = result.data or {}
     loc = result.location or {}
