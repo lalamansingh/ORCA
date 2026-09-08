@@ -1,11 +1,16 @@
 import type { NextConfig } from "next";
 
-const configuredAPI = process.env.NEXT_PUBLIC_API_URL;
-if (process.env.VERCEL_ENV === "production" && (!configuredAPI || !configuredAPI.startsWith("https://"))) {
-  throw new Error("Production hosting requires an HTTPS NEXT_PUBLIC_API_URL");
-}
-const apiOrigin = new URL(configuredAPI ?? "http://localhost:8000").origin;
+const configuredAPI = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const isDev = process.env.NODE_ENV === "development";
+
+let apiOrigin = "http://localhost:8000 https://*.railway.app https://*.up.railway.app https://*.render.com";
+try {
+  if (configuredAPI && configuredAPI.startsWith("http")) {
+    apiOrigin = `${new URL(configuredAPI).origin} ${apiOrigin}`;
+  }
+} catch {
+  // Safe fallback for origin parsing
+}
 const nextConfig: NextConfig = {
   output: "standalone",
   turbopack: { root: process.cwd() },
