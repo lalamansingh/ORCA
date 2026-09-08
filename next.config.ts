@@ -38,5 +38,23 @@ const nextConfig: NextConfig = {
     if (process.env.VERCEL_ENV === "production") headers.push({ key: "Strict-Transport-Security", value: "max-age=31536000" });
     return [{ source: "/:path*", headers }];
   },
+  async rewrites() {
+    const backendUrl = (
+      process.env.BACKEND_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "https://orca-production-41a6.up.railway.app"
+    ).replace(/\/$/, "");
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${backendUrl}/api/v1/:path*`,
+      },
+      {
+        source: "/openapi.json",
+        destination: `${backendUrl}/openapi.json`,
+      },
+    ];
+  },
 };
 export default nextConfig;
+
