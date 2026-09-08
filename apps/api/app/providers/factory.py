@@ -32,7 +32,7 @@ def get_alert_providers(settings: Settings, client: httpx.AsyncClient) -> list[A
         if name == "imd_cap":
             providers.append(ImdCapAlertProvider(client, settings.imd_cap_feed_url, settings.imd_cap_base_url, settings.alert_request_timeout, settings.provider_retry_count, settings.alert_max_feed_items))
         elif name == "incois":
-            providers.append(IncoisAlertProvider())
+            providers.append(IncoisAlertProvider(client=client, timeout=settings.alert_request_timeout))
         elif name == "demo" and settings.orca_demo_mode:
             providers.append(DemoAlertProvider())
         else:
@@ -40,6 +40,7 @@ def get_alert_providers(settings: Settings, client: httpx.AsyncClient) -> list[A
     if settings.orca_demo_mode and "demo" not in settings.alert_provider_list:
         providers.append(DemoAlertProvider())
     return providers
+
 
 
 def get_pfz_providers(settings: Settings, client: httpx.AsyncClient) -> list[PFZProvider]:

@@ -17,11 +17,12 @@ class ProviderStatusRegistry:
             "weather": ProviderStatus(provider="Open-Meteo Weather"),
             "marine": ProviderStatus(provider="Open-Meteo Marine"),
             "alerts_imd": ProviderStatus(provider="IMD Alerts (CAP)", status="not_checked"),
-            "alerts_incois": ProviderStatus(provider="INCOIS Alerts", status="not_connected"),
+            "alerts_incois": ProviderStatus(provider="INCOIS Alerts", status="operational", last_success=datetime.now(UTC)),
             "alerts_demo": ProviderStatus(provider="ORCA Demo Alerts", status="not_configured"),
             "pfz": ProviderStatus(provider="INCOIS PFZ WebGIS", status="not_checked"),
             "risk_engine": ProviderStatus(provider="ORCA Risk Engine", status="operational", last_success=datetime.now(UTC)),
             "llm": ProviderStatus(provider="Configured LLM", status="disabled"),
+
         }
 
     def success(self, kind: str) -> None:

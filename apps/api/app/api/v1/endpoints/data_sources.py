@@ -11,10 +11,11 @@ async def capabilities(request: Request):
             "demo_mode": settings.orca_demo_mode,
             "capabilities": {"risk": "DETERMINISTIC", "pfz_ranking": "DETERMINISTIC",
                 "geofence": "REQUIRES_AUTHORITATIVE_GEOMETRY", "route": "DEMO" if settings.orca_demo_mode else "UNAVAILABLE",
-                "ocean_products": "DEMO", "localization": ["en", "hi", "hi-Latn", "ta"],
+                "ocean_products": "DEMO", "localization": ["en", "hi", "hi-Latn", "ta", "te", "ml", "gu", "mr", "bn", "or", "kn"],
                 "llm": "CONFIGURED_NOT_PROBED" if settings.llm_enabled else "DISABLED",
                 "conversation_storage": "POSTGRES", "graph_checkpointer": "NOT_IMPLEMENTED",
                 "streaming": "NOT_IMPLEMENTED", "multi_turn_references": "NOT_IMPLEMENTED"}}
+
 
 
 @router.get("/data-sources", response_model=DataSourcesResponse)
