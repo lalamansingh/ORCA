@@ -72,12 +72,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.risk_engine = MarineRiskEngine(DEFAULT_RISK_CONFIG)
     app.state.rate_limiter = RateLimiter()
     app.state.metrics = Metrics()
+    cors_origins = [origin for origin in app_settings.cors_origin_list if origin != "*"]
+    cors_regex = r"^https?:\/\/([a-zA-Z0-9_-]+\.)*(vercel\.app|up\.railway\.app|localhost|127\.0\.0\.1)(:[0-9]+)?$"
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=app_settings.cors_origin_list,
+        allow_origins=cors_origins or ["http://localhost:3000"],
+        allow_origin_regex=cors_regex,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Content-Type", "X-Request-ID", "X-CSRF-Token"],
+        allow_headers=["*"],
         expose_headers=["X-Request-ID"],
     )
 
