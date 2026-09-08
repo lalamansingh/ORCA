@@ -35,56 +35,79 @@ REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 
 import sqlalchemy as sa
 
-AUTH_DDL = """
-CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY,
-    email VARCHAR(320) UNIQUE NOT NULL,
-    full_name VARCHAR(255),
-    password_hash VARCHAR(512),
-    preferred_language VARCHAR(16) DEFAULT 'en' NOT NULL,
-    preferred_units VARCHAR(16) DEFAULT 'metric' NOT NULL,
-    default_latitude FLOAT,
-    default_longitude FLOAT,
-    is_active BOOLEAN DEFAULT TRUE NOT NULL,
-    last_login_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS refresh_token_sessions (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    jti VARCHAR(64) UNIQUE NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    revoked_at TIMESTAMPTZ,
-    last_used_at TIMESTAMPTZ,
-    user_agent VARCHAR(512),
-    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS conversations (
-    id UUID PRIMARY KEY,
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    title VARCHAR(255) NOT NULL,
-    language VARCHAR(16) DEFAULT 'en' NOT NULL,
-    context_summary TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS saved_locations (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    latitude FLOAT NOT NULL,
-    longitude FLOAT NOT NULL,
-    location_type VARCHAR(32) DEFAULT 'CUSTOM' NOT NULL,
-    is_favourite BOOLEAN DEFAULT FALSE NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
-);
-"""
+AUTH_DDL_STATEMENTS = [
+    "CREATE EXTENSION IF NOT EXISTS pgcrypto;",
+    'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";',
+    """
+    CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY,
+        email VARCHAR(320) UNIQUE NOT NULL,
+        full_name VARCHAR(255),
+        password_hash VARCHAR(512),
+        preferred_language VARCHAR(16) DEFAULT 'en' NOT NULL,
+        preferred_units VARCHAR(16) DEFAULT 'metric' NOT NULL,
+        default_latitude FLOAT,
+        default_longitude FLOAT,
+        is_active BOOLEAN DEFAULT TRUE NOT NULL,
+        last_login_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+    );
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS refresh_token_sessions (
+        id UUID PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        jti VARCHAR(64) UNIQUE NOT NULL,
+        expires_at TIMESTAMPTZ NOT NULL,
+        revoked_at TIMESTAMPTZ,
+        last_used_at TIMESTAMPTZ,
+        user_agent VARCHAR(512),
+        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+    );
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS conversations (
+        id UUID PRIMARY KEY,
+        user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        title VARCHAR(255) NOT NULL,
+        language VARCHAR(16) DEFAULT 'en' NOT NULL,
+        context_summary TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+    );
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS saved_locations (
+        id UUID PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        latitude FLOAT NOT NULL,
+        longitude FLOAT NOT NULL,
+        location_type VARCHAR(32) DEFAULT 'CUSTOM' NOT NULL,
+        is_favourite BOOLEAN DEFAULT FALSE NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+    );
+    """,
+    "DO $$ BEGIN CREATE TYPE subscription_alert_type AS ENUM ('CYCLONE', 'STORM_SURGE', 'HIGH_WAVES', 'SWELL_SURGE', 'STRONG_WIND', 'LIGHTNING', 'HEAVY_RAIN', 'LOW_VISIBILITY', 'TSUNAMI', 'MARINE_HEAT_WAVE', 'OTHER'); EXCEPTION WHEN duplicate_object THEN null; END $$;",
+    "DO $$ BEGIN CREATE TYPE subscription_alert_severity AS ENUM ('INFO', 'WATCH', 'WARNING', 'SEVERE', 'CRITICAL'); EXCEPTION WHEN duplicate_object THEN null; END $$;",
+    """
+    CREATE TABLE IF NOT EXISTS alert_subscriptions (
+        id UUID PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        saved_location_id UUID REFERENCES saved_locations(id) ON DELETE SET NULL,
+        alert_type subscription_alert_type NOT NULL,
+        minimum_severity subscription_alert_severity NOT NULL,
+        radius_km FLOAT,
+        is_active BOOLEAN DEFAULT TRUE NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+    );
+    """,
+    "CREATE INDEX IF NOT EXISTS ix_alert_subscriptions_user_id ON alert_subscriptions(user_id);"
+]
 
 
 @asynccontextmanager
@@ -98,15 +121,13 @@ async def lifespan(app: FastAPI):
             except Exception as ext_err:
                 logger.warning("PostGIS extension note: %s", ext_err)
 
-            # 1. Execute explicit DDL for core authentication tables
-            for ddl_statement in AUTH_DDL.strip().split(";"):
-                stmt = ddl_statement.strip()
-                if stmt:
-                    try:
-                        await conn.execute(sa.text(stmt + ";"))
-                    except Exception as ddl_err:
-                        logger.warning("DDL execution note: %s", ddl_err)
-            logger.info("Core authentication tables verified/created via DDL.")
+            # 1. Execute explicit DDL for core authentication & preference tables
+            for stmt in AUTH_DDL_STATEMENTS:
+                try:
+                    await conn.execute(sa.text(stmt.strip()))
+                except Exception as ddl_err:
+                    logger.warning("DDL execution note: %s", ddl_err)
+            logger.info("Core authentication & preference tables verified/created via DDL.")
 
             # 2. Attempt full schema creation for any remaining models
             try:

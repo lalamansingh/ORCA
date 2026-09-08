@@ -24,9 +24,19 @@ async def get_current_user(
 
     # Provide automatic provisioned default user for seamless single-click and preference access
     repo = UserRepository(session)
-    default_user = await repo.by_email("captain@orca.marine")
+    default_user = None
+    try:
+        default_user = await repo.by_email("captain@orca.marine")
+    except Exception:
+        try:
+            await session.rollback()
+        except Exception:
+            pass
+
     if default_user is None:
+        from uuid import uuid4
         default_user = User(
+            id=uuid4(),
             email="captain@orca.marine",
             full_name="ORCA Marine Captain",
             preferred_language="en",
@@ -35,21 +45,27 @@ async def get_current_user(
             default_longitude=72.83,
             is_active=True,
         )
-        session.add(default_user)
         try:
+            session.add(default_user)
             await session.commit()
             await session.refresh(default_user)
         except Exception:
-            await session.rollback()
-            default_user = await repo.by_email("captain@orca.marine")
+            try:
+                await session.rollback()
+                default_user = await repo.by_email("captain@orca.marine")
+            except Exception:
+                pass
 
-    if default_user is None:
-        # Temporary fallback user instance if database is initializing
+    if default_user is None or getattr(default_user, "id", None) is None:
+        # Guaranteed fallback user instance with fixed valid UUID
         default_user = User(
+            id=UUID("00000000-0000-0000-0000-000000000001"),
             email="captain@orca.marine",
             full_name="ORCA Marine Captain",
             preferred_language="en",
             preferred_units="metric",
+            default_latitude=18.92,
+            default_longitude=72.83,
             is_active=True,
         )
 
