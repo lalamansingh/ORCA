@@ -31,18 +31,50 @@ logger = logging.getLogger(__name__)
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 
 
+import sqlalchemy as sa
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.http_client = httpx.AsyncClient(headers={"User-Agent": "ORCA/0.1 data-provider-service"})
     try:
         async with app.state.db_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-            logger.info("Database tables initialized successfully.")
+            try:
+                await conn.execute(sa.text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+                await conn.execute(sa.text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'))
+            except Exception as ext_err:
+                logger.warning("PostGIS extension note: %s", ext_err)
+
+            # Ensure essential auth and system tables exist unconditionally
+            for table_name in [
+                "users",
+                "refresh_token_sessions",
+                "conversations",
+                "messages",
+                "saved_locations",
+                "alert_subscriptions",
+                "data_source_logs",
+            ]:
+                if table_name in Base.metadata.tables:
+                    try:
+                        table = Base.metadata.tables[table_name]
+                        await conn.run_sync(table.create, checkfirst=True)
+                        logger.info("Table '%s' verified/created.", table_name)
+                    except Exception as tbl_err:
+                        logger.warning("Table '%s' init note: %s", table_name, tbl_err)
+
+            # Attempt full schema creation for remaining models
+            try:
+                await conn.run_sync(Base.metadata.create_all)
+                logger.info("Full database schema verified.")
+            except Exception as all_err:
+                logger.warning("Remaining tables schema note: %s", all_err)
     except Exception as exc:
-        logger.warning("Database startup init check: %s", exc)
+        logger.error("Database connection / startup init notice: %s", exc)
     yield
     await app.state.http_client.aclose()
     await app.state.db_engine.dispose()
+
 
 
 
