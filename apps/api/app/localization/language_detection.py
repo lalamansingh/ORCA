@@ -10,15 +10,14 @@ BENGALI = re.compile(r"[\u0980-\u09FF]")
 ODIA = re.compile(r"[\u0B00-\u0B7F]")
 KANNADA = re.compile(r"[\u0C80-\u0CFF]")
 
-MARATHI_MARKERS = {"आहे", "नाही", "कसा", "कशी", "वारा", "लाटा", "मासे", "समुद्र", "मासेमारी", "किनाऱ्यावर", "इशारे", "सुरक्षित", "सांगा", "दाखवा", "काय"}
+MARATHI_MARKERS = {"आहे", "नाही", "कसा", "कशी", "कसे", "वारा", "लाटा", "मासे", "मासेमारी", "किनाऱ्यावर", "सांगा", "दाखवा", "काय", "करायचे", "जावे"}
 
 HINGLISH = {
-    "kal", "aaj", "subah", "shaam", "sham", "raat", "samundar", "samandar", "jana", "jaana", "jaa", "ja",
-    "sakta", "sakte", "sakti", "safe", "khatra", "dikhao", "dikha", "batao", "bata", "bataiye", "btao", "karo",
+    "kal", "aaj", "subah", "shaam", "sham", "raat", "samundar", "samandar", "jana", "jaana", "jaa",
+    "sakta", "sakte", "sakti", "khatra", "dikhao", "dikha", "batao", "bata", "bataiye", "btao", "karo",
     "wahan", "yahan", "mausam", "mosam", "hawa", "lehar", "lahar", "lehrein", "lahrein", "machhli", "machli",
-    "pani", "paani", "nhi", "nahi", "tha", "raha", "rahi", "chal", "karein", "rakhein", "kya", "kia", "kyaa",
-    "kyu", "kyun", "kyon", "kaisa", "kaisi", "kaise", "kesa", "kese", "hai", "hain", "he", "ho", "hoga", "hogi",
-    "batao", "btao", "karna", "kare", "mein", "me"
+    "pani", "paani", "nhi", "nahi", "kya", "kia", "kyaa", "kyu", "kyun", "kyon", "kaisa", "kaisi", "kaise",
+    "kesa", "kese", "hai", "hain", "hoga", "hogi", "batao", "btao", "karna", "kare"
 }
 
 TANGLISH = {
@@ -99,5 +98,6 @@ def detect_language(text: str) -> tuple[str, str, bool, float, list[str]]:
         return LanguageCode.HI_LATN.value, "Hinglish", True, 0.95, ["en"]
 
     return LanguageCode.EN.value, "English", False, 0.80, []
+
 
 
