@@ -19,6 +19,7 @@ export const COMPOSITE_BASE_STYLE: import("maplibre-gl").StyleSpecification = {
         "https://services.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
       ],
       tileSize: 256,
+      maxzoom: 10,
       attribution: "© Esri, GEBCO, NOAA, National Geographic",
     },
     "ocean-ref-tiles": {
@@ -27,6 +28,7 @@ export const COMPOSITE_BASE_STYLE: import("maplibre-gl").StyleSpecification = {
         "https://services.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}",
       ],
       tileSize: 256,
+      maxzoom: 10,
       attribution: "© Esri, GEBCO, NOAA",
     },
     "dark-tiles": {
