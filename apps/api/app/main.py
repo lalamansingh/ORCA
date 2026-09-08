@@ -16,6 +16,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.api.router import router as api_router
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, request_id_context
+from app.db.base import Base
 from app.db.session import create_database_engine, create_session_factory
 from app.schemas.common import APIError, ErrorEnvelope
 from app.schemas.health import APIInfoResponse
@@ -33,9 +34,16 @@ REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.http_client = httpx.AsyncClient(headers={"User-Agent": "ORCA/0.1 data-provider-service"})
+    try:
+        async with app.state.db_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+            logger.info("Database tables initialized successfully.")
+    except Exception as exc:
+        logger.warning("Database startup init check: %s", exc)
     yield
     await app.state.http_client.aclose()
     await app.state.db_engine.dispose()
+
 
 
 def _request_id(request: Request) -> str:
