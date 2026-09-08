@@ -22,7 +22,8 @@ class Severity(StrEnum): LOW = "LOW"; MODERATE = "MODERATE"; HIGH = "HIGH"; CRIT
 class ZoneType(StrEnum): EEZ = "EEZ"; TERRITORIAL_SEA="TERRITORIAL_SEA"; CONTIGUOUS_ZONE="CONTIGUOUS_ZONE"; INTERNATIONAL_BOUNDARY = "INTERNATIONAL_BOUNDARY"; RESTRICTED_WATER = "RESTRICTED_WATER"; MARINE_PROTECTED_AREA = "MARINE_PROTECTED_AREA"; ECOLOGICALLY_SENSITIVE_ZONE = "ECOLOGICALLY_SENSITIVE_ZONE"; FISHING_RESTRICTION="FISHING_RESTRICTION"; PORT_RESTRICTED_ZONE="PORT_RESTRICTED_ZONE"; MILITARY_RESTRICTED_ZONE="MILITARY_RESTRICTED_ZONE"; TEMPORARY_RESTRICTION="TEMPORARY_RESTRICTION"; CUSTOM = "CUSTOM"
 
 def postgres_enum(enum_class: type[StrEnum], name: str) -> Enum:
-    return Enum(enum_class, name=name, values_callable=lambda enum: [member.value for member in enum])
+    return Enum(enum_class, name=name, values_callable=lambda enum: [member.value for member in enum], native_enum=False)
+
 
 
 class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):

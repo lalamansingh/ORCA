@@ -98,20 +98,17 @@ AUTH_DDL_STATEMENTS = [
         id UUID PRIMARY KEY,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         saved_location_id UUID REFERENCES saved_locations(id) ON DELETE SET NULL,
-        alert_type subscription_alert_type NOT NULL,
-        minimum_severity subscription_alert_severity NOT NULL,
+        alert_type VARCHAR(64) NOT NULL,
+        minimum_severity VARCHAR(64) NOT NULL,
         radius_km FLOAT,
         is_active BOOLEAN DEFAULT TRUE NOT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
         updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
     );
     """,
-    "CREATE INDEX IF NOT EXISTS ix_alert_subscriptions_user_id ON alert_subscriptions(user_id);",
-    """
-    INSERT INTO users (id, email, full_name, preferred_language, preferred_units, default_latitude, default_longitude, is_active, created_at, updated_at)
-    VALUES ('00000000-0000-0000-0000-000000000001', 'captain@orca.marine', 'ORCA Marine Captain', 'en', 'metric', 18.92, 72.83, true, NOW(), NOW())
-    ON CONFLICT (id) DO UPDATE SET is_active = true, email = 'captain@orca.marine';
-    """
+    "ALTER TABLE alert_subscriptions ALTER COLUMN minimum_severity TYPE VARCHAR(64) USING minimum_severity::text;",
+    "ALTER TABLE alert_subscriptions ALTER COLUMN alert_type TYPE VARCHAR(64) USING alert_type::text;",
+    "CREATE INDEX IF NOT EXISTS ix_alert_subscriptions_user_id ON alert_subscriptions(user_id);"
 ]
 
 
