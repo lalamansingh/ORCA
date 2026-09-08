@@ -17,7 +17,17 @@ export async function apiClient<T>(path: string, options: APIRequestOptions = {}
   const requestId = crypto.randomUUID();
   try {
     const method = (requestOptions.method ?? "GET").toUpperCase();
-    const csrfToken = typeof document !== "undefined" ? document.cookie.split("; ").find((item) => item.startsWith("orca_csrf="))?.split("=")[1] : undefined;
+    let csrfToken: string | undefined;
+    if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+      try {
+        const csrfResponse = await fetch(`${API_BASE_URL}/api/v1/auth/csrf`, { credentials: "include", cache: "no-store", signal: controller.signal });
+        if (csrfResponse.ok) {
+          csrfToken = ((await csrfResponse.json()) as { csrf_token: string }).csrf_token;
+        }
+      } catch {
+        // Proceed without csrf token for guest/stateless requests
+      }
+    }
     const response = await fetch(`${API_BASE_URL}${path}`, { ...requestOptions, credentials: "include", headers: { Accept: "application/json", "X-Request-ID": requestId, ...(method !== "GET" && csrfToken ? { "X-CSRF-Token": csrfToken } : {}), ...headers }, signal: controller.signal });
     const responseRequestId = response.headers.get("X-Request-ID") ?? undefined;
     if (!response.ok) {

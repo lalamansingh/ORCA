@@ -10,7 +10,9 @@ from app.db.session import create_database_engine, create_session_factory
 
 async def seed() -> None:
     settings = get_settings()
-    engine = create_database_engine(settings.database_url)
+    if settings.app_env not in {"development", "test", "demo"} or not settings.orca_demo_mode:
+        raise SystemExit("Demo seed requires ORCA_DEMO_MODE=true and a non-production environment")
+    engine = create_database_engine(settings.database_url, settings)
     factory = create_session_factory(engine)
     async with factory() as session:
         user = await session.scalar(select(User).where(User.email == "demo.operator@orca.local"))

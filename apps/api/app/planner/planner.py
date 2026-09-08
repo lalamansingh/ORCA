@@ -34,7 +34,9 @@ class QueryPlanner:
             by_id["geospatial"].depends_on=["pfz"]
             for identifier in ("weather","marine","alerts"):
                 by_id[identifier].depends_on=["geospatial"]
+                by_id[identifier].inputs["location_ref"]="$steps.pfz.pfzs.0.nearest_point"
             by_id["risk"].depends_on=["weather","marine","alerts"]
+            by_id["risk"].inputs["location_ref"]="$steps.pfz.pfzs.0.nearest_point"
             steps=[by_id[identifier] for identifier in ("pfz","geospatial","weather","marine","alerts","risk")]+[step for step in steps if step.id not in {"pfz","geospatial","weather","marine","alerts","risk"}]
         clarifications=[]
         needs_location=bool(extraction.requires_location or risk or pfz or recommendation or any(step.tool in {PlannerTool.WEATHER,PlannerTool.MARINE,PlannerTool.ALERTS,PlannerTool.RISK,PlannerTool.GEOSPATIAL,PlannerTool.GEOFENCE} for step in steps))

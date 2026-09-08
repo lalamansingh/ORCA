@@ -59,12 +59,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(
         title=app_settings.app_name,
         description="Foundation API for ORCA marine intelligence services.",
-        version="0.1.0",
+        version=app_settings.orca_version,
         debug=app_settings.debug,
         lifespan=lifespan,
     )
     app.state.settings = app_settings
-    app.state.db_engine = create_database_engine(app_settings.database_url)
+    app.state.db_engine = create_database_engine(app_settings.database_url, app_settings)
     app.state.db_session_factory = create_session_factory(app.state.db_engine)
     app.state.forecast_cache = TTLCache()
     app.state.provider_status = ProviderStatusRegistry()
@@ -78,6 +78,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "X-Request-ID", "X-CSRF-Token"],
+        expose_headers=["X-Request-ID"],
     )
 
     @app.middleware("http")
@@ -96,7 +97,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             limit=app_settings.auth_rate_limit_per_minute if path.endswith(("/login","/register","/refresh")) else app_settings.expensive_rate_limit_per_minute if path.endswith(("/ai/execute","/ai/conversations/messages","/routes/calculate","/pfz/recommendations")) else None
             if limit and not app.state.rate_limiter.allow(f"{client}:{path}",limit):return _error_response(request,status_code=429,code="RATE_LIMITED",message="Too many requests. Try again shortly.")
             response = await call_next(request)
-            app.state.metrics.increment("orca_http_requests_total",f"{request.method}:{request.url.path}:{response.status_code}")
+            app.state.metrics.increment("orca_http_requests_total",f"{request.method}:{getattr(request.scope.get('route'), 'path', 'unmatched')}:{response.status_code}")
             return response
         finally:
             duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
@@ -123,12 +124,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             code="VALIDATION_ERROR",
             message="Request validation failed.",
-            details=exc.errors(),
+            details=[{key: value for key, value in error.items() if key in {"type", "loc", "msg"}} for error in exc.errors()],
         )
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        logger.exception("unhandled_exception")
+        logger.error("unhandled_exception type=%s", type(exc).__name__)
         message = "An unexpected server error occurred."
         return _error_response(
             request,

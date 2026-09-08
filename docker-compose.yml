@@ -1,13 +1,12 @@
 services:
   db:
     image: postgis/postgis:16-3.4
-    container_name: orca-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-orca}
       POSTGRES_USER: ${POSTGRES_USER:-orca}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orca_local_dev_password}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - orca-postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -18,24 +17,34 @@ services:
   backend:
     build:
       context: ./apps/api
+    env_file:
+      - ./apps/api/.env
     environment:
       APP_ENV: development
       DEBUG: "false"
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-orca}:${POSTGRES_PASSWORD:-orca_local_dev_password}@db:5432/${POSTGRES_DB:-orca}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-local-compose-secret-change-before-production-123456}
-      FRONTEND_URL: http://localhost:3000
-      CORS_ORIGINS: http://localhost:3000
+      FRONTEND_URL: http://localhost:${WEB_PORT:-3000}
+      CORS_ORIGINS: http://localhost:${WEB_PORT:-3000}
       COOKIE_SECURE: "false"
       ORCA_DEMO_MODE: ${ORCA_DEMO_MODE:-false}
+      ALERT_PROVIDERS: ${ALERT_PROVIDERS:-imd_cap,incois}
+      PFZ_PROVIDERS: ${PFZ_PROVIDERS:-incois_wfs}
+      LLM_ENABLED: ${LLM_ENABLED:-true}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:${API_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/live', timeout=3)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=3)"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -53,11 +62,11 @@ services:
     build:
       context: .
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8000
+        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-8000}
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
     ports:
-      - "3000:3000"
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
     depends_on:
       backend:
         condition: service_healthy

@@ -32,7 +32,7 @@ def test_health_returns_structured_status_and_request_id() -> None:
     assert response.json() == {
         "status": "degraded",
         "service": "orca-api",
-        "version": "0.1.0",
+        "version": "0.1.0-hackathon",
         "environment": "test",
         "dependencies": {
             "database": {"status": "unavailable", "postgis": None},

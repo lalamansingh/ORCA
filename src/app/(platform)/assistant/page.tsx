@@ -1,13 +1,217 @@
 "use client";
-import {FormEvent,useState} from "react";
-import {Bot,LoaderCircle,MapPin,Send} from "lucide-react";
-import {MarineMap} from "@/components/marine-map";
-import {DemoDataBadge,PageHeader} from "@/components/ui";
-import {extractQuery,planQuery} from "@/lib/api/ai";
-import type {ExecutionPlan,QueryExtraction} from "@/features/ai/types";
+import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
+import { Bot, LoaderCircle, MapPin, Send, Sparkles } from "lucide-react";
+import { MarineMap } from "@/components/marine-map";
+import { PageHeader } from "@/components/ui";
+import { EvidenceFacts, ServiceFacts } from "@/components/evidence-facts";
+import { sendMessage, type ConversationReply } from "@/lib/api/ai";
+import { publishSelectedLocation, useSharedSelectedLocation } from "@/features/map/location-store";
+import { VoiceMic, VoiceSpeaker } from "@/components/voice-mic";
+import "../demo-polish.css";
 
-export default function AssistantPage(){
-  const[query,setQuery]=useState("");const[result,setResult]=useState<QueryExtraction|null>(null);const[plan,setPlan]=useState<ExecutionPlan|null>(null);const[error,setError]=useState("");const[loading,setLoading]=useState(false);
-  const submit=async(event:FormEvent)=>{event.preventDefault();if(!query.trim())return;setLoading(true);setError("");try{const text=query.trim();const[extracted,planned]=await Promise.all([extractQuery(text).catch(()=>null),planQuery(text)]);setResult(extracted);setPlan(planned);}catch(cause){setResult(null);setPlan(null);setError(cause instanceof Error?cause.message:"PLANNER_UNAVAILABLE");}finally{setLoading(false);}};
-  return <div className="page assistant-page"><PageHeader eyebrow="LANGUAGE INTELLIGENCE" title="ORCA Query Planner" subtitle="Structured extraction and deterministic planning only. No marine tools are executed in Step 12." action={<DemoDataBadge label="Step 12 Development"/>}/><div className="assistant-layout"><section className="chat-panel"><div className="chat-welcome"><span><Bot size={20}/></span><h2>Inspect a marine query</h2><p>Try English, Hindi, or Hinglish. ORCA preserves the original query and does not geocode place names.</p></div><form className="assistant-input" onSubmit={submit}><input aria-label="Marine query" maxLength={4000} value={query} onChange={event=>setQuery(event.target.value)} placeholder="Is it safe tomorrow morning near Chennai?"/><button disabled={loading} aria-label="Plan query">{loading?<LoaderCircle className="spin" size={17}/>:<Send size={17}/>}</button></form>{error&&<p className="auth-error" role="alert">{error}</p>}{(result||plan)&&<section className="agent-activity" aria-live="polite"><div><Bot size={17}/><strong>Validated extraction and execution plan</strong></div>{result&&<ol><li><i className="done"/>Language: {result.language.language_name}</li><li><i className="done"/>Intents: {result.possible_intents.join(", ")}</li><li><i className="done"/>Location: {result.requested_location_text??(result.latitude!=null?`${result.latitude}, ${result.longitude}`:"Not supplied")}</li><li><i className="done"/>Time: {result.requested_time_text??"Not supplied"}</li></ol>}{plan&&<><p><strong>Primary intent:</strong> {plan.primary_intent} · <strong>Tools:</strong> {plan.steps.map(step=>step.tool).join(" → ")||"None"}</p><p><strong>Dependencies:</strong> {plan.parallel_groups.map(group=>`[${group.join(", ")}]`).join(" → ")||"None"}</p><p><strong>Clarification:</strong> {plan.needs_clarification?plan.clarification_questions.join(" "):"Not needed"} · <strong>Capability:</strong> {plan.capability_status}</p></>}{process.env.NODE_ENV!=="production"&&<details className="conditions-evidence"><summary>Development debug — structured plan</summary><pre>{JSON.stringify(plan??result,null,2)}</pre></details>}</section>}</section><aside className="context-panel"><div className="context-title"><div><p className="eyebrow">PLANNER BOUNDARY</p><h3>No tools executed</h3></div><MapPin size={19}/></div><MarineMap/><div className="context-facts"><div><span>Execution</span><b>Future orchestrator</b></div><div><span>Safety</span><b>Risk engine only</b></div><div><span>Tools</span><b>Allowlisted ORCA tools</b></div></div></aside></div></div>;
+export default function AssistantPage() {
+  const [query, setQuery] = useState("");
+  const [messages, setMessages] = useState<{ query: string; reply: ConversationReply }[]>([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const location = useSharedSelectedLocation();
+
+  const handleQuery = async (textToSend: string) => {
+    if (!textToSend.trim() || loading) return;
+    setLoading(true);
+    setError("");
+    try {
+      const text = textToSend.trim();
+      const locToSend = location
+        ? { latitude: location.latitude, longitude: location.longitude }
+        : { latitude: 18.92, longitude: 72.83 };
+      const reply = await sendMessage(
+        text,
+        locToSend,
+        messages.at(-1)?.reply.conversation_id
+      );
+      setMessages((items) => [...items, { query: text, reply }]);
+      setQuery("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The assistant is unavailable. Please retry.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const initialQuery = new URLSearchParams(window.location.search).get("q");
+    if (initialQuery) {
+      void handleQuery(initialQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    await handleQuery(query);
+  };
+
+  return (
+    <div className="page assistant-page">
+      <PageHeader
+        eyebrow="INTELLIGENT MARINE ASSISTANT · MULTILINGUAL"
+        title="Ask ORCA (Ocean AI)"
+        subtitle="Natural language questions, real-time satellite reasoning, deterministic safety rules, and source evidence."
+      />
+      <div className="assistant-layout">
+        <section className="chat-panel">
+          <div className="chat-welcome">
+            <span>
+              <Bot size={20} />
+            </span>
+            <h2>How can ORCA assist your voyage today?</h2>
+            <p>
+              Ask in <b>English, Hindi, or Hinglish</b> about potential fishing zones, wave hazards, weather forecasts, or maritime restrictions.
+            </p>
+          </div>
+
+          <div className="prompt-row">
+            {[
+              "Show nearest PFZ and check safety",
+              "Kya samundar me jaana safe hai?",
+              "Assess current marine risk & waves",
+              "Show live AIS vessel traffic",
+              "Show SST and chlorophyll layers",
+              "Check coastal weather and alerts",
+            ].map((text) => (
+              <button className="map-control" key={text} onClick={() => void handleQuery(text)}>
+                <Sparkles size={13} style={{ color: "#38bdf8" }} />
+                {text}
+              </button>
+            ))}
+          </div>
+
+          <div aria-live="polite">
+            {messages.map(({ query: question, reply }) => (
+              <article className="assistant-result" key={reply.message_id}>
+                <p className="question-text">{question}</p>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", background: "rgba(15, 23, 42, 0.6)", padding: "12px 16px", borderRadius: "8px", border: "1px solid rgba(56, 189, 248, 0.2)" }}>
+                  <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: "13.5px", color: "#f8fafc", flex: 1 }}>
+                    {reply.answer}
+                  </div>
+                  <VoiceSpeaker text={reply.answer} />
+                </div>
+                <p className="result-warning" style={{ marginTop: "10px" }}>
+                  {JSON.stringify(reply.orchestration.data).match(/demo|fixture/i)
+                    ? "DEMO / MIXED DATA — includes prototype fixtures. Check source evidence."
+                    : "Real-time validated evidence from connected marine sources."}
+                </p>
+                <strong className="result-status">{reply.orchestration.status.replaceAll("_", " ")}</strong>
+                {reply.orchestration.warnings.map((warning, index) => (
+                  <p role="alert" className="result-warning" key={index}>
+                    {warning}
+                  </p>
+                ))}
+                {Object.entries(reply.orchestration.data).map(([name, facts]) => (
+                  <ServiceFacts key={name} name={name} value={facts} />
+                ))}
+                {reply.orchestration.errors.length > 0 && (
+                  <div role="alert">
+                    <h4>Some data could not be checked</h4>
+                    <EvidenceFacts value={reply.orchestration.errors} />
+                  </div>
+                )}
+                <details className="conditions-evidence">
+                  <summary>Source evidence · {reply.orchestration.evidence.length} records</summary>
+                  <EvidenceFacts value={reply.orchestration.evidence} />
+                </details>
+                <details className="agent-activity">
+                  <summary>Completed agent activity</summary>
+                  <ol>
+                    {reply.orchestration.step_results.map((step) => (
+                      <li key={step.step_id}>
+                        {step.agent} · {step.status}
+                      </li>
+                    ))}
+                  </ol>
+                </details>
+              </article>
+            ))}
+          </div>
+
+          {loading && (
+            <p role="status">
+              <LoaderCircle className="spin" size={16} /> Reasoning with collaborative marine agents…
+            </p>
+          )}
+          {error && (
+            <p className="auth-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <form className="assistant-input" onSubmit={submit}>
+            <VoiceMic onTranscript={(text) => setQuery(text)} disabled={loading} />
+            <input
+              aria-label="Marine query"
+              maxLength={4000}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Ask in English or Hindi (or click the Mic to speak)..."
+            />
+            <button disabled={loading || !query.trim()} aria-label="Send query">
+              {loading ? <LoaderCircle className="spin" size={17} /> : <Send size={17} />}
+            </button>
+          </form>
+        </section>
+
+        <aside className="context-panel">
+          <div className="context-title">
+            <div>
+              <p className="eyebrow">SELECTED LOCATION</p>
+              <h3>{location?.label ?? "Choose a coastal location"}</h3>
+            </div>
+            <MapPin size={19} />
+          </div>
+          <MarineMap selectedLocation={location} showDemoFeatures={false} selectMode onSelectLocation={publishSelectedLocation} />
+          <div className="context-facts">
+            <p>
+              {location
+                ? `${location.latitude.toFixed(4)}°, ${location.longitude.toFixed(4)}°`
+                : "Select a point on the marine map or pick a coastal sector:"}
+            </p>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", margin: "8px 0" }}>
+              {[
+                { name: "Chennai (Bay of Bengal)", lat: 13.08, lon: 80.27 },
+                { name: "Mumbai (Arabian Sea)", lat: 18.92, lon: 72.83 },
+                { name: "Porbandar (Gujarat)", lat: 21.64, lon: 69.60 },
+                { name: "Kochi (Kerala)", lat: 9.93, lon: 76.26 },
+                { name: "Vizag (Andhra)", lat: 17.68, lon: 83.21 },
+              ].map((loc) => (
+                <button
+                  key={loc.name}
+                  className="map-control"
+                  style={{ fontSize: "11px", padding: "3px 8px" }}
+                  onClick={() =>
+                    publishSelectedLocation({
+                      latitude: loc.lat,
+                      longitude: loc.lon,
+                      source: "default",
+                      label: `${loc.name} Sector`,
+                    })
+                  }
+                >
+                  📍 {loc.name}
+                </button>
+              ))}
+            </div>
+
+            <Link href="/map">Open full satellite map & layers</Link>
+            <p>
+              Risk is computed deterministically by ORCA rules. LOW is not a guarantee of safety. Always observe official port clearances.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
 }

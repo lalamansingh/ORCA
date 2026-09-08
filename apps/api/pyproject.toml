@@ -20,8 +20,10 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "pytest>=8.3,<9.0",
-  "pytest-asyncio>=0.25,<1.0",
+  "pip-audit>=2.10.1",
+  "pytest>=9.0.3,<10",
+  "pytest-asyncio>=1.0,<2",
+  "ruff>=0.16.6",
 ]
 
 [tool.pytest.ini_options]
@@ -30,3 +32,7 @@ pythonpath = ["."]
 
 [tool.uv]
 package = false
+
+[tool.ruff.lint]
+# Fatal syntax/name errors; preserve established formatting during release freeze.
+select = ["E9", "F821", "F822", "F823"]

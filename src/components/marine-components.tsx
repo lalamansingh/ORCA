@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Bot, Send, ShieldCheck, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import type { MapLayer } from "@/types";
@@ -13,5 +14,23 @@ export function ChatMessage({role,children}:{role:"user"|"orca";children:ReactNo
 export function AgentActivity(){return <div className="agent-activity"><div><Bot size={17}/><strong>ORCA Analysis</strong><DemoDataBadge label="Demonstration"/></div><ol>{["Understanding query","Checking marine conditions","Checking weather","Evaluating hazards","Assessing risk","Preparing recommendation"].map((x,i)=><li key={x}><i className={i<5?"done":""}/>{x}</li>)}</ol></div>}
 export function LayerToggle({layer,onChange}:{layer:MapLayer;onChange:(id:string)=>void}){return <label className="layer-toggle"><span><i style={{background:layer.color}}/>{layer.label}</span><input checked={layer.enabled} onChange={()=>onChange(layer.id)} type="checkbox"/><b/></label>}
 export function ChartCard({title,children,status="DEMO"}:{title:string;children:ReactNode;status?:"DEMO"|"CURRENT"}){return <article className="chart-card"><div className="chart-head"><div><p className="card-label">OCEAN ANALYTICS</p><h3>{title}</h3></div>{status==="DEMO"?<DemoDataBadge/>:<DataFreshnessBadge>Forecast</DataFreshnessBadge>}</div>{children}</article>}
-export function AssistantInput(){return <div className="assistant-input"><input aria-label="Ask ORCA" placeholder="Ask about weather, fishing zones, waves or marine safety…"/><button aria-label="Send message"><Send size={17}/></button></div>}
+
+export function AssistantInput(){
+  const router = useRouter();
+  return (
+    <form
+      className="assistant-input"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const input = (e.currentTarget.elements.namedItem("q") as HTMLInputElement)?.value;
+        if (input) router.push(`/assistant?q=${encodeURIComponent(input)}`);
+      }}
+    >
+      <input name="q" aria-label="Ask ORCA" placeholder="Ask about weather, fishing zones, waves or marine safety…" />
+      <button aria-label="Send message">
+        <Send size={17} />
+      </button>
+    </form>
+  );
+}
 export function Notice(){return <div className="notice"><ShieldCheck size={16}/><span>Prototype decision-support only — not certified navigational guidance.</span></div>}

@@ -3,6 +3,8 @@
 
 :root {
   --background: #ffffff;
+  --font-geist-sans: Arial, Helvetica, sans-serif;
+  --font-geist-mono: ui-monospace, monospace;
   --foreground: #171717;
 }
 
@@ -25,3 +27,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Shared product tokens: platform/auth styles depend on these values. */
+:root{--navy:#082536;--ocean:#16465d;--marine:#087d98;--cyan:#34bdd1;--teal:#147d68;--ink:#183341;--muted:#627b89;--border:#dbe6eb;--surface:#f3f7f9;--safe:#237548;--amber:#9a670f;--orange:#b45316;--red:#a82740}
+.app-shell{background:var(--surface);color:var(--ink)}
+.app-shell a,.auth-page a{text-decoration:none}
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--marine);margin:0 0 7px}
+.brand{display:inline-flex;align-items:center;gap:10px;font-size:23px;font-weight:800;letter-spacing:2px}.brand-mark{display:grid;place-items:center;width:32px;height:32px;border-radius:7px;background:var(--marine);color:white}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--marine);color:#fff;padding:11px 17px;border-radius:6px;font-size:12px;font-weight:700;border:0;cursor:pointer}.button:disabled{opacity:.6;cursor:wait}
+button,summary{cursor:pointer}a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #188cab;outline-offset:3px}

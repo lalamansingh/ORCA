@@ -27,14 +27,16 @@ jobs:
       DATABASE_URL: postgresql+asyncpg://orca:test-only-password@localhost:5432/orca_test
       JWT_SECRET_KEY: test-only-jwt-secret-with-at-least-32-characters
       LLM_ENABLED: "false"
+      ORCA_TEST_POSTGIS: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
       - run: uv sync --frozen
-      - run: uv run python -m compileall -q app
+      - run: uv run ruff check app scripts tests alembic
       - run: uv run alembic upgrade head
+      - run: uv run alembic check
       - run: uv run pytest -q
   frontend:
     runs-on: ubuntu-latest
@@ -44,6 +46,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: python3 scripts/secret_audit.py
       - run: npm ci
       - run: npm test
       - run: npm run lint
@@ -51,3 +54,12 @@ jobs:
       - run: npm run build
         env:
           NEXT_PUBLIC_API_URL: https://api.example.invalid
+      - run: npx playwright install --with-deps chromium
+      - name: Browser landing smoke
+        run: |
+          npm run start > /tmp/orca-next.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://localhost:3000 > /dev/null; then break; fi
+            sleep 1
+          done
+          npm run test:e2e

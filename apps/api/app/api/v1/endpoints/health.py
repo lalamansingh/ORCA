@@ -1,6 +1,7 @@
 """Service-health endpoints."""
 
 from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 
 from app.schemas.health import DatabaseDependencyResponse, DependenciesResponse, HealthResponse, ProviderDependencyResponse
 from app.services.database_health import check_database_health
@@ -13,7 +14,8 @@ async def liveness()->dict[str,str]:return {"status":"alive","service":"orca-api
 @router.get("/health/ready")
 async def readiness(request:Request)->dict[str,object]:
     database=await check_database_health(request.app.state.db_engine)
-    return {"status":"ready" if database.status=="healthy" else "not_ready","database":database.status,"postgis":database.postgis}
+    ready = database.status == "healthy" and database.postgis is True
+    return JSONResponse({"status":"ready" if ready else "not_ready","database":database.status,"postgis":database.postgis}, status_code=200 if ready else 503)
 
 
 @router.get("/health", response_model=HealthResponse, summary="Get API health")
@@ -24,7 +26,7 @@ async def health_check(request: Request) -> HealthResponse:
     return HealthResponse(
         status="healthy" if database.status == "healthy" else "degraded",
         service="orca-api",
-        version="0.1.0",
+        version=settings.orca_version,
         environment=settings.app_env,
         dependencies=DependenciesResponse(
             database=DatabaseDependencyResponse(status=database.status, postgis=database.postgis),

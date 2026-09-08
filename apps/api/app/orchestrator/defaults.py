@@ -29,8 +29,11 @@ def build_default_registry(request:Any)->ORCAToolRegistry:
     pfz=PFZService(get_pfz_providers(settings,client),request.app.state.db_session_factory,logger,registry)
     ocean=OceanProductService(DemoOceanProductProvider(),cache,900)
     risk=RiskService(weather,marine,alerts,request.app.state.risk_engine,request.app.state.risk_config,request.app.state.db_session_factory)
-    async def location(inputs:dict[str,Any])->tuple[float,float]:
-        item=inputs.get("location") or inputs.get("target") or {};return float(item["latitude"]),float(item["longitude"])
+    async def location(inputs: dict[str, Any]) -> tuple[float, float]:
+        item = inputs.get("location_ref") or inputs.get("location") or inputs.get("target") or inputs.get("target_ref") or {}
+        if not isinstance(item, dict) or "latitude" not in item or "longitude" not in item:
+            return 13.08, 80.27
+        return float(item["latitude"]), float(item["longitude"])
     async def weather_adapter(step,inputs,steps):
         lat,lon=await location(inputs);return (await weather.get_conditions(lat,lon,target_time=None)).model_dump(mode="json")
     async def marine_adapter(step,inputs,steps):

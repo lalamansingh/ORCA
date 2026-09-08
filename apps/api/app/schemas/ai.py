@@ -1,4 +1,5 @@
 from pydantic import BaseModel,Field
+from uuid import UUID
 
 
 class QueryInput(BaseModel):
@@ -8,5 +9,5 @@ class ExecuteInput(QueryInput):
     selected_location: dict|None = None
 
 class ConversationMessageInput(QueryInput):
-    conversation_id: str|None = None
+    conversation_id: UUID|None = None
     selected_location: dict|None = None

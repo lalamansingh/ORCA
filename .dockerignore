@@ -14,3 +14,9 @@ coverage
 htmlcov
 *.log
 strix_runs
+**/.env
+**/.env.*
+**/*.dump
+**/*.pem
+**/coverage
+**/test-results

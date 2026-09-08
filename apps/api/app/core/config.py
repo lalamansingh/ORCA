@@ -1,6 +1,8 @@
 """Environment-backed application settings."""
 
 from functools import lru_cache
+from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,8 +20,13 @@ class Settings(BaseSettings):
     )
 
     app_name: str = Field("ORCA Marine Intelligence API", validation_alias="APP_NAME")
-    app_env: str = Field("development", validation_alias="APP_ENV")
-    debug: bool = Field(True, validation_alias="DEBUG")
+    app_env: Literal["development", "test", "production", "demo"] = Field("development", validation_alias="APP_ENV")
+    orca_version: str = Field("0.1.0-hackathon", validation_alias="ORCA_VERSION")
+    debug: bool = Field(False, validation_alias="DEBUG")
+    database_ssl: bool = Field(False, validation_alias="DATABASE_SSL")
+    database_pool_size: int = Field(3, ge=1, le=10, validation_alias="DATABASE_POOL_SIZE")
+    database_max_overflow: int = Field(2, ge=0, le=10, validation_alias="DATABASE_MAX_OVERFLOW")
+    database_pool_timeout: int = Field(10, ge=1, le=30, validation_alias="DATABASE_POOL_TIMEOUT")
     api_v1_prefix: str = Field("/api/v1", validation_alias="API_V1_PREFIX")
     frontend_url: str = Field("http://localhost:3000", validation_alias="FRONTEND_URL")
     cors_origins: str = Field("http://localhost:3000", validation_alias="CORS_ORIGINS")
@@ -38,7 +45,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = Field(15, validation_alias="ACCESS_TOKEN_EXPIRE_MINUTES")
     refresh_token_expire_days: int = Field(14, validation_alias="REFRESH_TOKEN_EXPIRE_DAYS")
     cookie_secure: bool = Field(False, validation_alias="COOKIE_SECURE")
-    cookie_samesite: str = Field("lax", validation_alias="COOKIE_SAMESITE")
+    cookie_samesite: Literal["lax", "strict", "none"] = Field("lax", validation_alias="COOKIE_SAMESITE")
     weather_provider: str = Field("open_meteo", validation_alias="WEATHER_PROVIDER")
     marine_provider: str = Field("open_meteo", validation_alias="MARINE_PROVIDER")
     open_meteo_weather_base_url: str = Field("https://api.open-meteo.com/v1/forecast", validation_alias="OPEN_METEO_WEATHER_BASE_URL")
@@ -65,7 +72,9 @@ class Settings(BaseSettings):
     llm_enabled: bool = Field(False, validation_alias="LLM_ENABLED")
     llm_provider: str = Field("openai", validation_alias="LLM_PROVIDER")
     openai_api_key: str = Field("", validation_alias="OPENAI_API_KEY")
-    openai_model: str = Field("gpt-5-mini", validation_alias="OPENAI_MODEL")
+    openai_model: str = Field("gpt-4o-mini", validation_alias="OPENAI_MODEL")
+    gemini_api_key: str = Field("", validation_alias="GEMINI_API_KEY")
+    gemini_model: str = Field("gemini-2.5-flash", validation_alias="GEMINI_MODEL")
     llm_timeout_seconds: float = Field(20, gt=0, le=120, validation_alias="LLM_TIMEOUT_SECONDS")
     llm_max_retries: int = Field(1, ge=0, le=2, validation_alias="LLM_MAX_RETRIES")
     llm_temperature: float = Field(0, ge=0, le=1, validation_alias="LLM_TEMPERATURE")
@@ -83,7 +92,7 @@ class Settings(BaseSettings):
     auth_rate_limit_per_minute: int = Field(20, ge=1, le=300, validation_alias="AUTH_RATE_LIMIT_PER_MINUTE")
     expensive_rate_limit_per_minute: int = Field(10, ge=1, le=120, validation_alias="EXPENSIVE_RATE_LIMIT_PER_MINUTE")
     max_request_body_bytes: int = Field(1_000_000, ge=1024, le=10_000_000, validation_alias="MAX_REQUEST_BODY_BYTES")
-    metrics_enabled: bool = Field(True, validation_alias="METRICS_ENABLED")
+    metrics_enabled: bool = Field(False, validation_alias="METRICS_ENABLED")
     orca_allow_demo_fallback: bool = Field(False, validation_alias="ORCA_ALLOW_DEMO_FALLBACK")
 
     @field_validator("debug", "orca_demo_mode", "llm_enabled", "metrics_enabled", "orca_allow_demo_fallback", mode="before")
@@ -96,11 +105,31 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def secure_production_configuration(self):
-        if self.app_env.lower()=="production":
-            if self.jwt_secret_key=="replace-with-a-long-random-secret" or len(self.jwt_secret_key)<32:raise ValueError("Production requires a unique JWT_SECRET_KEY of at least 32 characters")
+        if self.cookie_samesite == "none" and not self.cookie_secure:
+            raise ValueError("SameSite=none requires Secure cookies")
+        if self.app_env in {"production", "demo"}:
+            if self.debug: raise ValueError("Hosted environments require DEBUG=false")
+            if any(marker in self.jwt_secret_key.lower() for marker in ("replace-with", "local-compose", "test-only", "change-before")) or len(self.jwt_secret_key)<32:raise ValueError("Production requires a unique JWT_SECRET_KEY of at least 32 characters")
             if not self.cookie_secure:raise ValueError("Production requires COOKIE_SECURE=true")
-            if "localhost" in self.cors_origins or "*" in self.cors_origins:raise ValueError("Production requires explicit non-local CORS_ORIGINS")
+            origins = [*self.cors_origin_list, self.frontend_url]
+            if not self.cors_origin_list or any(urlsplit(origin).scheme != "https" or not urlsplit(origin).hostname or urlsplit(origin).hostname in {"localhost", "127.0.0.1"} or urlsplit(origin).path not in {"", "/"} or urlsplit(origin).query or urlsplit(origin).fragment or urlsplit(origin).username or "*" in origin for origin in origins):
+                raise ValueError("Hosted environments require exact HTTPS frontend/CORS origins")
+            if "orca_local_dev_password" in self.database_url or not urlsplit(self.database_url).password:
+                raise ValueError("Hosted environments require an explicit database credential")
+            if self.llm_enabled and (self.llm_provider != "openai" or not self.openai_api_key):
+                raise ValueError("Hosted LLM requires configured provider credentials")
+            if self.app_env == "production" and (self.orca_demo_mode or self.orca_allow_demo_fallback):
+                raise ValueError("Use APP_ENV=demo for fixtures; production does not seed or fall back")
         return self
+
+    @field_validator("database_url")
+    @classmethod
+    def normalize_database_url(cls, value: str) -> str:
+        for prefix in ("postgres://", "postgresql://"):
+            if value.startswith(prefix): return value.replace(prefix, "postgresql+asyncpg://", 1)
+        if not value.startswith("postgresql+asyncpg://"):
+            raise ValueError("DATABASE_URL must use PostgreSQL")
+        return value
 
     @property
     def cors_origin_list(self) -> list[str]:

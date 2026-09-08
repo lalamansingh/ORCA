@@ -59,10 +59,11 @@ class PFZService:
                 rows = await PFZRepository(session).nearest(latitude=latitude, longitude=longitude, statuses=statuses, radius_km=radius_km, limit=limit)
         except Exception:
             logger.warning("pfz_query_unavailable")
+            self.registry.set_status("pfz", "UNAVAILABLE", "DATABASE_UNAVAILABLE")
             rows = []
         records = [self._read(row, latitude, longitude) for row in rows]
         source_status = self.registry.snapshot()["pfz"].status.upper()
-        state = "PFZ_AVAILABLE" if records else "PFZ_PROVIDER_UNAVAILABLE" if source_status in {"UNAVAILABLE", "NOT_CONNECTED"} else "NO_PFZ_WITHIN_RADIUS"
+        state = "PFZ_AVAILABLE" if records else "PFZ_PROVIDER_UNAVAILABLE" if source_status in {"UNAVAILABLE", "NOT_CONNECTED", "NOT_CHECKED"} else "NO_PFZ_WITHIN_RADIUS"
         return PFZListResponse(location=Location(latitude=latitude, longitude=longitude), status="complete" if records else "unavailable" if state == "PFZ_PROVIDER_UNAVAILABLE" else "empty", result_state=state, pfzs=records, sources=[self._source(r) for r in self.last_results], retrieved_at=datetime.now(UTC), limitations=["INCOIS WFS does not publish an explicit validity end; current means advisory date within configured freshness policy."])
 
     async def detail(self, pfz_id: UUID) -> PotentialFishingZoneRead | None:

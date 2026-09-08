@@ -2,6 +2,27 @@
 
 ORCA is a marine-intelligence platform foundation for safer, evidence-aware decisions at sea. The current build pairs a polished Next.js command center with a versioned FastAPI service foundation.
 
+## Release workflow
+
+```sh
+docker compose up --build
+# Explicit labelled demo instead:
+make demo
+# Demo fixtures are seeded by make demo.
+```
+
+Open http://localhost:3000 and register an account. Local Compose needs no secret
+files; its defaults are strictly local development. Weather/marine and map tiles
+still need internet. `make demo` selects fixture PFZ/alerts and route geometry;
+it is not an offline operational system.
+
+Checks: `make test`, `make lint`, `make build`, `make system-check`,
+`make pre-demo-check`. See [deployment](docs/deployment.md),
+[release checklist](docs/deployment-checklist.md), [judge checklist](docs/judge-demo-checklist.md),
+[5–7 minute demo](docs/demo-script.md), [actual architecture](docs/architecture.md),
+[coverage and limitations](docs/problem-statement-coverage.md), and
+[validation report](docs/hosted-validation.md).
+
 ## Architecture
 
 ```text
@@ -35,7 +56,7 @@ cd apps/api
 cp .env.example .env
 uv sync --all-groups
 uv run alembic upgrade head
-uv run python -m scripts.seed_development
+ORCA_DEMO_MODE=true uv run python -m scripts.seed_development
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
@@ -77,7 +98,7 @@ docker compose ps
 
 cd apps/api
 uv run alembic upgrade head
-uv run python -m scripts.seed_development
+ORCA_DEMO_MODE=true uv run python -m scripts.seed_development
 ```
 
 `DATABASE_URL`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, and `POSTGRES_PORT` are configured in `apps/api/.env`. The template contains local-development-only credentials.
@@ -144,11 +165,11 @@ Use **Use my current location** to request browser GPS only after an explicit ac
 
 ### Map layers and fixtures
 
-The layer panel distinguishes `LIVE`, `PARTIAL`, `DEMO`, `NOT_CONNECTED`, and `UNAVAILABLE`. Alert geometry now comes from normalized providers and is never synthesized from textual affected-area descriptions. PFZ, restricted-zone, and route geometries remain labeled development fixtures; they are not INCOIS data, real boundaries, or route recommendations.
+The layer panel distinguishes `LIVE`, `PARTIAL`, `DEMO`, `NOT_CONNECTED`, and `UNAVAILABLE`. Alert geometry now comes from normalized providers and is never synthesized from textual affected-area descriptions. PFZ layers can show ingested advisories; restricted-zone and illustrative route layers remain labelled fixtures. The route page draws its returned geometry with provenance and limitations.
 
 ### Location privacy
 
-ORCA does not continuously persist browser GPS, collect background location, or create GPS history. A coordinate reaches the backend only when the user explicitly saves a location (or a future user-directed location action requires it).
+ORCA does not continuously persist browser GPS, collect background location, or create GPS history. Selected coordinates reach the API for requested conditions, risk, PFZ or assistant actions; they are not saved as GPS history. Saving a location and sending a conversation are explicit persistence actions.
 
 ### Saved locations API
 
@@ -226,14 +247,19 @@ All thresholds are ORCA prototype decision-support settings. They require vessel
 
 ## Current project status
 
-- Step 1 complete: responsive frontend UI, mock data, maps, charts, and navigation.
-- Step 2 complete: FastAPI foundation, `/api/v1/health`, CORS, request IDs, structured errors, logging, validation, and frontend health status.
-- Step 3 complete: PostgreSQL/PostGIS models, Alembic migration, repositories, seed fixtures, and dependency-aware health checks.
-- Step 4 complete: Argon2 password authentication, HttpOnly JWT cookies, refresh-session revocation, protected routes, and profile foundations.
-- Step 5 complete: reusable MapLibre map, explicit GPS/manual location state, typed demo map layers, and authenticated saved-location CRUD.
-- Step 6 complete: provider-independent weather/marine forecasts, normalized evidence, caching, partial responses, and dashboard/map/analytics integration.
-- Step 7 complete: normalized IMD CAP alerts, provider status, PostGIS ingestion/querying, alert UX/map, and preference CRUD.
-- Step 8 complete: deterministic, versioned marine operational risk scoring, official-alert escalation, evidence UI, map assessment, and forecast timeline.
-- Future work: additional authorized advisory feeds, vessel-aware calibration, route intelligence, and AI-agent orchestration.
+Steps 1–19 provide the frontend, API, auth, spatial persistence, normalized providers,
+deterministic risk/planning/routing/ranking services and language-layer foundations.
+Step 20 adds reproducible release configuration, migration repairs, CI spatial checks,
+smoke tooling, production config validation and judge-facing landing/assistant/route polish.
 
-Open-Meteo model forecasts, the public IMD CAP advisory feed, and deterministic ORCA Risk v1 are integrated. No vessel-specific safety clearance, fishing permission, push delivery, route optimization, or AI agent is implemented yet.
+The assistant executes authenticated queries and stores conversations, but cross-turn
+references, persisted LangGraph execution, streaming and complete translated replies
+remain incomplete. Live land masks and authoritative boundary coverage are unavailable;
+routing is an explicitly labelled geometry demo. Ocean products are DEMO. PFZ ranking
+can return no eligible results when required evidence is missing. Scenario registry
+entries are not all interactive runtime scenarios. See the requirement matrix rather
+than interpreting earlier step labels as proof of complete integration.
+
+No hosted deployment or hosted end-to-end success is claimed without verified URLs.
+ORCA is a decision-support prototype using available environmental and geospatial
+data. It is not a certified navigation system or official maritime clearance.

@@ -4,6 +4,18 @@ from app.schemas.data_sources import DataSourcesResponse
 
 router = APIRouter(prefix="/system")
 
+@router.get("/capabilities")
+async def capabilities(request: Request):
+    settings = request.app.state.settings
+    return {"version": settings.orca_version, "environment": settings.app_env,
+            "demo_mode": settings.orca_demo_mode,
+            "capabilities": {"risk": "DETERMINISTIC", "pfz_ranking": "DETERMINISTIC",
+                "geofence": "REQUIRES_AUTHORITATIVE_GEOMETRY", "route": "DEMO" if settings.orca_demo_mode else "UNAVAILABLE",
+                "ocean_products": "DEMO", "localization": ["en", "hi", "hi-Latn", "ta"],
+                "llm": "CONFIGURED_NOT_PROBED" if settings.llm_enabled else "DISABLED",
+                "conversation_storage": "POSTGRES", "graph_checkpointer": "NOT_IMPLEMENTED",
+                "streaming": "NOT_IMPLEMENTED", "multi_turn_references": "NOT_IMPLEMENTED"}}
+
 
 @router.get("/data-sources", response_model=DataSourcesResponse)
 async def data_sources(request: Request) -> DataSourcesResponse:

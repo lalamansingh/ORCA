@@ -16,5 +16,16 @@ async def get_current_user(request:Request,access_token:str|None=Cookie(default=
     if user is None or not user.is_active: raise HTTPException(status_code=401,detail="Authentication required.")
     return user
 
+async def get_current_user_optional(request:Request,access_token:str|None=Cookie(default=None,alias="orca_access"),session:AsyncSession=Depends(get_db_session))->User|None:
+    if not access_token: return None
+    try: payload=decode_token(access_token,"access",request.app.state.settings)
+    except TokenError: return None
+    try:
+        user=await UserRepository(session).by_id(UUID(str(payload["sub"])))
+        return user if user and user.is_active else None
+    except Exception: return None
+
 def csrf_protect(request:Request,csrf_cookie:str|None=Cookie(default=None,alias="orca_csrf"))->None:
     if not csrf_cookie or request.headers.get("X-CSRF-Token") != csrf_cookie: raise HTTPException(status_code=403,detail="CSRF validation failed.")
+
+

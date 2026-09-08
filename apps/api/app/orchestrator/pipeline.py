@@ -13,6 +13,11 @@ class ORCAQueryExecutionService:
             except Exception: extraction=self._fallback(query)
         else:extraction=self._fallback(query)
         plan=QueryPlanner().plan(extraction,selected_location)
+        # Forecast text is not yet resolved to a timezone-aware instant by this pipeline.
+        # Never present current observations as an answer about tomorrow.
+        if plan.requested_time and plan.requested_time.lower() not in {"now", "today"}:
+            plan.needs_clarification = True
+            plan.clarification_questions = ["Use the dashboard forecast time selector for future assessments. Conversational forecast-time resolution is not connected yet."]
         return await self.orchestrator.execute(plan,query,selected_location)
     @staticmethod
     def _fallback(query:str)->QueryExtractionResult:

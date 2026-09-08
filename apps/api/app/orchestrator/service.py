@@ -26,6 +26,8 @@ class ORCAOrchestrator:
         except asyncio.TimeoutError:state["errors"].append({"code":"ORCHESTRATION_TIMEOUT","message":"Orchestration time budget exceeded."});state["execution_status"]="PARTIAL"
         results=[AgentResult.model_validate(item) for item in state.get("step_results",{}).values()]
         errors=[OrchestrationError(step_id=item.step_id,agent=item.agent,code=error.get("code","AGENT_FAILED"),message=error.get("message","Approved service failed.")) for item in results for error in item.errors]
+        if state.get("execution_status") == "PARTIAL" and not errors:
+            errors.append(OrchestrationError(code="ORCHESTRATION_TIMEOUT",message="Orchestration time budget exceeded."))
         result_status=OrchestrationStatus.SUCCESS if not errors else OrchestrationStatus.PARTIAL
         return OrchestrationResult(query_id=plan.query_id,trace_id=trace_id,status=result_status,intent=plan.primary_intent,location=state.get("selected_location"),requested_time=plan.requested_time,data={key:value for key,value in state.items() if key in {"weather","marine","alerts","risk","pfz","pfz_recommendation","ocean_products","geospatial","geofence","route"}},evidence=state.get("evidence",[]),step_results=results,warnings=state.get("warnings",[]),errors=errors,map_actions=[MapAction.model_validate(action) for action in state.get("map_actions",[])],started_at=started,completed_at=datetime.now(UTC),duration_ms=(time.perf_counter()-clock)*1000)
     async def _run(self,state:ORCAState,plan:ExecutionPlan)->ORCAState:

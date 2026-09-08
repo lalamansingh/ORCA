@@ -9,6 +9,15 @@ from app.schemas.auth import UserLogin, UserProfileUpdate, UserRead, UserRegiste
 from app.services.auth_service import AccountExistsError, AuthenticationError, AuthService
 
 router=APIRouter(prefix="/auth")
+
+@router.get("/csrf")
+async def csrf_token(request: Request, response: Response):
+    """Allow the configured frontend to read the API-host cookie token via CORS."""
+    token = request.cookies.get("orca_csrf") or token_urlsafe(32)
+    settings = request.app.state.settings
+    response.headers["Cache-Control"] = "no-store"
+    response.set_cookie("orca_csrf", token, httponly=True, secure=settings.cookie_secure, samesite=settings.cookie_samesite, path="/")
+    return {"csrf_token": token}
 def _set_cookies(response:Response,access:str,refresh:str,settings:Settings)->None:
     common={"httponly":True,"secure":settings.cookie_secure,"samesite":settings.cookie_samesite,"path":"/"}
     response.set_cookie("orca_access",access,max_age=settings.access_token_expire_minutes*60,**common)
@@ -41,7 +50,7 @@ async def refresh(request:Request,response:Response,refresh_token:str|None=Cooki
 
 @router.post("/logout",status_code=status.HTTP_204_NO_CONTENT,dependencies=[Depends(csrf_protect)])
 async def logout(request:Request,response:Response,refresh_token:str|None=Cookie(default=None,alias="orca_refresh"),session:AsyncSession=Depends(get_db_session))->Response:
-    await AuthService(session,request.app.state.settings).logout(refresh_token); _clear_cookies(response,request.app.state.settings); return response
+    await AuthService(session,request.app.state.settings).logout(refresh_token); _clear_cookies(response,request.app.state.settings); response.status_code=204; return response
 
 @router.patch("/users/me",response_model=UserRead,dependencies=[Depends(csrf_protect)])
 async def update_me(request:Request,data:UserProfileUpdate,user:User=Depends(get_current_user),session:AsyncSession=Depends(get_db_session))->User:

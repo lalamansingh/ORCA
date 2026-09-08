@@ -27,3 +27,7 @@ def configure_logging(log_level: str) -> None:
     root_logger.handlers.clear()
     root_logger.addHandler(handler)
     root_logger.setLevel(log_level.upper())
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpx2").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+
