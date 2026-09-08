@@ -15,8 +15,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.router import router as api_router
 from app.core.config import Settings, get_settings
-from app.core.logging import configure_logging, request_id_context
 from app.db.base import Base
+import app.db.models  # noqa: F401
 from app.db.session import create_database_engine, create_session_factory
 from app.schemas.common import APIError, ErrorEnvelope
 from app.schemas.health import APIInfoResponse
@@ -33,6 +33,57 @@ REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 
 import sqlalchemy as sa
 
+AUTH_DDL = """
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY,
+    email VARCHAR(320) UNIQUE NOT NULL,
+    full_name VARCHAR(255),
+    password_hash VARCHAR(512),
+    preferred_language VARCHAR(16) DEFAULT 'en' NOT NULL,
+    preferred_units VARCHAR(16) DEFAULT 'metric' NOT NULL,
+    default_latitude FLOAT,
+    default_longitude FLOAT,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    last_login_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS refresh_token_sessions (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    jti VARCHAR(64) UNIQUE NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked_at TIMESTAMPTZ,
+    last_used_at TIMESTAMPTZ,
+    user_agent VARCHAR(512),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS conversations (
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    title VARCHAR(255) NOT NULL,
+    language VARCHAR(16) DEFAULT 'en' NOT NULL,
+    context_summary TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS saved_locations (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    latitude FLOAT NOT NULL,
+    longitude FLOAT NOT NULL,
+    location_type VARCHAR(32) DEFAULT 'CUSTOM' NOT NULL,
+    is_favourite BOOLEAN DEFAULT FALSE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+"""
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -45,35 +96,28 @@ async def lifespan(app: FastAPI):
             except Exception as ext_err:
                 logger.warning("PostGIS extension note: %s", ext_err)
 
-            # Ensure essential auth and system tables exist unconditionally
-            for table_name in [
-                "users",
-                "refresh_token_sessions",
-                "conversations",
-                "messages",
-                "saved_locations",
-                "alert_subscriptions",
-                "data_source_logs",
-            ]:
-                if table_name in Base.metadata.tables:
+            # 1. Execute explicit DDL for core authentication tables
+            for ddl_statement in AUTH_DDL.strip().split(";"):
+                stmt = ddl_statement.strip()
+                if stmt:
                     try:
-                        table = Base.metadata.tables[table_name]
-                        await conn.run_sync(table.create, checkfirst=True)
-                        logger.info("Table '%s' verified/created.", table_name)
-                    except Exception as tbl_err:
-                        logger.warning("Table '%s' init note: %s", table_name, tbl_err)
+                        await conn.execute(sa.text(stmt + ";"))
+                    except Exception as ddl_err:
+                        logger.warning("DDL execution note: %s", ddl_err)
+            logger.info("Core authentication tables verified/created via DDL.")
 
-            # Attempt full schema creation for remaining models
+            # 2. Attempt full schema creation for any remaining models
             try:
                 await conn.run_sync(Base.metadata.create_all)
                 logger.info("Full database schema verified.")
             except Exception as all_err:
                 logger.warning("Remaining tables schema note: %s", all_err)
     except Exception as exc:
-        logger.error("Database connection / startup init notice: %s", exc)
+        logger.error("Database startup init notice: %s", exc)
     yield
     await app.state.http_client.aclose()
     await app.state.db_engine.dispose()
+
 
 
 
