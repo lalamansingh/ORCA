@@ -871,37 +871,83 @@ export function MarineMap({
       return;
     }
 
-    map.flyTo({ center: [selectedLocation.longitude, selectedLocation.latitude], zoom: compact ? 7.5 : LOCATION_ZOOM, essential: true });
+    const currentZoom = map.getZoom();
+    const targetZoom = compact ? Math.max(currentZoom, 8) : Math.max(currentZoom, LOCATION_ZOOM);
+    map.easeTo({
+      center: [selectedLocation.longitude, selectedLocation.latitude],
+      zoom: targetZoom,
+      duration: 350,
+    });
+
+    const coordText = `📍 ${selectedLocation.latitude.toFixed(3)}°N, ${selectedLocation.longitude.toFixed(3)}°E`;
     const feature = {
       type: "Feature" as const,
-      properties: { risk_label: riskLevel && riskLevel !== "UNAVAILABLE" ? riskLevel : "" },
+      properties: {
+        risk_label: riskLevel && riskLevel !== "UNAVAILABLE" ? riskLevel : "",
+        coord_label: coordText,
+      },
       geometry: { type: "Point" as const, coordinates: [selectedLocation.longitude, selectedLocation.latitude] },
     };
     if (existingSource) {
       existingSource.setData(feature);
     } else {
       map.addSource(sourceId, { type: "geojson", data: feature });
+
+      // Outer pulsing radar ring
+      map.addLayer({
+        id: `${sourceId}-pulse`,
+        type: "circle",
+        source: sourceId,
+        paint: {
+          "circle-radius": 18,
+          "circle-color": "#38bdf8",
+          "circle-opacity": 0.22,
+          "circle-stroke-width": 1.5,
+          "circle-stroke-color": "#38bdf8",
+        },
+      });
+
+      // Core point marker
       map.addLayer({
         id: sourceId,
         type: "circle",
         source: sourceId,
         paint: {
-          "circle-radius": selectedLocation.accuracy ? Math.min(28, Math.max(8, selectedLocation.accuracy / 3)) : 8,
-          "circle-color": selectedLocation.source === "gps" ? "#117ea6" : "#f6c452",
+          "circle-radius": selectedLocation.accuracy ? Math.min(28, Math.max(9, selectedLocation.accuracy / 3)) : 9,
+          "circle-color": selectedLocation.source === "gps" ? "#117ea6" : "#0284c7",
           "circle-opacity": selectedLocation.accuracy ? 0.22 : 1,
           "circle-stroke-width": 3,
           "circle-stroke-color": "#ffffff",
         },
       });
+
+      // Coordinate text label directly on map
+      map.addLayer({
+        id: "orca-selected-coord-label",
+        type: "symbol",
+        source: sourceId,
+        layout: {
+          "text-field": ["get", "coord_label"],
+          "text-size": 11,
+          "text-offset": [0, -1.9],
+          "text-allow-overlap": true,
+        },
+        paint: {
+          "text-color": "#ffffff",
+          "text-halo-color": "#082536",
+          "text-halo-width": 3,
+        },
+      });
+
       map.addLayer({
         id: "orca-selected-risk",
         type: "symbol",
         source: sourceId,
         filter: ["!=", ["get", "risk_label"], ""],
-        layout: { "text-field": ["get", "risk_label"], "text-size": 11, "text-offset": [0, -1.8], "text-allow-overlap": true },
+        layout: { "text-field": ["get", "risk_label"], "text-size": 10, "text-offset": [0, 1.8], "text-allow-overlap": true },
         paint: {
-          "text-color": ["match", ["get", "risk_label"], "LOW", "#166534", "MODERATE", "#8a5a05", "HIGH", "#b54708", "EXTREME", "#a61b2b", "#425466"],
-          "text-halo-color": "#ffffff",
+          "text-color": ["match", ["get", "risk_label"], "LOW", "#10b981", "MODERATE", "#f59e0b", "HIGH", "#f97316", "EXTREME", "#ef4444", "#38bdf8"],
+          "text-halo-color": "#082536",
           "text-halo-width": 3,
         },
       });
