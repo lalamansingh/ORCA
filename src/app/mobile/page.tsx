@@ -892,6 +892,15 @@ export default function MobileAppPage() {
   const [queryInput, setQueryInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (chatTextareaRef.current) {
+      chatTextareaRef.current.style.height = "auto";
+      const scrollHeight = chatTextareaRef.current.scrollHeight;
+      chatTextareaRef.current.style.height = `${Math.min(Math.max(scrollHeight, 36), 110)}px`;
+    }
+  }, [queryInput]);
 
   useEffect(() => {
     if (activeTab === "assistant") {
@@ -1397,17 +1406,26 @@ export default function MobileAppPage() {
               >
                 <VoiceMic
                   selectedLang={voiceCode}
+                  compact={true}
                   onTranscript={(transcript) => {
                     setQueryInput(transcript);
                     void handleSendChat(transcript);
                   }}
                 />
-                <input
-                  type="text"
+                <textarea
+                  ref={chatTextareaRef}
+                  rows={1}
                   value={queryInput}
                   onChange={(e) => setQueryInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      void handleSendChat(queryInput);
+                    }
+                  }}
                   placeholder={t("askPlaceholder")}
                   disabled={chatLoading}
+                  className="m-chat-textarea"
                 />
                 <button type="submit" className="m-send-btn" disabled={!queryInput.trim() || chatLoading} title="Send">
                   <Send size={16} />
