@@ -8,7 +8,20 @@ type VoiceMicProps = {
   disabled?: boolean;
   selectedLang?: string;
   onLanguageChange?: (lang: string) => void;
+  compact?: boolean;
 };
+
+const VOICE_LANGS: Array<{ code: string; label: string; short: string }> = [
+  { code: "hi-IN", label: "हिंदी (Hindi)", short: "हि" },
+  { code: "en-IN", label: "English (India)", short: "EN" },
+  { code: "ta-IN", label: "தமிழ் (Tamil)", short: "த" },
+  { code: "te-IN", label: "తెలుగు (Telugu)", short: "తె" },
+  { code: "ml-IN", label: "മലയാളം (Malayalam)", short: "മ" },
+  { code: "gu-IN", label: "ગુજરાતી (Gujarati)", short: "ગુ" },
+  { code: "mr-IN", label: "मराठी (Marathi)", short: "म" },
+  { code: "bn-IN", label: "বাংলা (Bengali)", short: "বা" },
+  { code: "kn-IN", label: "ಕನ್ನಡ (Kannada)", short: "ಕ" },
+];
 
 // TypeScript Web Speech API definitions
 interface SpeechRecognitionEvent extends Event {
@@ -27,7 +40,7 @@ interface SpeechRecognitionInstance extends EventTarget {
   onend: (() => void) | null;
 }
 
-export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN", onLanguageChange }: VoiceMicProps) {
+export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN", onLanguageChange, compact = false }: VoiceMicProps) {
   const [isListening, setIsListening] = useState(false);
   const [lang, setLang] = useState<string>(selectedLang);
   const [supported, setSupported] = useState(false);
@@ -90,8 +103,10 @@ export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN
 
   if (!supported) return null;
 
+  const currentLangObj = VOICE_LANGS.find((v) => v.code === lang) || VOICE_LANGS[0];
+
   return (
-    <div className="voice-mic-container" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+    <div className="voice-mic-container" style={{ display: "inline-flex", alignItems: "center", gap: compact ? "4px" : "6px", flexShrink: 0 }}>
       <button
         type="button"
         className={`voice-mic-button ${isListening ? "listening" : ""}`}
@@ -103,18 +118,19 @@ export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          width: "36px",
-          height: "36px",
+          width: compact ? "32px" : "36px",
+          height: compact ? "32px" : "36px",
           borderRadius: "50%",
-          border: isListening ? "2px solid #e17a2c" : "1px solid rgba(255,255,255,0.18)",
-          backgroundColor: isListening ? "#e17a2c" : "rgba(255,255,255,0.06)",
+          border: isListening ? "2px solid #e17a2c" : "1px solid rgba(8, 37, 54, 0.15)",
+          backgroundColor: isListening ? "#e17a2c" : "rgba(8, 37, 54, 0.05)",
           color: isListening ? "#fff" : "inherit",
           cursor: "pointer",
           transition: "all 0.2s ease",
           position: "relative",
+          flexShrink: 0,
         }}
       >
-        {isListening ? <MicOff size={17} /> : <Mic size={17} />}
+        {isListening ? <MicOff size={compact ? 15 : 17} /> : <Mic size={compact ? 15 : 17} />}
         {isListening && (
           <span
             style={{
@@ -129,35 +145,90 @@ export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN
         )}
       </button>
 
-      <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11px", opacity: 0.85 }}>
-        <Globe size={12} />
-        <select
-          value={lang}
-          onChange={(e) => {
-            setLang(e.target.value);
-            onLanguageChange?.(e.target.value);
-          }}
+      {compact ? (
+        <div
+          className="voice-lang-compact"
           style={{
-            background: "transparent",
-            border: "none",
-            color: "inherit",
-            fontSize: "11px",
+            position: "relative",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(14, 116, 144, 0.08)",
+            border: "1px solid rgba(14, 116, 144, 0.22)",
+            borderRadius: "10px",
+            padding: "2px 5px",
             cursor: "pointer",
-            outline: "none",
+            height: "26px",
+            flexShrink: 0,
           }}
-          aria-label="Voice language"
+          title={`Speech Language: ${currentLangObj.label}`}
         >
-          <option value="hi-IN" style={{ background: "#0f172a", color: "#fff" }}>हिंदी (Hindi)</option>
-          <option value="en-IN" style={{ background: "#0f172a", color: "#fff" }}>English (India)</option>
-          <option value="ta-IN" style={{ background: "#0f172a", color: "#fff" }}>தமிழ் (Tamil)</option>
-          <option value="te-IN" style={{ background: "#0f172a", color: "#fff" }}>తెలుగు (Telugu)</option>
-          <option value="ml-IN" style={{ background: "#0f172a", color: "#fff" }}>മലയാളം (Malayalam)</option>
-          <option value="gu-IN" style={{ background: "#0f172a", color: "#fff" }}>ગુજરાતી (Gujarati)</option>
-          <option value="mr-IN" style={{ background: "#0f172a", color: "#fff" }}>मराठी (Marathi)</option>
-          <option value="bn-IN" style={{ background: "#0f172a", color: "#fff" }}>বাংলা (Bengali)</option>
-          <option value="kn-IN" style={{ background: "#0f172a", color: "#fff" }}>ಕನ್ನಡ (Kannada)</option>
-        </select>
-      </div>
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "var(--mobile-marine, #082536)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "2px",
+              pointerEvents: "none",
+              userSelect: "none",
+            }}
+          >
+            {currentLangObj.short}
+            <span style={{ fontSize: "8px", opacity: 0.6 }}>▼</span>
+          </span>
+          <select
+            value={lang}
+            onChange={(e) => {
+              setLang(e.target.value);
+              onLanguageChange?.(e.target.value);
+            }}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              opacity: 0,
+              cursor: "pointer",
+            }}
+            aria-label="Voice language"
+          >
+            {VOICE_LANGS.map((v) => (
+              <option key={v.code} value={v.code} style={{ background: "#0f172a", color: "#fff" }}>
+                {v.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : (
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11px", opacity: 0.85 }}>
+          <Globe size={12} />
+          <select
+            value={lang}
+            onChange={(e) => {
+              setLang(e.target.value);
+              onLanguageChange?.(e.target.value);
+            }}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "inherit",
+              fontSize: "11px",
+              cursor: "pointer",
+              outline: "none",
+            }}
+            aria-label="Voice language"
+          >
+            {VOICE_LANGS.map((v) => (
+              <option key={v.code} value={v.code} style={{ background: "#0f172a", color: "#fff" }}>
+                {v.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 }

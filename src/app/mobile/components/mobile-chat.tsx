@@ -491,6 +491,7 @@ export function MobileChat({
           onTranscript={(text) => handleSendQuery(text)}
           disabled={loading}
           selectedLang={activeVoiceCode}
+          compact={true}
         />
         <input
           type="text"
