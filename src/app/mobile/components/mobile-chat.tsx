@@ -16,6 +16,13 @@ import {
 import { sendMessage, type ConversationReply } from "@/lib/api/ai";
 import { VoiceMic, VoiceSpeaker } from "@/components/voice-mic";
 import type { MobileLocation } from "./location-detector";
+import {
+  isGreetingQuery,
+  getConversationalGreeting,
+  localizeReplyText,
+  getLocalizedError,
+  FormattedChatMessage,
+} from "@/features/ai/mobile-assistant-helper";
 
 export const MOBILE_LANGUAGES = [
   { code: "hi", name: "Hindi", native: "हिन्दी", voiceCode: "hi-IN" },
@@ -189,6 +196,20 @@ export function MobileChat({
     setInputQuery("");
     setLoading(true);
 
+    // Natural Greeting Interception: Respond warmly in the selected language without backend template dump
+    if (isGreetingQuery(cleanText)) {
+      const greetingAnswer = getConversationalGreeting(selectedLang);
+      const botGreetMsg: ChatMessage = {
+        id: `bot-greet-${Date.now()}`,
+        sender: "bot",
+        text: greetingAnswer,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, botGreetMsg]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const langNames: Record<string, string> = {
         en: "English",
@@ -213,10 +234,12 @@ export function MobileChat({
         messages.filter((m) => m.reply).at(-1)?.reply?.conversation_id
       );
 
+      const localizedAnswer = localizeReplyText(reply.answer, selectedLang);
+
       const botMsg: ChatMessage = {
         id: reply.message_id || `bot-${Date.now()}`,
         sender: "bot",
-        text: reply.answer,
+        text: localizedAnswer,
         reply,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
@@ -225,7 +248,7 @@ export function MobileChat({
       const errorMsg: ChatMessage = {
         id: `err-${Date.now()}`,
         sender: "bot",
-        text: "समुद्री सर्वर से संपर्क नहीं हो पाया। पुनः प्रयास किया जा रहा है। (Could not reach marine assistant API. Please retry.)",
+        text: getLocalizedError(selectedLang),
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages((prev) => [...prev, errorMsg]);
@@ -376,8 +399,8 @@ export function MobileChat({
                 </div>
               </div>
 
-              <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.5, fontSize: "13.5px" }}>
-                {msg.text}
+              <div style={{ fontSize: "13.5px" }}>
+                <FormattedChatMessage text={msg.text} />
               </div>
 
               {/* Quick Metrics Card if present in bot answer */}
