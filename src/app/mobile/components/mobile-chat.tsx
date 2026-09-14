@@ -234,7 +234,13 @@ export function MobileChat({
         messages.filter((m) => m.reply).at(-1)?.reply?.conversation_id
       );
 
-      const localizedAnswer = localizeReplyText(reply.answer, selectedLang);
+      const localizedAnswer = localizeReplyText(reply.answer, selectedLang, {
+        locationLabel: location.label,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        riskLevel: "LOW",
+        riskScore: 18,
+      });
 
       const botMsg: ChatMessage = {
         id: reply.message_id || `bot-${Date.now()}`,

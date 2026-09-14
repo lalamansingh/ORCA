@@ -46,15 +46,88 @@ export function getLocalizedError(lang: string): string {
   return LOCALIZED_NETWORK_ERRORS[lang] || LOCALIZED_NETWORK_ERRORS.hi;
 }
 
+export interface LiveRiskContext {
+  locationLabel: string;
+  latitude: number;
+  longitude: number;
+  riskLevel: string; // "LOW" | "MODERATE" | "HIGH" | "CRITICAL"
+  riskScore: number;
+  waveHeight?: string;
+  windSpeed?: string;
+  windGust?: string;
+  currentSpeed?: string;
+  recommendation?: string;
+}
+
 /**
- * If the backend returns an English template but user selected Hindi (or regional language),
- * translate template labels into that language cleanly so there is no language mismatch.
+ * Localize template text and strictly synchronize with the Dashboard's live risk assessment
+ * and currently selected coastal location/coordinates.
  */
-export function localizeReplyText(text: string, lang: string): string {
+export function localizeReplyText(text: string, lang: string, liveRisk?: LiveRiskContext): string {
   if (!text) return "";
+  let out = text;
+
+  // 1. Synchronize Location Header with the actual selected location
+  if (liveRisk) {
+    const locName = liveRisk.locationLabel || "Selected Coastal Waters";
+    const coords = `${liveRisk.latitude.toFixed(2)}° N, ${liveRisk.longitude.toFixed(2)}° E`;
+
+    if (lang === "en") {
+      out = out.replace(/📍 \*\*Marine Sector\*\*:[^\n]+/g, `📍 **Location / Harbor**: **${locName}** (\`${coords}\`)`);
+      out = out.replace(/📍 \*\*स्थान\*\*:[^\n]+/g, `📍 **Location / Harbor**: **${locName}** (\`${coords}\`)`);
+    } else if (lang === "hi") {
+      out = out.replace(/📍 \*\*Marine Sector\*\*:[^\n]+/g, `📍 **स्थान / बंदरगाह**: **${locName}** (\`${coords}\`)`);
+      out = out.replace(/📍 \*\*स्थान\*\*:[^\n]+/g, `📍 **स्थान / बंदरगाह**: **${locName}** (\`${coords}\`)`);
+    }
+
+    // 2. Synchronize Safety Assessment block with the Dashboard's actual live risk
+    const isDanger = liveRisk.riskLevel === "HIGH" || liveRisk.riskLevel === "CRITICAL";
+    const isCaution = liveRisk.riskLevel === "MODERATE";
+
+    if (lang === "hi") {
+      let riskBlock = "";
+      if (isDanger) {
+        riskBlock = `🛡️ **सुरक्षा मूल्यांकन**: **उच्च जोखिम (DANGER / HIGH RISK - ${liveRisk.riskScore}/100)** ⚠️\nतूफानी हवाओं या तेज समुद्री धाराओं के कारण समुद्र में जाना वर्जित है! नावों को तट पर रखने की सलाह दी जाती है।`;
+      } else if (isCaution) {
+        riskBlock = `🛡️ **सुरक्षा मूल्यांकन**: **मध्यम जोखिम (CAUTION - ${liveRisk.riskScore}/100)** ⚠️\nसमुद्री हलचल और हवाओं के कारण सतर्कता आवश्यक है। केवल अनुभवी नाविक ही सावधानीपूर्वक जाएं।`;
+      } else {
+        riskBlock = `🛡️ **सुरक्षा मूल्यांकन**: **कम जोखिम (सुरक्षित / SAFE SEA - ${liveRisk.riskScore}/100)** ✅\nमौसम और लहरें सामान्य हैं। तटीय मछली पकड़ने और नौकायन के लिए स्थिति अनुकूल है।`;
+      }
+
+      // Replace safety assessment line or section
+      out = out.replace(/🛡️ \*\*Safety Assessment\*\*:[^\n]+(\n[^\n]+)?/g, riskBlock);
+      out = out.replace(/🛡️ \*\*सुरक्षा मूल्यांकन\*\*:[^\n]+(\n[^\n]+)?/g, riskBlock);
+    } else {
+      let riskBlock = "";
+      if (isDanger) {
+        riskBlock = `🛡️ **Safety Assessment**: **HIGH RISK (DANGER - Score: ${liveRisk.riskScore}/100)** ⚠️\nElevated marine hazards present. Fishing boats and small craft are strongly advised NOT to venture out.`;
+      } else if (isCaution) {
+        riskBlock = `🛡️ **Safety Assessment**: **MODERATE RISK (Caution - Score: ${liveRisk.riskScore}/100)** ⚠️\nModerate sea turbulence and elevated winds. Exercise caution and maintain coastal radio watch.`;
+      } else {
+        riskBlock = `🛡️ **Safety Assessment**: **LOW RISK (Safe Sea - Score: ${liveRisk.riskScore}/100)** ✅\nSea conditions are calm and favorable for coastal fishing and navigation.`;
+      }
+
+      out = out.replace(/🛡️ \*\*Safety Assessment\*\*:[^\n]+(\n[^\n]+)?/g, riskBlock);
+      out = out.replace(/🛡️ \*\*सुरक्षा मूल्यांकन\*\*:[^\n]+(\n[^\n]+)?/g, riskBlock);
+    }
+
+    // 3. Synchronize Wave Height & Wind Speed if live data is available
+    if (liveRisk.waveHeight) {
+      out = out.replace(/• \*\*Significant Wave Height\*\*:[^\n]+/g, `• **Significant Wave Height**: ${liveRisk.waveHeight}`);
+      out = out.replace(/• \*\*लहरों की ऊँचाई\*\*:[^\n]+/g, `• **लहरों की ऊँचाई**: ${liveRisk.waveHeight}`);
+      out = out.replace(/• \*\*Lehar Ki Unchai \(Waves\)\*\*:[^\n]+/g, `• **लहरों की ऊँचाई**: ${liveRisk.waveHeight}`);
+    }
+    if (liveRisk.windSpeed) {
+      const gustText = liveRisk.windGust ? ` (झोंके: ${liveRisk.windGust})` : "";
+      const gustTextEn = liveRisk.windGust ? ` (Gusts: ${liveRisk.windGust})` : "";
+      out = out.replace(/• \*\*Wind Speed\*\*:[^\n]+/g, `• **Wind Speed**: ${liveRisk.windSpeed}${gustTextEn}`);
+      out = out.replace(/• \*\*हवा की गति\*\*:[^\n]+/g, `• **हवा की गति**: ${liveRisk.windSpeed}${gustText}`);
+      out = out.replace(/• \*\*Hawa Ki Speed \(Wind\)\*\*:[^\n]+/g, `• **हवा की गति**: ${liveRisk.windSpeed}${gustText}`);
+    }
+  }
+
   if (lang === "en") {
-    // Return clean English
-    return text
+    return out
       .replace(/📍 \*\*स्थान\*\*:/g, "📍 **Location**:")
       .replace(/🛡️ \*\*सुरक्षा मूल्यांकन\*\*:/g, "🛡️ **Safety Assessment**:")
       .replace(/🌊 \*\*समुद्री व मौसमी स्थिति\*\*:/g, "🌊 **Marine & Weather Conditions**:")
@@ -67,7 +140,7 @@ export function localizeReplyText(text: string, lang: string): string {
   }
 
   if (lang === "hi") {
-    return text
+    return out
       .replace(/📍 \*\*Marine Sector\*\*:/g, "📍 **स्थान / तटीय क्षेत्र**:")
       .replace(/🛡️ \*\*Safety Assessment\*\*:/g, "🛡️ **सुरक्षा मूल्यांकन**:")
       .replace(/\*\*LOW RISK\*\* \(Favorable for fishing and sailing \(Safe\)\)/gi, "**कम जोखिम (सुरक्षित)** — समुद्र में जाना अनुकूल है")
@@ -87,7 +160,7 @@ export function localizeReplyText(text: string, lang: string): string {
   }
 
   if (lang === "ta") {
-    return text
+    return out
       .replace(/📍 \*\*Marine Sector\*\*:/g, "📍 **கடலோரப் பகுதி**:")
       .replace(/🛡️ \*\*Safety Assessment\*\*:/g, "🛡️ **பாதுகாப்பு மதிப்பீடு**:")
       .replace(/\*\*LOW RISK\*\*/gi, "**பாதுகாப்பானது (குறைந்த ஆபத்து)**")
@@ -100,7 +173,7 @@ export function localizeReplyText(text: string, lang: string): string {
       .replace(/💡 \*\*Advisory\*\*:/g, "💡 **ஆலோசனை**:");
   }
 
-  return text;
+  return out;
 }
 
 import React from "react";
