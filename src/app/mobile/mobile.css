@@ -78,11 +78,11 @@
 .mobile-brand-icon {
   width: 28px;
   height: 28px;
-  background: var(--mobile-marine);
+  background: transparent;
   border-radius: 7px;
   display: grid;
   place-items: center;
-  color: #ffffff;
+  overflow: hidden;
 }
 
 .mobile-port-selector {
