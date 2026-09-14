@@ -41,6 +41,15 @@ import type { SelectedLocation } from "@/features/map/types";
 import { useMapLayers } from "@/features/map/hooks/use-map-layers";
 import { MAP_PARAMETERS } from "@/features/map/mobile-map-params";
 import { getLocalizedAlert, getRegionalAdvisories, type LocalizedAlert } from "@/features/alerts/mobile-alert-i18n";
+import { getPFZGeoJSON } from "@/lib/api/pfz";
+import type { PFZGeoJSON } from "@/features/pfz/types";
+import {
+  isGreetingQuery,
+  getConversationalGreeting,
+  localizeReplyText,
+  getLocalizedError,
+  FormattedChatMessage,
+} from "@/features/ai/mobile-assistant-helper";
 
 import "./mobile.css";
 
@@ -817,13 +826,38 @@ export default function MobileAppPage() {
   const marine = conditions.data?.marine?.current;
   const sourceDetail = conditions.data?.sources?.map((s) => s.provider).join(" · ") || "Open-Meteo & INCOIS";
 
+  // Live PFZ GeoJSON layer state
+  const [pfzGeojson, setPfzGeojson] = useState<PFZGeoJSON | null>(null);
+  useEffect(() => {
+    let active = true;
+    void getPFZGeoJSON().then(
+      (data) => { if (active) setPfzGeojson(data); },
+      () => { if (active) setPfzGeojson(null); }
+    );
+    return () => { active = false; };
+  }, []);
+
+  const mobileSavedLocations = useMemo(() => COASTAL_HARBORS.map((h, i) => ({
+    id: `port-${i}`,
+    user_id: "mobile",
+    name: h.name,
+    location_type: "HARBOR" as const,
+    latitude: h.lat,
+    longitude: h.lon,
+    created_at: "",
+    updated_at: "",
+  })), []);
+
   // Trigger Map resize whenever Map tab is activated
   useEffect(() => {
     if (activeTab === "map") {
-      const timer = setTimeout(() => {
-        window.dispatchEvent(new Event("resize"));
-      }, 100);
-      return () => clearTimeout(timer);
+      window.dispatchEvent(new Event("resize"));
+      const t1 = setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
+      const t2 = setTimeout(() => window.dispatchEvent(new Event("resize")), 300);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     }
   }, [activeTab]);
 
@@ -877,6 +911,20 @@ export default function MobileAppPage() {
     setQueryInput("");
     setChatLoading(true);
 
+    // Natural Greeting Interception: Respond warmly in the selected language without backend template dump
+    if (isGreetingQuery(q)) {
+      const greetingAnswer = getConversationalGreeting(selectedLang);
+      const botGreetMsg: ChatMessage = {
+        id: `b-greet-${Date.now()}`,
+        sender: "bot",
+        text: greetingAnswer,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setChatMessages((prev) => [...prev, botGreetMsg]);
+      setChatLoading(false);
+      return;
+    }
+
     try {
       // Find previous valid conversation_id if available (MUST be a UUID or undefined)
       const prevReplies = chatMessages.filter((m) => m.reply?.conversation_id);
@@ -910,10 +958,15 @@ export default function MobileAppPage() {
         lastConvId
       );
 
+      const localizedAnswer = localizeReplyText(
+        reply.answer || (selectedLang === "en" ? "Could not retrieve information." : "जानकारी प्राप्त नहीं हो सकी।"),
+        selectedLang
+      );
+
       const botMsg: ChatMessage = {
         id: `b-${Date.now()}`,
         sender: "bot",
-        text: reply.answer || (selectedLang === "en" ? "Could not retrieve information." : "जानकारी प्राप्त नहीं हो सकी।"),
+        text: localizedAnswer,
         reply,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
@@ -925,7 +978,7 @@ export default function MobileAppPage() {
         {
           id: `err-${Date.now()}`,
           sender: "bot",
-          text: t("networkError"),
+          text: getLocalizedError(selectedLang),
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
@@ -1234,7 +1287,7 @@ export default function MobileAppPage() {
               {chatMessages.map((msg) => (
                 <div key={msg.id} className={`m-bubble ${msg.sender}`}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                    <span>{msg.text}</span>
+                    <FormattedChatMessage text={msg.text} />
                     {msg.sender === "bot" && (
                       <VoiceSpeaker
                         text={msg.text}
@@ -1378,6 +1431,8 @@ export default function MobileAppPage() {
                 layers={mapLayers.layers}
                 showDemoFeatures={true}
                 alerts={alertData.data?.alerts ?? []}
+                pfzs={pfzGeojson}
+                savedLocations={mobileSavedLocations}
                 riskLevel={riskLevel}
               />
             </div>

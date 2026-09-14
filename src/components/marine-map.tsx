@@ -84,7 +84,9 @@ export function MarineMap({
   const selectLocationRef = useRef(onSelectLocation);
   const featureSelectRef = useRef(onFeatureSelect);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
-  const [baseStyle, setBaseStyle] = useState<"satellite" | "ocean" | "dark" | "vector">("satellite");
+  const [baseStyle, setBaseStyle] = useState<"satellite" | "ocean" | "dark" | "vector">(
+    compact ? "ocean" : "satellite"
+  );
   const [styleRevision, setStyleRevision] = useState<number>(0);
   const [aisCount, setAisCount] = useState<number>(0);
   const [legendOpen, setLegendOpen] = useState<boolean>(!compact);
@@ -492,7 +494,7 @@ export function MarineMap({
           container: container.current,
           style: COMPOSITE_BASE_STYLE,
           center: selectedLocation ? [selectedLocation.longitude, selectedLocation.latitude] : INDIA_MARINE_VIEW.center,
-          zoom: selectedLocation ? LOCATION_ZOOM : INDIA_MARINE_VIEW.zoom,
+          zoom: selectedLocation ? (compact ? 7.5 : LOCATION_ZOOM) : INDIA_MARINE_VIEW.zoom,
           attributionControl: false,
         });
         mapRef.current = mapInstance;
@@ -500,6 +502,23 @@ export function MarineMap({
         mapInstance.on("load", () => {
           if (cancelled || !mapInstance) return;
           setupMapLayers(mapInstance);
+
+          // Apply initial basemap visibility
+          const BASEMAP_GROUPS: Record<"satellite" | "ocean" | "dark" | "vector", string[]> = {
+            satellite: ["satellite-base-layer"],
+            ocean: ["ocean-base-layer", "ocean-ref-layer"],
+            dark: ["dark-base-layer", "dark-ref-layer"],
+            vector: ["voyager-base-layer"],
+          };
+          Object.entries(BASEMAP_GROUPS).forEach(([groupKey, layerIds]) => {
+            const isTarget = groupKey === (compact ? "ocean" : baseStyle);
+            layerIds.forEach((layerId) => {
+              if (mapInstance?.getLayer(layerId)) {
+                mapInstance.setLayoutProperty(layerId, "visibility", isTarget ? "visible" : "none");
+              }
+            });
+          });
+
           setState("ready");
           setStyleRevision((r) => r + 1);
 
@@ -559,12 +578,24 @@ export function MarineMap({
       mapRef.current?.resize();
     };
     window.addEventListener("resize", handleResize);
-    const t1 = setTimeout(handleResize, 150);
-    const t2 = setTimeout(handleResize, 500);
+
+    let ro: ResizeObserver | null = null;
+    if (container.current && typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => {
+        mapRef.current?.resize();
+      });
+      ro.observe(container.current);
+    }
+
+    const t1 = setTimeout(handleResize, 100);
+    const t2 = setTimeout(handleResize, 300);
+    const t3 = setTimeout(handleResize, 800);
     return () => {
       window.removeEventListener("resize", handleResize);
+      ro?.disconnect();
       clearTimeout(t1);
       clearTimeout(t2);
+      clearTimeout(t3);
     };
   }, [state, compact]);
 
@@ -831,7 +862,7 @@ export function MarineMap({
       return;
     }
 
-    map.flyTo({ center: [selectedLocation.longitude, selectedLocation.latitude], zoom: LOCATION_ZOOM, essential: true });
+    map.flyTo({ center: [selectedLocation.longitude, selectedLocation.latitude], zoom: compact ? 7.5 : LOCATION_ZOOM, essential: true });
     const feature = {
       type: "Feature" as const,
       properties: { risk_label: riskLevel && riskLevel !== "UNAVAILABLE" ? riskLevel : "" },
@@ -926,7 +957,9 @@ export function MarineMap({
         {(
           compact
             ? [
+                { id: "ocean", label: "🌊 Bathy" },
                 { id: "satellite", label: "🛰️ Sat" },
+                { id: "vector", label: "🗺️ Map" },
                 { id: "dark", label: "🌙 Dark" },
               ]
             : [
