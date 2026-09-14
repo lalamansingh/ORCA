@@ -19,6 +19,7 @@ import { API_BASE_URL, API_V1_PREFIX } from "@/lib/api/config";
 type Props = {
   routeGeometry?: import("geojson").LineString | null;
   large?: boolean;
+  compact?: boolean;
   layers?: MarineMapLayer[];
   selectedLocation?: SelectedLocation | null;
   selectMode?: boolean;
@@ -63,6 +64,7 @@ const interactiveLayerIds = [
 export function MarineMap({
   routeGeometry,
   large = false,
+  compact = false,
   layers = [],
   selectedLocation,
   selectMode = false,
@@ -85,7 +87,7 @@ export function MarineMap({
   const [baseStyle, setBaseStyle] = useState<"satellite" | "ocean" | "dark" | "vector">("satellite");
   const [styleRevision, setStyleRevision] = useState<number>(0);
   const [aisCount, setAisCount] = useState<number>(0);
-  const [legendOpen, setLegendOpen] = useState<boolean>(true);
+  const [legendOpen, setLegendOpen] = useState<boolean>(!compact);
 
   useEffect(() => {
     selectModeRef.current = selectMode;
@@ -551,6 +553,21 @@ export function MarineMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Automatic Map Resize on Mount & Tab Transition
+  useEffect(() => {
+    const handleResize = () => {
+      mapRef.current?.resize();
+    };
+    window.addEventListener("resize", handleResize);
+    const t1 = setTimeout(handleResize, 150);
+    const t2 = setTimeout(handleResize, 500);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [state, compact]);
+
   // Basemap Switcher Handler
   useEffect(() => {
     const map = mapRef.current;
@@ -882,50 +899,55 @@ export function MarineMap({
   }, [alerts, focusAlertId, state]);
 
   return (
-    <div className={`marine-map ${large ? "large" : ""} ${selectMode ? "select-mode" : ""}`} style={{ position: "relative" }}>
-      <div ref={container} className="live-map" aria-label="Interactive marine map" />
+    <div className={`marine-map ${large ? "large" : ""} ${compact ? "compact" : ""} ${selectMode ? "select-mode" : ""}`} style={{ position: "relative", height: "100%", minHeight: compact ? "440px" : undefined }}>
+      <div ref={container} className="live-map" style={compact ? { opacity: 1 } : undefined} aria-label="Interactive marine map" />
 
       {/* Map Style Selector Overlay */}
       <div
         className="map-style-switcher"
         style={{
           position: "absolute",
-          top: "12px",
-          right: "12px",
+          top: "10px",
+          right: "10px",
           zIndex: 10,
-          background: "rgba(15, 23, 42, 0.88)",
+          background: "rgba(15, 23, 42, 0.9)",
           backdropFilter: "blur(10px)",
-          padding: "4px 8px",
+          padding: "3px 6px",
           borderRadius: "8px",
           border: "1px solid rgba(255, 255, 255, 0.18)",
           display: "flex",
           alignItems: "center",
-          gap: "6px",
-          fontSize: "11px",
+          gap: "4px",
+          fontSize: "10.5px",
         }}
       >
-        <Satellite size={13} style={{ color: "#38bdf8" }} />
-        <span style={{ fontWeight: 600, color: "#e2e8f0" }}>Base:</span>
+        {!compact && <Satellite size={13} style={{ color: "#38bdf8" }} />}
+        {!compact && <span style={{ fontWeight: 600, color: "#e2e8f0" }}>Base:</span>}
         {(
-          [
-            { id: "satellite", label: "🛰️ Satellite" },
-            { id: "ocean", label: "🌊 Bathymetry" },
-            { id: "dark", label: "🌙 Dark Ocean" },
-            { id: "vector", label: "🗺️ Vector" },
-          ] as const
+          compact
+            ? [
+                { id: "satellite", label: "🛰️ Sat" },
+                { id: "dark", label: "🌙 Dark" },
+              ]
+            : [
+                { id: "satellite", label: "🛰️ Satellite" },
+                { id: "ocean", label: "🌊 Bathymetry" },
+                { id: "dark", label: "🌙 Dark Ocean" },
+                { id: "vector", label: "🗺️ Vector" },
+              ]
         ).map((item) => (
           <button
             key={item.id}
             type="button"
-            onClick={() => setBaseStyle(item.id)}
+            onClick={() => setBaseStyle(item.id as "satellite" | "ocean" | "dark" | "vector")}
             style={{
               background: baseStyle === item.id ? "#0284c7" : "transparent",
               color: baseStyle === item.id ? "#ffffff" : "#94a3b8",
               border: baseStyle === item.id ? "1px solid #38bdf8" : "none",
               borderRadius: "4px",
-              padding: "3px 7px",
+              padding: "2px 6px",
               cursor: "pointer",
-              fontSize: "11px",
+              fontSize: "10.5px",
               fontWeight: baseStyle === item.id ? 700 : 500,
             }}
           >
@@ -935,8 +957,9 @@ export function MarineMap({
       </div>
 
       {/* Floating Live Map Specifications & Layer Legend HUD */}
-      <div
-        className="map-live-hud"
+      {!compact && (
+        <div
+          className="map-live-hud"
         style={{
           position: "absolute",
           bottom: "14px",
@@ -1082,6 +1105,7 @@ export function MarineMap({
           </div>
         )}
       </div>
+      )}
 
       {state !== "ready" && (
         <div className="map-loading">
@@ -1096,10 +1120,10 @@ export function MarineMap({
         </div>
       )}
       {showStatus && state === "ready" && (
-        <div className="map-ui-top">
-          <span className="map-location">
-            <MapPin size={13} />
-            {selectedLocation?.label ?? "India Marine Satellite View"}
+        <div className="map-ui-top" style={compact ? { top: "10px", left: "10px", right: "auto", zIndex: 10 } : undefined}>
+          <span className="map-location" style={{ fontSize: "11px", fontWeight: 700 }}>
+            <MapPin size={13} style={{ color: "#34bdd1" }} />
+            {(selectedLocation?.label ?? "India Marine View").split(" ")[0]}
           </span>
         </div>
       )}
