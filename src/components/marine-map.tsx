@@ -523,29 +523,38 @@ export function MarineMap({
           setStyleRevision((r) => r + 1);
 
           mapInstance.on("click", (event) => {
+            const lat = Number(event.lngLat.lat.toFixed(4));
+            const lng = Number(event.lngLat.lng.toFixed(4));
             const features = mapInstance?.queryRenderedFeatures(event.point, { layers: interactiveLayerIds }) ?? [];
+            let label = `Marine Point [${lat.toFixed(2)}° N, ${lng.toFixed(2)}° E]`;
+
             if (features[0]) {
               const properties = features[0].properties ?? {};
+              const featureTitle = String(properties.title ?? properties.name ?? properties.product ?? "");
+              if (featureTitle) label = featureTitle;
               featureSelectRef.current?.({
                 id: String(properties.id ?? properties.mmsi ?? "feature"),
-                title: String(properties.title ?? properties.name ?? properties.product ?? "Marine Specification"),
+                title: featureTitle || "Marine Specification",
                 type: String(properties.type ?? properties.vessel_type ?? properties.product ?? "Layer"),
                 status: String(properties.status ?? properties.collision_risk ?? properties.restriction_level ?? "Active"),
                 source: String(properties.source ?? properties.provider ?? "ORCA Marine Intelligence Network"),
                 updated: String(properties.updated ?? properties.last_updated ?? properties.valid_time ?? "Real-time Live Feed"),
-                coordinates: `${formatCoordinate(event.lngLat.lat, "latitude")} · ${formatCoordinate(event.lngLat.lng, "longitude")}`,
+                coordinates: `${formatCoordinate(lat, "latitude")} · ${formatCoordinate(lng, "longitude")}`,
                 properties: Object.fromEntries(
                   Object.entries(properties)
                     .filter(([key]) => !["id", "title", "type", "status", "source", "updated", "layer"].includes(key))
                     .map(([key, value]) => [key, String(value)]),
                 ),
               });
-            } else if (selectModeRef.current) {
+            }
+
+            // In compact (mobile) mode or when selectMode is active, clicking ANYWHERE on the map selects that location
+            if (compact || selectModeRef.current) {
               selectLocationRef.current?.({
-                latitude: event.lngLat.lat,
-                longitude: event.lngLat.lng,
+                latitude: lat,
+                longitude: lng,
                 source: "map",
-                label: "Selected Marine Coordinates",
+                label,
               });
             }
           });

@@ -49,6 +49,7 @@ import {
   localizeReplyText,
   getLocalizedError,
   FormattedChatMessage,
+  type LiveRiskContext,
 } from "@/features/ai/mobile-assistant-helper";
 
 import "./mobile.css";
@@ -898,6 +899,11 @@ export default function MobileAppPage() {
     }
   }, [chatMessages, chatLoading, activeTab]);
 
+  const riskLevel = risk.data?.level ?? "LOW";
+  const riskScore = risk.data?.score ?? 18;
+  const isSafe = riskLevel === "LOW";
+  const isModerate = riskLevel === "MODERATE";
+
   const handleSendChat = async (text: string) => {
     if (!text.trim() || chatLoading) return;
     const q = text.trim();
@@ -958,9 +964,23 @@ export default function MobileAppPage() {
         lastConvId
       );
 
+      const liveRiskContext: LiveRiskContext = {
+        locationLabel: location.label || "Coastal Waters",
+        latitude: location.latitude,
+        longitude: location.longitude,
+        riskLevel: riskLevel,
+        riskScore: riskScore,
+        waveHeight: formatMeasurement(marine?.wave_height) || "1.1 m",
+        windSpeed: formatMeasurement(weather?.wind_speed) || "15 km/h",
+        windGust: weather?.wind_gust?.value ? `${weather.wind_gust.value} km/h` : undefined,
+        currentSpeed: formatMeasurement(marine?.ocean_current_speed) || "0.35 m/s",
+        recommendation: risk.data?.recommendation,
+      };
+
       const localizedAnswer = localizeReplyText(
         reply.answer || (selectedLang === "en" ? "Could not retrieve information." : "जानकारी प्राप्त नहीं हो सकी।"),
-        selectedLang
+        selectedLang,
+        liveRiskContext
       );
 
       const botMsg: ChatMessage = {
@@ -997,10 +1017,33 @@ export default function MobileAppPage() {
     setShowPortModal(false);
   };
 
-  const riskLevel = risk.data?.level ?? "LOW";
-  const riskScore = risk.data?.score ?? 18;
-  const isSafe = riskLevel === "LOW";
-  const isModerate = riskLevel === "MODERATE";
+  const handleSelectMapLocation = (loc: SelectedLocation) => {
+    let bestLabel = loc.label;
+    if (!bestLabel || bestLabel.startsWith("Marine Point") || bestLabel.startsWith("Selected Marine")) {
+      let closestHarbor = null;
+      let minDistance = 0.75; // ~80 km
+      for (const h of COASTAL_HARBORS) {
+        const dist = Math.hypot(h.lat - loc.latitude, h.lon - loc.longitude);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestHarbor = h;
+        }
+      }
+      if (closestHarbor) {
+        bestLabel = `${closestHarbor.name} (${closestHarbor.state})`;
+      } else {
+        const sea = loc.longitude < 75.5 ? "Arabian Sea" : loc.longitude > 79.5 ? "Bay of Bengal" : "Indian Ocean";
+        bestLabel = `${sea} [${loc.latitude.toFixed(2)}° N, ${loc.longitude.toFixed(2)}° E]`;
+      }
+    }
+
+    publishSelectedLocation({
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+      source: "map",
+      label: bestLabel,
+    });
+  };
 
   const voiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLang)?.voiceCode || "hi-IN";
 
@@ -1263,6 +1306,41 @@ export default function MobileAppPage() {
         {/* TAB 2: ASSISTANT (सागर साथी - AI Voice & Chat) */}
         {activeTab === "assistant" && (
           <div className="m-chat-container">
+            {/* Active Location & Risk Context Badge for Chat */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "rgba(8, 37, 54, 0.9)",
+                padding: "8px 12px",
+                borderRadius: "10px",
+                border: "1px solid rgba(56, 189, 248, 0.22)",
+                fontSize: "12px",
+                marginBottom: "4px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+                <MapPin size={14} style={{ color: "#38bdf8", flexShrink: 0 }} />
+                <span style={{ fontWeight: 700, color: "#f8fafc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {location.label || "Marine Sector"} ({location.latitude.toFixed(2)}°N, {location.longitude.toFixed(2)}°E)
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: "10.5px",
+                  fontWeight: 800,
+                  padding: "2px 7px",
+                  borderRadius: "8px",
+                  flexShrink: 0,
+                  background: isSafe ? "rgba(16, 185, 129, 0.2)" : isModerate ? "rgba(245, 158, 11, 0.2)" : "rgba(239, 68, 68, 0.2)",
+                  color: isSafe ? "#34d399" : isModerate ? "#fbbf24" : "#f87171",
+                }}
+              >
+                {isSafe ? t("voyageSafe") : isModerate ? t("voyageCaution") : t("voyageDanger")} ({riskScore})
+              </span>
+            </div>
+
             {/* Quick Suggestion Chips in current language */}
             <div className="m-quick-chips">
               {[
@@ -1422,12 +1500,46 @@ export default function MobileAppPage() {
               })}
             </div>
             
+            {/* Active Selected Location & Risk Pill on Map */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "rgba(8, 37, 54, 0.95)",
+                padding: "8px 12px",
+                borderRadius: "10px",
+                border: "1px solid rgba(56, 189, 248, 0.25)",
+                fontSize: "12px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+                <MapPin size={14} style={{ color: "#38bdf8", flexShrink: 0 }} />
+                <span style={{ fontWeight: 700, color: "#f1f5f9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {location.label || "Marine Sector"} ({location.latitude.toFixed(2)}°N, {location.longitude.toFixed(2)}°E)
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: "10.5px",
+                  fontWeight: 800,
+                  padding: "2px 7px",
+                  borderRadius: "8px",
+                  flexShrink: 0,
+                  background: isSafe ? "rgba(16, 185, 129, 0.2)" : isModerate ? "rgba(245, 158, 11, 0.2)" : "rgba(239, 68, 68, 0.2)",
+                  color: isSafe ? "#34d399" : isModerate ? "#fbbf24" : "#f87171",
+                }}
+              >
+                {isSafe ? t("voyageSafe") : isModerate ? t("voyageCaution") : t("voyageDanger")} ({riskScore})
+              </span>
+            </div>
+
             {/* Seamless, Non-overlapping Mobile Map Container */}
             <div className="compact-map-wrapper">
               <MarineMap
                 compact={true}
                 selectedLocation={location}
-                onSelectLocation={(loc) => publishSelectedLocation(loc)}
+                onSelectLocation={handleSelectMapLocation}
                 layers={mapLayers.layers}
                 showDemoFeatures={true}
                 alerts={alertData.data?.alerts ?? []}
