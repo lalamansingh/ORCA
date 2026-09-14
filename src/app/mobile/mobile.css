@@ -1,0 +1,614 @@
+/* ==========================================================================
+   ORCA Android Mobile App Experience
+   ========================================================================== */
+
+:root {
+  --android-bg: #070d18;
+  --android-card: #0e1726;
+  --android-card-hover: #131f33;
+  --android-surface: #17243b;
+  --android-primary: #0284c7;
+  --android-primary-light: #38bdf8;
+  --android-primary-glow: rgba(56, 189, 248, 0.18);
+  --android-accent: #f59e0b;
+  --android-success: #10b981;
+  --android-danger: #ef4444;
+  --android-warning: #f97316;
+  --android-border: rgba(56, 189, 248, 0.16);
+  --android-text-high: #f8fafc;
+  --android-text-medium: #cbd5e1;
+  --android-text-low: #64748b;
+  --android-radius: 16px;
+}
+
+/* Base Container Wrapper */
+.android-wrapper {
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 10%, #0c1a30 0%, #040812 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, Roboto, "Segoe UI", sans-serif;
+  color: var(--android-text-high);
+}
+
+/* Presentation Mode Controls (Top Bar on Desktop) */
+.presentation-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 440px;
+  margin-bottom: 12px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: 1px solid var(--android-border);
+  font-size: 13px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.presentation-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--android-primary-light);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.presentation-badge span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--android-success);
+  box-shadow: 0 0 10px var(--android-success);
+  animation: pulse-dot 2s infinite;
+}
+
+.presentation-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.presentation-btn {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--android-text-high);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.presentation-btn:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: var(--android-primary-light);
+}
+
+/* Phone Mockup Frame (Active when frameMode is true) */
+.android-phone-frame {
+  width: 100%;
+  max-width: 430px;
+  height: 860px;
+  max-height: 94vh;
+  background: var(--android-bg);
+  border-radius: 46px;
+  border: 8px solid #232b38;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85),
+              0 0 0 2px rgba(56, 189, 248, 0.2),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fullscreen Mode (Removes phone bezel) */
+.android-phone-fullscreen {
+  width: 100%;
+  max-width: 500px;
+  height: 100vh;
+  max-height: 100vh;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+/* Android Status Bar */
+.android-status-bar {
+  height: 38px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--android-text-medium);
+  background: var(--android-bg);
+  flex-shrink: 0;
+  user-select: none;
+  z-index: 50;
+}
+
+.status-bar-notch {
+  width: 12px;
+  height: 12px;
+  background: #020617;
+  border-radius: 50%;
+  border: 2px solid #1e293b;
+}
+
+.status-bar-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+/* Top Navigation / App Bar */
+.android-app-bar {
+  padding: 10px 16px;
+  background: rgba(14, 23, 38, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--android-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 40;
+}
+
+.app-bar-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 0;
+}
+
+.app-bar-location:hover {
+  background: rgba(56, 189, 248, 0.16);
+  border-color: var(--android-primary-light);
+}
+
+.app-bar-location strong {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.app-bar-location small {
+  font-size: 10px;
+  color: var(--android-text-low);
+  display: block;
+}
+
+.app-bar-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.android-lang-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--android-border);
+  color: var(--android-text-high);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Main Content Area in Android App */
+.android-content-area {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--android-bg);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom Scrollbar for Phone Frame */
+.android-content-area::-webkit-scrollbar {
+  width: 4px;
+}
+.android-content-area::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.2);
+  border-radius: 4px;
+}
+
+/* Bottom Navigation Bar */
+.android-bottom-nav {
+  height: 64px;
+  background: rgba(14, 23, 38, 0.98);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--android-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  flex-shrink: 0;
+  z-index: 40;
+}
+
+.nav-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: var(--android-text-low);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 12px;
+  transition: all 0.15s ease;
+  position: relative;
+  flex: 1;
+}
+
+.nav-tab-item.active {
+  color: var(--android-primary-light);
+  font-weight: 600;
+}
+
+.nav-tab-item.active::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  width: 24px;
+  height: 3px;
+  background: var(--android-primary-light);
+  border-radius: 2px;
+  box-shadow: 0 0 8px var(--android-primary-light);
+}
+
+/* Android Gestures Bar (Bottom Indicator) */
+.android-gesture-bar {
+  height: 18px;
+  background: var(--android-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gesture-pill {
+  width: 90px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+}
+
+/* Location Detection View */
+.location-detection-screen {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.radar-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(56, 189, 248, 0.05) 70%, transparent 100%);
+  border: 2px solid var(--android-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 20px;
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+}
+
+.radar-sweep {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--android-primary-light);
+  animation: radar-ping 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.radar-sweep-2 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px dashed rgba(56, 189, 248, 0.4);
+  animation: radar-ping 2s 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+@keyframes radar-ping {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ports Grid */
+.ports-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+  margin-top: 14px;
+  text-align: left;
+}
+
+.port-card-btn {
+  background: var(--android-card);
+  border: 1px solid var(--android-border);
+  padding: 12px;
+  border-radius: 12px;
+  color: var(--android-text-high);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.port-card-btn:hover, .port-card-btn.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--android-primary-light);
+  transform: translateY(-2px);
+}
+
+.port-card-btn strong {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.port-card-btn small {
+  font-size: 11px;
+  color: var(--android-text-low);
+}
+
+/* Chat Screen Styles */
+.mobile-chat-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.mobile-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.chat-bubble-user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  padding: 10px 14px;
+  border-radius: 18px 18px 4px 18px;
+  max-width: 84%;
+  font-size: 13.5px;
+  line-height: 1.45;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+  word-break: break-word;
+}
+
+.chat-bubble-bot {
+  align-self: flex-start;
+  background: var(--android-card);
+  border: 1px solid var(--android-border);
+  color: var(--android-text-high);
+  padding: 14px;
+  border-radius: 18px 18px 18px 4px;
+  max-width: 92%;
+  font-size: 13px;
+  line-height: 1.5;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Quick Feature Pills in Chat */
+.chat-feature-chips {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  overflow-x: auto;
+  white-space: nowrap;
+  background: rgba(14, 23, 38, 0.7);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+  flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chat-feature-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.feature-chip-btn {
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: var(--android-primary-light);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.feature-chip-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: var(--android-primary-light);
+  transform: translateY(-1px);
+}
+
+/* Chat Input Bar */
+.mobile-chat-input-bar {
+  padding: 10px 12px;
+  background: rgba(14, 23, 38, 0.98);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--android-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mobile-input-field {
+  flex: 1;
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid var(--android-border);
+  color: var(--android-text-high);
+  font-size: 13.5px;
+  padding: 10px 14px;
+  border-radius: 24px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.mobile-input-field:focus {
+  border-color: var(--android-primary-light);
+  box-shadow: 0 0 0 2px var(--android-primary-glow);
+}
+
+.mobile-send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--android-primary);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.mobile-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mobile-send-btn:not(:disabled):hover {
+  background: var(--android-primary-light);
+  transform: scale(1.05);
+}
+
+/* Mobile Cards (PFZ, Weather, Alerts) */
+.mobile-info-card {
+  background: var(--android-card);
+  border: 1px solid var(--android-border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-info-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.mobile-info-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.mobile-info-badge.green {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.mobile-info-badge.yellow {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.mobile-info-badge.red {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
