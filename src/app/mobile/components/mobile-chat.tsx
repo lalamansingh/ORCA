@@ -190,8 +190,25 @@ export function MobileChat({
     setLoading(true);
 
     try {
+      const langNames: Record<string, string> = {
+        en: "English",
+        hi: "Hindi",
+        ta: "Tamil",
+        te: "Telugu",
+        ml: "Malayalam",
+        gu: "Gujarati",
+        mr: "Marathi",
+        bn: "Bengali",
+        kn: "Kannada",
+        or: "Odia",
+      };
+      const langDirective = selectedLang === "en"
+        ? "(Please reply in English)"
+        : `(Please reply in ${langNames[selectedLang] || "Hindi"})`;
+      const promptWithLang = `${cleanText} ${langDirective}`;
+
       const reply = await sendMessage(
-        cleanText,
+        promptWithLang,
         { latitude: location.latitude, longitude: location.longitude },
         messages.filter((m) => m.reply).at(-1)?.reply?.conversation_id
       );
