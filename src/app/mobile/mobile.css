@@ -1015,3 +1015,130 @@
   }
 }
 
+/* ---------------- Real-time Coordinate Live Card on Map ---------------- */
+.m-coordinate-live-card {
+  background: #ffffff;
+  border: 1px solid var(--mobile-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 10px rgba(8, 37, 54, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.m-coord-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.m-coord-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.m-coord-title h4 {
+  margin: 3px 0 2px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #082536;
+  line-height: 1.3;
+}
+
+.m-coord-title p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.m-coord-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--mobile-marine);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.m-coord-risk-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.m-coord-risk-pill.safe {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.m-coord-risk-pill.caution {
+  background: rgba(245, 158, 11, 0.14);
+  color: #d97706;
+}
+
+.m-coord-risk-pill.danger {
+  background: rgba(239, 68, 68, 0.14);
+  color: #dc2626;
+}
+
+.m-coord-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  background: #f8fafc;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.m-coord-metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.m-coord-metric-item small {
+  font-size: 9.5px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m-coord-metric-item strong {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.m-coord-ask-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(14, 116, 144, 0.08);
+  border: 1px solid rgba(14, 116, 144, 0.25);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #082536;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.m-coord-ask-ai-btn:hover {
+  background: rgba(14, 116, 144, 0.15);
+}
+
+

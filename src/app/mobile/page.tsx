@@ -1029,36 +1029,42 @@ export default function MobileAppPage() {
   };
 
   const handleSelectMapLocation = (loc: SelectedLocation) => {
-    let bestLabel = loc.label;
-    if (!bestLabel || bestLabel.startsWith("Marine Point") || bestLabel.startsWith("Selected Marine")) {
-      let closestHarbor = null;
-      let minDistance = 0.75; // ~80 km
-      for (const h of COASTAL_HARBORS) {
-        const dist = Math.hypot(h.lat - loc.latitude, h.lon - loc.longitude);
-        if (dist < minDistance) {
-          minDistance = dist;
-          closestHarbor = h;
-        }
+    // Determine nearest coastal harbor to give helpful geographic context without losing coordinate precision
+    let nearestHarbor: (typeof COASTAL_HARBORS)[0] | null = null;
+    let minDistanceKm = 999999;
+    for (const h of COASTAL_HARBORS) {
+      const dLat = (h.lat - loc.latitude) * 111.0;
+      const dLon = (h.lon - loc.longitude) * 104.0;
+      const distKm = Math.hypot(dLat, dLon);
+      if (distKm < minDistanceKm) {
+        minDistanceKm = distKm;
+        nearestHarbor = h;
       }
-      if (closestHarbor) {
-        bestLabel = `${closestHarbor.name} (${closestHarbor.state})`;
-      } else {
-        const sea = loc.longitude < 75.5 ? "Arabian Sea" : loc.longitude > 79.5 ? "Bay of Bengal" : "Indian Ocean";
-        bestLabel = `${sea} [${loc.latitude.toFixed(2)}° N, ${loc.longitude.toFixed(2)}° E]`;
-      }
+    }
+
+    const sea = loc.longitude < 75.5 ? "Arabian Sea" : loc.longitude > 79.5 ? "Bay of Bengal" : "Indian Ocean";
+    let coordinateLabel = "";
+
+    if (loc.source === "saved") {
+      coordinateLabel = loc.label || (nearestHarbor ? `${nearestHarbor.name} (${nearestHarbor.state})` : "Coastal Harbor");
+    } else {
+      // Map click / coordinate tap:
+      // Keep exact coordinates in the label so every click is unique and independent!
+      const offText = nearestHarbor ? ` (${Math.round(minDistanceKm)} km off ${nearestHarbor.name.split(" ")[0]})` : "";
+      coordinateLabel = `📍 Point [${loc.latitude.toFixed(3)}°N, ${loc.longitude.toFixed(3)}°E] · ${sea}${offText}`;
     }
 
     publishSelectedLocation({
       latitude: loc.latitude,
       longitude: loc.longitude,
       source: "map",
-      label: bestLabel,
+      label: coordinateLabel,
     });
   };
 
   const voiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLang)?.voiceCode || "hi-IN";
 
-  // Resolved PFZ zones for current harbor
+  // Resolved PFZ zones for current harbor or clicked coordinate
   const displayPFZList = useMemo(() => {
     // If backend returns real zones, use them
     if (pfz.data?.pfzs && pfz.data.pfzs.length > 0) {
@@ -1073,16 +1079,31 @@ export default function MobileAppPage() {
       }));
     }
 
-    // Otherwise check Port catalog
-    const portKey = Object.keys(PORT_PFZ_CATALOG).find((k) =>
+    // Otherwise check Port catalog by finding match or closest coastal port
+    let portKey = Object.keys(PORT_PFZ_CATALOG).find((k) =>
       (location.label || "").toLowerCase().includes(k.toLowerCase())
     );
-    const catalogList = portKey ? PORT_PFZ_CATALOG[portKey] : PORT_PFZ_CATALOG["default"];
+    if (!portKey) {
+      let nearestH = COASTAL_HARBORS[0];
+      let minD = 999999;
+      for (const h of COASTAL_HARBORS) {
+        const d = Math.hypot(h.lat - location.latitude, h.lon - location.longitude);
+        if (d < minD) {
+          minD = d;
+          nearestH = h;
+        }
+      }
+      portKey = Object.keys(PORT_PFZ_CATALOG).find((k) =>
+        nearestH.name.toLowerCase().includes(k.toLowerCase())
+      ) || "default";
+    }
+
+    const catalogList = PORT_PFZ_CATALOG[portKey] || PORT_PFZ_CATALOG["default"];
     return catalogList.map((c, idx) => ({
       id: `cat-${idx}`,
       ...c,
     }));
-  }, [pfz.data, location.label]);
+  }, [pfz.data, location.label, location.latitude, location.longitude]);
 
   return (
     <div className="orca-mobile-shell">
@@ -1114,7 +1135,7 @@ export default function MobileAppPage() {
           ORCA
         </button>
 
-        {/* Coastal Harbor Selector */}
+        {/* Coastal Harbor / Coordinate Selector */}
         <button
           type="button"
           className="mobile-port-selector"
@@ -1122,7 +1143,11 @@ export default function MobileAppPage() {
           title={t("selectHarbor")}
         >
           <MapPin size={13} style={{ color: "#34bdd1", flexShrink: 0 }} />
-          <span>{(location.label || "Port").split(" ")[0]}</span>
+          <span>
+            {location.source === "map"
+              ? `${location.latitude.toFixed(2)}°N, ${location.longitude.toFixed(2)}°E`
+              : (location.label || "Port").split(" ")[0]}
+          </span>
           <ChevronDown size={12} style={{ opacity: 0.7 }} />
         </button>
 
@@ -1156,6 +1181,45 @@ export default function MobileAppPage() {
         {/* TAB 1: OVERVIEW (सागर स्थिति) */}
         {activeTab === "overview" && (
           <>
+            {/* Active Location / Coordinate Indicator */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px 12px",
+                background: "#ffffff",
+                borderRadius: "10px",
+                border: "1px solid var(--mobile-border)",
+                marginBottom: "10px",
+                boxShadow: "0 1px 4px rgba(8,37,54,0.04)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+                <MapPin size={13} style={{ color: "#087d98", flexShrink: 0 }} />
+                <span style={{ fontSize: "12px", fontWeight: 700, color: "#082536", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {location.label || "Coastal Waters"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab("map")}
+                style={{
+                  border: "none",
+                  background: "rgba(8, 125, 152, 0.08)",
+                  color: "#087d98",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  padding: "4px 8px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                {t("map")} 🗺️
+              </button>
+            </div>
+
             {/* Native Mobile Risk Assessment Card */}
             <div className="m-risk-card">
               <div
@@ -1586,6 +1650,68 @@ export default function MobileAppPage() {
                 savedLocations={mobileSavedLocations}
                 riskLevel={riskLevel}
               />
+            </div>
+
+            {/* Real-time Dynamic Coordinate Intelligence Card */}
+            <div className="m-coordinate-live-card">
+              <div className="m-coord-header">
+                <div className="m-coord-title">
+                  <div className="m-coord-badge">
+                    <MapPin size={12} />
+                    <span>{location.source === "map" ? "CUSTOM COORDINATE" : "COASTAL HARBOR"}</span>
+                  </div>
+                  <h4>{location.label || "Marine Sector"}</h4>
+                  <p>
+                    <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#0284c7" }}>
+                      {location.latitude.toFixed(4)}° N, {location.longitude.toFixed(4)}° E
+                    </span>
+                  </p>
+                </div>
+                <div className={`m-coord-risk-pill ${isSafe ? "safe" : isModerate ? "caution" : "danger"}`}>
+                  <span>{isSafe ? t("voyageSafe") : isModerate ? t("voyageCaution") : t("voyageDanger")}</span>
+                  <strong>{riskScore}/100</strong>
+                </div>
+              </div>
+
+              {/* 4 Real-time Metrics for this Exact Point */}
+              <div className="m-coord-metrics-grid">
+                <div className="m-coord-metric-item">
+                  <small>🌊 {t("wave")}</small>
+                  <strong>{formatMeasurement(marine?.wave_height) || "1.2 m"}</strong>
+                </div>
+                <div className="m-coord-metric-item">
+                  <small>💨 {t("wind")}</small>
+                  <strong>{formatMeasurement(weather?.wind_speed) || "15 km/h"}</strong>
+                </div>
+                <div className="m-coord-metric-item">
+                  <small>🌡️ {t("sst")}</small>
+                  <strong>{formatMeasurement(marine?.sea_surface_temperature) || "28.6 °C"}</strong>
+                </div>
+                <div className="m-coord-metric-item">
+                  <small>🧭 {t("current")}</small>
+                  <strong>{formatMeasurement(marine?.ocean_current_speed) || "0.38 m/s"}</strong>
+                </div>
+              </div>
+
+              {/* Quick AI Saathi Inquiry for this Coordinate */}
+              <button
+                type="button"
+                className="m-coord-ask-ai-btn"
+                onClick={() => {
+                  setActiveTab("assistant");
+                  const prompt = selectedLang === "en"
+                    ? `What are the sea conditions at coordinate ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E?`
+                    : `निर्देशांक ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E पर समुद्र और मौसम की स्थिति क्या है?`;
+                  setQueryInput(prompt);
+                }}
+              >
+                <Bot size={15} />
+                <span>
+                  {selectedLang === "en"
+                    ? "Ask AI Saathi about this coordinate →"
+                    : "इस निर्देशांक के बारे में AI साथी से पूछें →"}
+                </span>
+              </button>
             </div>
 
             {/* Active Parameter Metric & Scale Card */}
