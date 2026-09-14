@@ -3,12 +3,13 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "ORCA — Marine Intelligence & Fisher Companion",
-    short_name: "ORCA Marine",
+    short_name: "ORCA",
     description: "Marine Ecosystem Reasoning with Collaborative Agents for safe fishing voyages.",
-    start_url: "/mobile",
+    start_url: "/mobile?pwa=v3",
+    id: "orca-marine-v3",
     display: "standalone",
-    background_color: "#082536",
-    theme_color: "#082536",
+    background_color: "#ffffff",
+    theme_color: "#ffffff",
     orientation: "portrait",
     icons: [
       {

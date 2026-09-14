@@ -43,6 +43,7 @@ import { MAP_PARAMETERS } from "@/features/map/mobile-map-params";
 import { getLocalizedAlert, getRegionalAdvisories, type LocalizedAlert } from "@/features/alerts/mobile-alert-i18n";
 import { getPFZGeoJSON } from "@/lib/api/pfz";
 import type { PFZGeoJSON } from "@/features/pfz/types";
+import { SplashScreen } from "@/components/splash-screen";
 import {
   isGreetingQuery,
   getConversationalGreeting,
@@ -814,6 +815,7 @@ export default function MobileAppPage() {
   const oceanProducts = useOceanProducts(location);
   const mapLayers = useMapLayers();
   const [activeMapParam, setActiveMapParam] = useState<string>("chlorophyll");
+  const [showSplash, setShowSplash] = useState(true);
 
   const handleSelectMapParam = (paramId: string) => {
     setActiveMapParam(paramId);
@@ -1084,9 +1086,22 @@ export default function MobileAppPage() {
 
   return (
     <div className="orca-mobile-shell">
+      {/* 2-Second Native Splash Pop-up with White Background & ORCA Logo */}
+      <SplashScreen
+        show={showSplash}
+        onFinish={() => setShowSplash(false)}
+        duration={2000}
+      />
+
       {/* 1. Native Top App Bar */}
       <header className="mobile-top-bar">
-        <Link href="/dashboard" className="mobile-bar-brand" title="Web Command Center">
+        <button
+          type="button"
+          onClick={() => setShowSplash(true)}
+          className="mobile-bar-brand"
+          style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+          title="ORCA Logo & Launch Pop-up"
+        >
           <div className="mobile-brand-icon">
             <img
               src="/icon-192.png"
@@ -1097,7 +1112,7 @@ export default function MobileAppPage() {
             />
           </div>
           ORCA
-        </Link>
+        </button>
 
         {/* Coastal Harbor Selector */}
         <button
