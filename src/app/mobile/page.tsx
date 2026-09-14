@@ -133,6 +133,11 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     dataSource: "डेटा स्रोत",
     updated: "अपडेटेड",
     justNow: "अभी",
+    networkError: "नेटवर्क त्रुटि: समुद्री सर्वर से संपर्क नहीं हो पाया। कृपया दोबारा प्रयास करें।",
+    chipWeather: "आज का मौसम कैसा है?",
+    chipPFZ: "नजदीकी मछली क्षेत्र (PFZ)?",
+    chipWind: "हवा की गति व दिशा क्या है?",
+    chipSafety: "क्या आज समुद्र में जाना सुरक्षित है?",
   },
   en: {
     safeSea: "Safe Sea · Safe for Voyage",
@@ -192,6 +197,11 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     dataSource: "Data Sources",
     updated: "Updated",
     justNow: "Just now",
+    networkError: "Network error: Unable to reach marine assistant. Please retry.",
+    chipWeather: "How is the ocean weather today?",
+    chipPFZ: "Where is nearest fish zone (PFZ)?",
+    chipWind: "Wind speed and direction?",
+    chipSafety: "Is it safe to sail today?",
   },
   ta: {
     safeSea: "கடல் பாதுகாப்பானது · Safe Sea",
@@ -251,6 +261,11 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     dataSource: "தரவு ஆதாரம்",
     updated: "புதுப்பிக்கப்பட்டது",
     justNow: "இப்போது",
+    networkError: "பிணையப் பிழை: சேவையகத்தை இணைக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
+    chipWeather: "இன்றைய கடல் வானிலை எப்படி உள்ளது?",
+    chipPFZ: "அருகிலுள்ள மீன்பிடி மண்டலம் எங்கே?",
+    chipWind: "காற்றின் வேகம் மற்றும் திசை என்ன?",
+    chipSafety: "இன்று கடலுக்கு செல்வது பாதுகாப்பானதா?",
   },
   te: {
     safeSea: "సముద్రం సురక్షితం · Safe Sea",
@@ -310,6 +325,11 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     dataSource: "డేటా వనరులు",
     updated: "అప్‌డేట్ చేయబడింది",
     justNow: "ఇప్పుడే",
+    networkError: "నెట్‌వర్క్ లోపం: సర్వర్‌ను సంప్రదించలేకపోయాము. దయచేసి మళ్లీ ప్రయత్నించండి.",
+    chipWeather: "నేటి సముద్ర వాతావరణం ఎలా ఉంది?",
+    chipPFZ: "సమీపంలోని చేపల వేట ప్రాంతం ఎక్కడ?",
+    chipWind: "గాలి వేగం మరియు దిశ ఏమిటి?",
+    chipSafety: "ఈ రోజు వేటకు వెళ్లడం సురక్షితమేనా?",
   },
   ml: {
     safeSea: "കടൽ സുരക്ഷിതം · Safe Sea",
@@ -369,6 +389,11 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     dataSource: "വിവര ഉറവിടം",
     updated: "അപ്ഡേറ്റ് ചെയ്തത്",
     justNow: "ഇപ്പോൾ",
+    networkError: "നെറ്റ്‌വർക്ക് തകരാർ: സെർവറുമായി ബന്ധപ്പെടാൻ കഴിഞ്ഞില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.",
+    chipWeather: "ഇന്നത്തെ സമുദ്ര കാലാവസ്ഥ എങ്ങനെയുണ്ട്?",
+    chipPFZ: "ഏറ്റവും അടുത്തുള്ള മത്സ്യ മേഖല എവിടെയാണ്?",
+    chipWind: "കാറ്റിന്റെ വേഗതയും ദിശയും എന്താണ്?",
+    chipSafety: "ഇന്ന് കടലിൽ പോകുന്നത് സുരക്ഷിതമാണോ?",
   },
   gu: {
     safeSea: "દરિયો સુરક્ષિત છે · Safe Sea",
@@ -428,6 +453,11 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     dataSource: "ડેટા સ્ત્રોત",
     updated: "અપડેટ કર્યું",
     justNow: "હમણાં જ",
+    networkError: "નેટવર્ક ભૂલ: સર્વર સાથે સંપર્ક થઈ શક્યો નથી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+    chipWeather: "આજનું દરિયાઈ હવામાન કેવું છે?",
+    chipPFZ: "નજીકનું માછલી ક્ષેત્ર (PFZ) ક્યાં છે?",
+    chipWind: "પવનની ઝડપ અને દિશા શું છે?",
+    chipSafety: "શું આજે દરિયામાં જવું સુરક્ષિત છે?",
   },
   mr: {
     safeSea: "समुद्र सुरक्षित आहे · Safe Sea",
@@ -487,6 +517,11 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     dataSource: "माहिती स्रोत",
     updated: "अपडेट",
     justNow: "आत्ताच",
+    networkError: "नेटवर्क त्रुटी: सर्व्हरशी संपर्क होऊ शकला नाही. कृपया पुन्हा प्रयत्न करा.",
+    chipWeather: "आजचे समुद्री हवामान कसे आहे?",
+    chipPFZ: "जवळचे मत्स्य क्षेत्र (PFZ) कुठे आहे?",
+    chipWind: "वाऱ्याचा वेग आणि दिशा काय आहे?",
+    chipSafety: "आज समुद्रात जाणे सुरक्षित आहे का?",
   },
   bn: {
     safeSea: "সমুদ্র শান্ত ও নিরাপদ · Safe Sea",
@@ -546,6 +581,11 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     dataSource: "উৎস",
     updated: "আপডেট",
     justNow: "এইমাত্র",
+    networkError: "নেটওয়ার্ক ত্রুটি: সার্ভারের সাথে যোগাযোগ করা যায়নি। দয়া করে আবার চেষ্টা করুন।",
+    chipWeather: "আজকের সমুদ্রের আবহাওয়া কেমন?",
+    chipPFZ: "নিকটবর্তী মাছ ধরার অঞ্চল কোথায়?",
+    chipWind: "বাতাসের গতি ও দিক কী?",
+    chipSafety: "আজ কি সমুদ্রে যাওয়া নিরাপদ?",
   },
   kn: {
     safeSea: "ಸಮುದ್ರ ಸುರಕ್ಷಿತವಾಗಿದೆ · Safe Sea",
@@ -605,6 +645,11 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     dataSource: "ಮಾಹಿತಿ ಮೂಲ",
     updated: "ನವೀಕರಿಸಲಾಗಿದೆ",
     justNow: "ಈಗಷ್ಟೇ",
+    networkError: "ನೆಟ್‌ವರ್ಕ್ ದೋಷ: ಸರ್ವರ್ ಸಂಪರ್ಕಿಸಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    chipWeather: "ಇಂದಿನ ಸಮುದ್ರ ಹವಾಮಾನ ಹೇಗಿದೆ?",
+    chipPFZ: "ಹತ್ತಿರದ ಮೀನು ವಲಯ ಎಲ್ಲಿದೆ?",
+    chipWind: "ಗಾಳಿಯ ವೇಗ ಮತ್ತು ದಿಕ್ಕು ಯಾವುದು?",
+    chipSafety: "ಇಂದು ಸಮುದ್ರಕ್ಕೆ ಹೋಗುವುದು ಸುರಕ್ಷಿತವೇ?",
   },
   or: {
     safeSea: "ସମୁଦ୍ର ସୁରକ୍ଷିତ · Safe Sea",
@@ -664,6 +709,11 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     dataSource: "ତଥ୍ୟ ଉତ୍ସ",
     updated: "ଅପଡେଟ୍",
     justNow: "ବର୍ତ୍ତମାନ",
+    networkError: "ନେଟୱାର୍କ ତ୍ରୁଟି: ସର୍ଭର ସହିତ ଯୋଗାଯୋଗ ହୋଇପାରିଲା ନାହିଁ। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।",
+    chipWeather: "ଆଜିର ସମୁଦ୍ର ପାଣିପାଗ କିପରି ଅଛି?",
+    chipPFZ: "ନିକଟତମ ମାଛ ଧରିବା ଜୋନ୍ କେଉଁଠି?",
+    chipWind: "ପବନର ବେଗ ଏବଂ ଦିଗ କ’ଣ?",
+    chipSafety: "ଆଜି ସମୁଦ୍ରକୁ ଯିବା ସୁରକ୍ଷିତ କି?",
   },
 };
 
@@ -828,36 +878,54 @@ export default function MobileAppPage() {
     setChatLoading(true);
 
     try {
+      // Find previous valid conversation_id if available (MUST be a UUID or undefined)
+      const prevReplies = chatMessages.filter((m) => m.reply?.conversation_id);
+      const lastConvId = prevReplies.length > 0 ? prevReplies[prevReplies.length - 1]?.reply?.conversation_id : undefined;
+
+      const langNames: Record<string, string> = {
+        en: "English",
+        hi: "Hindi",
+        ta: "Tamil",
+        te: "Telugu",
+        ml: "Malayalam",
+        gu: "Gujarati",
+        mr: "Marathi",
+        bn: "Bengali",
+        kn: "Kannada",
+        or: "Odia",
+      };
+
+      const langDirective = selectedLang === "en"
+        ? "(Please reply in English)"
+        : `(Please reply in ${langNames[selectedLang] || "Hindi"})`;
+
+      const promptWithLang = `${q} ${langDirective}`;
+
       const reply = await sendMessage(
-        q,
+        promptWithLang,
         {
-          language: selectedLang,
-          selected_location: location
-            ? {
-                latitude: location.latitude,
-                longitude: location.longitude,
-                label: location.label ?? "Coastal Station",
-              }
-            : undefined,
+          latitude: location.latitude,
+          longitude: location.longitude,
         },
-        selectedLang
+        lastConvId
       );
 
       const botMsg: ChatMessage = {
         id: `b-${Date.now()}`,
         sender: "bot",
-        text: reply.answer || "जानकारी प्राप्त नहीं हो सकी।",
+        text: reply.answer || (selectedLang === "en" ? "Could not retrieve information." : "जानकारी प्राप्त नहीं हो सकी।"),
         reply,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setChatMessages((prev) => [...prev, botMsg]);
-    } catch {
+    } catch (err) {
+      console.error("AI Saathi error:", err);
       setChatMessages((prev) => [
         ...prev,
         {
           id: `err-${Date.now()}`,
           sender: "bot",
-          text: "नेटवर्क त्रुटि: कृपया दोबारा प्रयास करें।",
+          text: t("networkError"),
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
@@ -1145,10 +1213,10 @@ export default function MobileAppPage() {
             {/* Quick Suggestion Chips in current language */}
             <div className="m-quick-chips">
               {[
-                selectedLang === "en" ? "How is the sea weather today?" : "आज का मौसम कैसा है?",
-                selectedLang === "en" ? "Where is nearest fish zone (PFZ)?" : "नजदीकी मछली क्षेत्र (PFZ)?",
-                selectedLang === "en" ? "Wind speed and direction?" : "हवा की गति व दिशा क्या है?",
-                selectedLang === "en" ? "Is it safe to sail today?" : "क्या आज समुद्र में जाना सुरक्षित है?",
+                t("chipWeather"),
+                t("chipPFZ"),
+                t("chipWind"),
+                t("chipSafety"),
               ].map((txt) => (
                 <button
                   key={txt}
