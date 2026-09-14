@@ -1,614 +1,950 @@
 /* ==========================================================================
-   ORCA Android Mobile App Experience
+   ORCA Android Mobile App — Native Mobile Ergonomics & Design System
+   Exact Design System: #082536 (Navy), #087d98 (Marine), #34bdd1 (Cyan),
+   #1b4332 / #edf8f5 (PFZ Mint), #f3f7f9 (Surface)
    ========================================================================== */
 
 :root {
-  --android-bg: #070d18;
-  --android-card: #0e1726;
-  --android-card-hover: #131f33;
-  --android-surface: #17243b;
-  --android-primary: #0284c7;
-  --android-primary-light: #38bdf8;
-  --android-primary-glow: rgba(56, 189, 248, 0.18);
-  --android-accent: #f59e0b;
-  --android-success: #10b981;
-  --android-danger: #ef4444;
-  --android-warning: #f97316;
-  --android-border: rgba(56, 189, 248, 0.16);
-  --android-text-high: #f8fafc;
-  --android-text-medium: #cbd5e1;
-  --android-text-low: #64748b;
-  --android-radius: 16px;
+  --mobile-navy: #082536;
+  --mobile-navy-light: #103850;
+  --mobile-marine: #087d98;
+  --mobile-cyan: #34bdd1;
+  --mobile-surface: #f4f8fa;
+  --mobile-card: #ffffff;
+  --mobile-border: #d4e2e8;
+  --mobile-text: #0d2533;
+  --mobile-muted: #5c7585;
+  --mobile-safe: #107c41;
+  --mobile-safe-bg: #edf8f2;
+  --mobile-amber: #b45309;
+  --mobile-amber-bg: #fffbeb;
+  --mobile-danger: #b91c1c;
+  --mobile-danger-bg: #fef2f2;
 }
 
-/* Base Container Wrapper */
-.android-wrapper {
+/* Base Mobile App Shell */
+.orca-mobile-shell {
   min-height: 100vh;
-  background: radial-gradient(circle at 50% 10%, #0c1a30 0%, #040812 100%);
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  background: var(--mobile-surface);
+  color: var(--mobile-text);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  box-sizing: border-box;
-  font-family: system-ui, -apple-system, Roboto, "Segoe UI", sans-serif;
-  color: var(--android-text-high);
+  position: relative;
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Presentation Mode Controls (Top Bar on Desktop) */
-.presentation-bar {
+@media (min-width: 768px) {
+  .orca-mobile-shell {
+    max-width: 440px;
+    margin: 0 auto;
+    box-shadow: 0 0 50px rgba(8, 37, 54, 0.2);
+    border-left: 1px solid var(--mobile-border);
+    border-right: 1px solid var(--mobile-border);
+  }
+}
+
+/* ---------------- Native Top App Bar ---------------- */
+.mobile-top-bar {
+  height: 56px;
+  background: var(--mobile-navy);
+  color: #ffffff;
+  padding: 0 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-  max-width: 440px;
-  margin-bottom: 12px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(12px);
-  padding: 8px 16px;
-  border-radius: 9999px;
-  border: 1px solid var(--android-border);
-  font-size: 13px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(8, 37, 54, 0.25);
 }
 
-.presentation-badge {
+.mobile-bar-brand {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--android-primary-light);
-  font-weight: 600;
-  font-size: 12px;
-  letter-spacing: 0.5px;
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: 0.8px;
 }
 
-.presentation-badge span {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--android-success);
-  box-shadow: 0 0 10px var(--android-success);
-  animation: pulse-dot 2s infinite;
+.mobile-brand-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--mobile-marine);
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
 }
 
-.presentation-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.presentation-btn {
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  color: var(--android-text-high);
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  cursor: pointer;
+.mobile-port-selector {
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.2s ease;
-}
-
-.presentation-btn:hover {
-  background: rgba(56, 189, 248, 0.25);
-  border-color: var(--android-primary-light);
-}
-
-/* Phone Mockup Frame (Active when frameMode is true) */
-.android-phone-frame {
-  width: 100%;
-  max-width: 430px;
-  height: 860px;
-  max-height: 94vh;
-  background: var(--android-bg);
-  border-radius: 46px;
-  border: 8px solid #232b38;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85),
-              0 0 0 2px rgba(56, 189, 248, 0.2),
-              inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Fullscreen Mode (Removes phone bezel) */
-.android-phone-fullscreen {
-  width: 100%;
-  max-width: 500px;
-  height: 100vh;
-  max-height: 100vh;
-  border-radius: 0;
-  border: none;
-  box-shadow: none;
-}
-
-/* Android Status Bar */
-.android-status-bar {
-  height: 38px;
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--android-text-medium);
-  background: var(--android-bg);
-  flex-shrink: 0;
-  user-select: none;
-  z-index: 50;
-}
-
-.status-bar-notch {
-  width: 12px;
-  height: 12px;
-  background: #020617;
-  border-radius: 50%;
-  border: 2px solid #1e293b;
-}
-
-.status-bar-icons {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 6px 12px;
+  color: #ffffff;
   font-size: 12px;
-}
-
-/* Top Navigation / App Bar */
-.android-app-bar {
-  padding: 10px 16px;
-  background: rgba(14, 23, 38, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--android-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-shrink: 0;
-  z-index: 40;
-}
-
-.app-bar-location {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 12px;
-  background: rgba(56, 189, 248, 0.08);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  transition: all 0.2s;
-  flex: 1;
-  min-width: 0;
+  max-width: 175px;
+  transition: background 0.15s;
 }
 
-.app-bar-location:hover {
-  background: rgba(56, 189, 248, 0.16);
-  border-color: var(--android-primary-light);
+.mobile-port-selector:active {
+  background: rgba(255, 255, 255, 0.22);
 }
 
-.app-bar-location strong {
-  font-size: 13px;
+.mobile-port-selector span {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: block;
 }
 
-.app-bar-location small {
-  font-size: 10px;
-  color: var(--android-text-low);
-  display: block;
-}
-
-.app-bar-tools {
+.mobile-top-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  gap: 6px;
 }
 
-.android-lang-pill {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--android-border);
-  color: var(--android-text-high);
+.mobile-lang-btn {
+  background: rgba(52, 189, 209, 0.2);
+  border: 1px solid var(--mobile-cyan);
+  color: #ffffff;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 800;
   padding: 5px 9px;
-  border-radius: 20px;
+  border-radius: 6px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 
-/* Main Content Area in Android App */
-.android-content-area {
+.mobile-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.mobile-icon-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ---------------- Scrollable Content View ---------------- */
+.mobile-scroll-view {
   flex: 1;
   overflow-y: auto;
-  position: relative;
+  padding: 12px 12px 84px;
   display: flex;
   flex-direction: column;
-  background: var(--android-bg);
+  gap: 12px;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Custom Scrollbar for Phone Frame */
-.android-content-area::-webkit-scrollbar {
-  width: 4px;
-}
-.android-content-area::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.2);
-  border-radius: 4px;
+/* ---------------- Native Mobile Risk Card ---------------- */
+.m-risk-card {
+  border-radius: 12px;
+  padding: 16px;
+  color: #ffffff;
+  background: var(--mobile-navy);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 14px rgba(8, 37, 54, 0.15);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Bottom Navigation Bar */
-.android-bottom-nav {
+.m-risk-card::after {
+  content: "";
+  position: absolute;
+  right: -30px;
+  top: -30px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(52, 189, 209, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.m-risk-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.m-risk-status-pill.low {
+  background: rgba(16, 124, 65, 0.25);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.35);
+}
+
+.m-risk-status-pill.moderate {
+  background: rgba(217, 119, 6, 0.25);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+
+.m-risk-status-pill.high,
+.m-risk-status-pill.extreme {
+  background: rgba(220, 38, 38, 0.25);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.m-risk-main-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.m-risk-title {
+  font-size: 19px;
+  font-weight: 800;
+  margin: 0;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.m-risk-score-badge {
+  font-size: 22px;
+  font-weight: 900;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.m-risk-score-badge small {
+  font-size: 12px;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+.m-risk-advice {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #d1e4ed;
+  margin: 0;
+}
+
+.m-risk-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.m-risk-chip {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  color: #e2eff5;
+  font-weight: 600;
+}
+
+.m-risk-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 10px;
+  color: #9bbcd0;
+}
+
+/* ---------------- 2-Column Mobile Metric Grid ---------------- */
+.m-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.m-section-header h3 {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--mobile-muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.m-metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.m-metric-card {
+  background: var(--mobile-card);
+  border: 1px solid var(--mobile-border);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 4px rgba(8, 37, 54, 0.05);
+}
+
+.m-metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--mobile-marine);
+}
+
+.m-metric-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mobile-muted);
+  margin: 0;
+}
+
+.m-metric-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--mobile-text);
+  margin: 2px 0 0;
+  letter-spacing: -0.3px;
+}
+
+.m-metric-sub {
+  font-size: 10px;
+  color: var(--mobile-marine);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* ---------------- Quick Action Row ---------------- */
+.m-action-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.m-action-card {
+  background: #ffffff;
+  border: 1px solid var(--mobile-border);
+  border-radius: 10px;
+  padding: 10px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(8, 37, 54, 0.04);
+  transition: transform 0.1s, background 0.15s;
+}
+
+.m-action-card:active {
+  transform: scale(0.97);
+  background: #eef6f9;
+}
+
+.m-action-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+}
+
+.m-action-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--mobile-text);
+  line-height: 1.2;
+}
+
+/* ---------------- Ocean Productivity Card ---------------- */
+.m-card {
+  background: var(--mobile-card);
+  border: 1px solid var(--mobile-border);
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 1px 4px rgba(8, 37, 54, 0.05);
+}
+
+.m-card-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--mobile-text);
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------------- Native PFZ Cards (Fish Zones) ---------------- */
+.m-pfz-item {
+  background: #edf8f5;
+  border: 1px solid #b7dfd2;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.m-pfz-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.m-pfz-zone-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #124d3c;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.m-pfz-yield-badge {
+  background: #176f57;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 6px;
+}
+
+.m-pfz-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 7px;
+  padding: 8px;
+  gap: 4px;
+  text-align: center;
+}
+
+.m-pfz-stat strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0e3d2f;
+}
+
+.m-pfz-stat span {
+  font-size: 9.5px;
+  color: #4a7569;
+  font-weight: 600;
+}
+
+.m-pfz-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: #386759;
+}
+
+/* ---------------- Native Alert & SOS Cards ---------------- */
+.m-alert-item {
+  background: #ffffff;
+  border-radius: 9px;
+  border: 1px solid var(--mobile-border);
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+  border-left: 4px solid var(--mobile-safe);
+}
+
+.m-alert-item.moderate {
+  border-left-color: #d97706;
+}
+
+.m-alert-item.high,
+.m-alert-item.critical {
+  border-left-color: #dc2626;
+}
+
+.m-alert-content {
+  flex: 1;
+}
+
+.m-alert-headline {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--mobile-text);
+  margin: 0 0 4px;
+}
+
+.m-alert-desc {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--mobile-muted);
+  margin: 0 0 6px;
+}
+
+.m-alert-meta {
+  font-size: 9.5px;
+  color: #889fab;
+}
+
+.m-sos-card {
+  background: linear-gradient(135deg, #7f1d1d, #991b1b);
+  border-radius: 12px;
+  padding: 16px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(185, 28, 28, 0.25);
+}
+
+.m-sos-title {
+  font-size: 16px;
+  font-weight: 900;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.m-sos-desc {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #fecaca;
+  margin: 0;
+}
+
+.m-sos-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.m-sos-dial-btn {
+  background: #ffffff;
+  color: #991b1b;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.m-sos-dial-btn:active {
+  background: #fee2e2;
+}
+
+/* ---------------- Modern Native AI Assistant Chat View ---------------- */
+.m-chat-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  position: relative;
+  min-height: calc(100vh - 130px);
+  min-height: calc(100dvh - 130px);
+}
+
+.m-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0 80px; /* Space for fixed bottom bar */
+  -webkit-overflow-scrolling: touch;
+}
+
+.m-bubble {
+  max-width: 86%;
+  padding: 11px 13px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.m-bubble.user {
+  align-self: flex-end;
+  background: var(--mobile-marine);
+  color: #ffffff;
+  border-bottom-right-radius: 3px;
+}
+
+.m-bubble.bot {
+  align-self: flex-start;
+  background: #ffffff;
+  color: var(--mobile-text);
+  border: 1px solid var(--mobile-border);
+  border-bottom-left-radius: 3px;
+  box-shadow: 0 1px 4px rgba(8, 37, 54, 0.05);
+}
+
+.m-bubble-time {
+  font-size: 9.5px;
+  opacity: 0.7;
+  align-self: flex-end;
+}
+
+.m-quick-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 6px 0 10px;
+  scrollbar-width: none;
+}
+
+.m-quick-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.m-quick-chip {
+  background: #ffffff;
+  border: 1px solid var(--mobile-border);
+  border-radius: 20px;
+  padding: 5px 11px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mobile-marine);
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(8, 37, 54, 0.04);
+}
+
+.m-quick-chip:active {
+  background: #edf7fa;
+}
+
+/* Pinned Chat Input Bar (Right above bottom nav, no awkward spacing) */
+.m-chat-input-fixed-wrap {
+  position: fixed;
+  bottom: 64px;
+  left: 0;
+  right: 0;
+  z-index: 95;
+  background: rgba(244, 248, 250, 0.96);
+  backdrop-filter: blur(8px);
+  padding: 6px 12px 8px;
+  border-top: 1px solid var(--mobile-border);
+}
+
+@media (min-width: 768px) {
+  .m-chat-input-fixed-wrap {
+    max-width: 440px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+}
+
+.m-chat-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid var(--mobile-border);
+  border-radius: 28px;
+  padding: 4px 6px 4px 10px;
+  box-shadow: 0 2px 8px rgba(8, 37, 54, 0.08);
+}
+
+.m-chat-input-bar input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13.5px;
+  color: var(--mobile-text);
+  background: transparent;
+  padding: 6px 4px;
+}
+
+.m-send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--mobile-marine);
+  border: none;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.m-send-btn:disabled {
+  opacity: 0.5;
+}
+
+/* ---------------- Compact Map Container ---------------- */
+.compact-map-wrapper {
+  height: calc(100vh - 180px);
+  height: calc(100dvh - 180px);
+  min-height: 480px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--mobile-border);
+  position: relative;
+  background: #082536;
+}
+
+.compact-map-wrapper .marine-map {
+  height: 100% !important;
+  min-height: 480px !important;
+  margin: 0 !important;
+}
+
+.compact-map-wrapper .live-map {
+  opacity: 1 !important;
+}
+
+/* ---------------- Mobile Map Parameter Bar & Scale ---------------- */
+.m-map-param-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 6px;
+  scrollbar-width: none;
+}
+
+.m-map-param-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.m-map-param-chip {
+  background: #ffffff;
+  border: 1px solid var(--mobile-border);
+  border-radius: 18px;
+  padding: 6px 11px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mobile-text);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(8, 37, 54, 0.05);
+  transition: all 0.15s ease;
+}
+
+.m-map-param-chip.active {
+  background: var(--mobile-marine);
+  color: #ffffff;
+  border-color: var(--mobile-marine);
+  box-shadow: 0 2px 6px rgba(8, 125, 152, 0.3);
+}
+
+.m-param-scale-card {
+  background: #0b1e2c;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid rgba(52, 189, 209, 0.3);
+  font-size: 10.5px;
+}
+
+.m-param-scale-bar {
+  height: 6px;
+  border-radius: 3px;
+  width: 100%;
+}
+
+.m-param-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  color: #9bbcd0;
+}
+
+.m-alert-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.m-alert-badge.critical,
+.m-alert-badge.severe {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.m-alert-badge.warning {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.m-alert-badge.watch,
+.m-alert-badge.info {
+  background: #eef8fa;
+  color: #087d98;
+}
+
+/* ---------------- Native Bottom Navigation ---------------- */
+.mobile-bottom-nav {
   height: 64px;
-  background: rgba(14, 23, 38, 0.98);
-  backdrop-filter: blur(14px);
-  border-top: 1px solid var(--android-border);
+  background: var(--mobile-navy);
+  border-top: 1px solid #143e55;
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 0 8px;
-  flex-shrink: 0;
-  z-index: 40;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 0 2px;
 }
 
-.nav-tab-item {
+@media (min-width: 768px) {
+  .mobile-bottom-nav {
+    max-width: 440px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+}
+
+.m-nav-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  background: none;
+  background: transparent;
   border: none;
-  color: var(--android-text-low);
-  font-size: 11px;
-  font-weight: 500;
+  color: #8daab9;
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 12px;
-  transition: all 0.15s ease;
-  position: relative;
-  flex: 1;
+  padding: 6px 0;
+  transition: color 0.15s;
 }
 
-.nav-tab-item.active {
-  color: var(--android-primary-light);
-  font-weight: 600;
+.m-nav-item.active {
+  color: var(--mobile-cyan);
 }
 
-.nav-tab-item.active::after {
-  content: "";
-  position: absolute;
-  top: 4px;
-  width: 24px;
-  height: 3px;
-  background: var(--android-primary-light);
-  border-radius: 2px;
-  box-shadow: 0 0 8px var(--android-primary-light);
+.m-nav-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
 }
 
-/* Android Gestures Bar (Bottom Indicator) */
-.android-gesture-bar {
-  height: 18px;
-  background: var(--android-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.gesture-pill {
-  width: 90px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 2px;
-}
-
-/* Location Detection View */
-.location-detection-screen {
-  padding: 24px 20px;
+/* ---------------- Native Modal / Bottom Sheet ---------------- */
+.m-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 37, 54, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 200;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  flex: 1;
-  justify-content: center;
-  animation: fadeIn 0.3s ease;
+  justify-content: flex-end;
 }
 
-.radar-circle {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(56, 189, 248, 0.05) 70%, transparent 100%);
-  border: 2px solid var(--android-primary-light);
+.m-sheet-card {
+  background: #ffffff;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  padding: 18px 16px 28px;
+  max-height: 80vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  margin-bottom: 20px;
-  box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+  flex-direction: column;
+  gap: 12px;
+  animation: slideUp 0.2s ease-out;
 }
 
-.radar-sweep {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 2px solid var(--android-primary-light);
-  animation: radar-ping 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-}
-
-.radar-sweep-2 {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 1px dashed rgba(56, 189, 248, 0.4);
-  animation: radar-ping 2s 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-}
-
-@keyframes radar-ping {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.9;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-@keyframes pulse-dot {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(0.85);
-  }
-}
-
-@keyframes fadeIn {
+@keyframes slideUp {
   from {
-    opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(100%);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* Ports Grid */
-.ports-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  width: 100%;
-  margin-top: 14px;
-  text-align: left;
-}
-
-.port-card-btn {
-  background: var(--android-card);
-  border: 1px solid var(--android-border);
-  padding: 12px;
-  border-radius: 12px;
-  color: var(--android-text-high);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.port-card-btn:hover, .port-card-btn.active {
-  background: rgba(56, 189, 248, 0.15);
-  border-color: var(--android-primary-light);
-  transform: translateY(-2px);
-}
-
-.port-card-btn strong {
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.port-card-btn small {
-  font-size: 11px;
-  color: var(--android-text-low);
-}
-
-/* Chat Screen Styles */
-.mobile-chat-container {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-}
-
-.mobile-chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.chat-bubble-user {
-  align-self: flex-end;
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-  color: #ffffff;
-  padding: 10px 14px;
-  border-radius: 18px 18px 4px 18px;
-  max-width: 84%;
-  font-size: 13.5px;
-  line-height: 1.45;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
-  word-break: break-word;
-}
-
-.chat-bubble-bot {
-  align-self: flex-start;
-  background: var(--android-card);
-  border: 1px solid var(--android-border);
-  color: var(--android-text-high);
-  padding: 14px;
-  border-radius: 18px 18px 18px 4px;
-  max-width: 92%;
-  font-size: 13px;
-  line-height: 1.5;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Quick Feature Pills in Chat */
-.chat-feature-chips {
-  display: flex;
-  gap: 8px;
-  padding: 10px 14px;
-  overflow-x: auto;
-  white-space: nowrap;
-  background: rgba(14, 23, 38, 0.7);
-  border-bottom: 1px solid rgba(56, 189, 248, 0.1);
-  flex-shrink: 0;
-  -webkit-overflow-scrolling: touch;
-}
-
-.chat-feature-chips::-webkit-scrollbar {
-  display: none;
-}
-
-.feature-chip-btn {
-  background: rgba(56, 189, 248, 0.08);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  color: var(--android-primary-light);
-  font-size: 12px;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-}
-
-.feature-chip-btn:hover {
-  background: rgba(56, 189, 248, 0.2);
-  border-color: var(--android-primary-light);
-  transform: translateY(-1px);
-}
-
-/* Chat Input Bar */
-.mobile-chat-input-bar {
-  padding: 10px 12px;
-  background: rgba(14, 23, 38, 0.98);
-  backdrop-filter: blur(12px);
-  border-top: 1px solid var(--android-border);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.mobile-input-field {
-  flex: 1;
-  background: rgba(2, 6, 23, 0.7);
-  border: 1px solid var(--android-border);
-  color: var(--android-text-high);
-  font-size: 13.5px;
-  padding: 10px 14px;
-  border-radius: 24px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.mobile-input-field:focus {
-  border-color: var(--android-primary-light);
-  box-shadow: 0 0 0 2px var(--android-primary-glow);
-}
-
-.mobile-send-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--android-primary);
-  color: #fff;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-
-.mobile-send-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.mobile-send-btn:not(:disabled):hover {
-  background: var(--android-primary-light);
-  transform: scale(1.05);
-}
-
-/* Mobile Cards (PFZ, Weather, Alerts) */
-.mobile-info-card {
-  background: var(--android-card);
-  border: 1px solid var(--android-border);
-  border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-}
-
-.mobile-info-card-header {
+.m-sheet-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  border-bottom: 1px solid var(--mobile-border);
+  padding-bottom: 10px;
 }
 
-.mobile-info-badge {
-  font-size: 11px;
+.m-sheet-head h4 {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--mobile-text);
+  margin: 0;
+}
+
+.m-sheet-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.m-sheet-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 12px;
+  border-radius: 8px;
+  background: #f4f8fa;
+  border: 1px solid transparent;
+  font-size: 12.5px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
-  text-transform: uppercase;
+  color: var(--mobile-text);
+  cursor: pointer;
+  text-align: left;
 }
 
-.mobile-info-badge.green {
-  background: rgba(16, 185, 129, 0.18);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+.m-sheet-option.selected {
+  background: #e6f6f9;
+  border-color: var(--mobile-cyan);
+  color: var(--mobile-marine);
 }
 
-.mobile-info-badge.yellow {
-  background: rgba(245, 158, 11, 0.18);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.mobile-info-badge.red {
-  background: rgba(239, 68, 68, 0.18);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+.m-sheet-option small {
+  font-size: 10px;
+  color: var(--mobile-muted);
 }
