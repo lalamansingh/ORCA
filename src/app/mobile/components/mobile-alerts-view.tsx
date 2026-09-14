@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShieldAlert, AlertTriangle, PhoneCall, Radio, RefreshCw, LoaderCircle, CheckCircle2 } from "lucide-react";
+import { ShieldAlert, PhoneCall, Radio, RefreshCw, LoaderCircle, CheckCircle2 } from "lucide-react";
 import { getAlerts } from "@/lib/api/alerts";
 import type { AlertListResponse, MarineAlert } from "@/features/alerts/types";
 import type { MobileLocation } from "./location-detector";
@@ -34,7 +34,28 @@ export function MobileAlertsView({ location }: MobileAlertsViewProps) {
   };
 
   useEffect(() => {
-    void fetchAlerts();
+    let active = true;
+    void getAlerts({
+      latitude: location.latitude,
+      longitude: location.longitude,
+      radiusKm: 200,
+      active: true,
+    })
+      .then((res) => {
+        if (active) {
+          setAlerts(res.alerts || []);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setError("Unable to connect to IMD/INCOIS alert servers.");
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, [location.latitude, location.longitude]);
 
   return (
