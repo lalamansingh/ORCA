@@ -709,9 +709,9 @@
 
 /* ---------------- Compact Map Container ---------------- */
 .compact-map-wrapper {
-  height: calc(100vh - 180px);
-  height: calc(100dvh - 180px);
-  min-height: 480px;
+  height: 320px;
+  min-height: 310px;
+  max-height: 340px;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--mobile-border);
@@ -721,7 +721,8 @@
 
 .compact-map-wrapper .marine-map {
   height: 100% !important;
-  min-height: 480px !important;
+  min-height: 310px !important;
+  max-height: 340px !important;
   margin: 0 !important;
 }
 

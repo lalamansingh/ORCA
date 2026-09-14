@@ -930,7 +930,7 @@ export function MarineMap({
   }, [alerts, focusAlertId, state]);
 
   return (
-    <div className={`marine-map ${large ? "large" : ""} ${compact ? "compact" : ""} ${selectMode ? "select-mode" : ""}`} style={{ position: "relative", height: "100%", minHeight: compact ? "440px" : undefined }}>
+    <div className={`marine-map ${large ? "large" : ""} ${compact ? "compact" : ""} ${selectMode ? "select-mode" : ""}`} style={{ position: "relative", height: "100%", minHeight: compact ? "310px" : undefined }}>
       <div ref={container} className="live-map" style={compact ? { opacity: 1 } : undefined} aria-label="Interactive marine map" />
 
       {/* Map Style Selector Overlay */}
