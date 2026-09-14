@@ -24,7 +24,8 @@ import {
   LoaderCircle,
   X,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  Globe
 } from "lucide-react";
 
 import { useSharedSelectedLocation, publishSelectedLocation } from "@/features/map/location-store";
@@ -798,6 +799,11 @@ export default function MobileAppPage() {
   const [showPortModal, setShowPortModal] = useState(false);
   const [showLangModal, setShowLangModal] = useState(false);
   const [selectedLang, setSelectedLang] = useState("hi");
+  const [saathiLang, setSaathiLang] = useState("hi");
+
+  useEffect(() => {
+    setSaathiLang(selectedLang);
+  }, [selectedLang]);
 
   // Translation helper
   const t = (key: string): string => {
@@ -876,6 +882,12 @@ export default function MobileAppPage() {
   const isSafe = riskLevel === "LOW";
   const isModerate = riskLevel === "MODERATE";
   const voiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLang)?.voiceCode || "hi-IN";
+  const saathiVoiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === saathiLang)?.voiceCode || "hi-IN";
+
+  // Dedicated translation helper for AI Saathi
+  const tSaathi = (key: string): string => {
+    return I18N_MAP[saathiLang]?.[key] ?? I18N_MAP["hi"]?.[key] ?? key;
+  };
 
   // Resolved PFZ zones for current harbor or clicked coordinate
   const displayPFZList = useMemo(() => {
@@ -958,10 +970,10 @@ export default function MobileAppPage() {
       if (prev.length <= 1 && prev[0]?.id.startsWith("briefing-")) {
         return [
           {
-            id: `briefing-${location.label || "init"}-${selectedLang}`,
+            id: `briefing-${location.label || "init"}-${saathiLang}`,
             sender: "bot",
             text: generateInitialLocationBriefing(
-              selectedLang,
+              saathiLang,
               liveRiskContext,
               alertData.data?.alerts || [],
               displayPFZList
@@ -972,7 +984,7 @@ export default function MobileAppPage() {
       }
       return prev;
     });
-  }, [selectedLang, location.label, location.latitude, location.longitude, liveRiskContext, alertData.data?.alerts, displayPFZList]);
+  }, [saathiLang, location.label, location.latitude, location.longitude, liveRiskContext, alertData.data?.alerts, displayPFZList]);
 
   const [queryInput, setQueryInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
@@ -1008,7 +1020,7 @@ export default function MobileAppPage() {
 
     // 1. Natural Greeting
     if (isGreetingQuery(q)) {
-      const greetingAnswer = getConversationalGreeting(selectedLang);
+      const greetingAnswer = getConversationalGreeting(saathiLang);
       const botGreetMsg: ChatMessage = {
         id: `b-greet-${Date.now()}`,
         sender: "bot",
@@ -1032,7 +1044,7 @@ export default function MobileAppPage() {
     if (isInland || isPersonal || isCap || isAdv || isFish || isWeath) {
       const intelligentAnswer = generateIntelligentSaathiReply(
         q,
-        selectedLang,
+        saathiLang,
         liveRiskContext,
         alertData.data?.alerts || [],
         displayPFZList
@@ -1066,9 +1078,9 @@ export default function MobileAppPage() {
         or: "Odia",
       };
 
-      const langDirective = selectedLang === "en"
+      const langDirective = saathiLang === "en"
         ? "(Please reply in English)"
-        : `(Please reply in ${langNames[selectedLang] || "Hindi"})`;
+        : `(Please reply in ${langNames[saathiLang] || "Hindi"})`;
 
       const promptWithLang = `${q} ${langDirective}`;
 
@@ -1089,7 +1101,7 @@ export default function MobileAppPage() {
         ans.includes("Safety Assessment:");
 
       const finalText = isRigidTemplate
-        ? generateIntelligentSaathiReply(q, selectedLang, liveRiskContext, alertData.data?.alerts || [], displayPFZList)
+        ? generateIntelligentSaathiReply(q, saathiLang, liveRiskContext, alertData.data?.alerts || [], displayPFZList)
         : ans;
 
       const botMsg: ChatMessage = {
@@ -1104,7 +1116,7 @@ export default function MobileAppPage() {
       console.warn("AI Saathi backend notice, using local intelligent reasoning:", err);
       const fallbackAnswer = generateIntelligentSaathiReply(
         q,
-        selectedLang,
+        saathiLang,
         liveRiskContext,
         alertData.data?.alerts || [],
         displayPFZList
@@ -1498,13 +1510,33 @@ export default function MobileAppPage() {
               </span>
             </div>
 
-            {/* Quick Suggestion Chips in current language */}
+            {/* AI Saathi Independent Language Selector Bar */}
+            <div className="m-chat-lang-bar">
+              <div className="m-chat-lang-title">
+                <Globe size={13} style={{ color: "#38bdf8" }} />
+                <span>భాష / Lang:</span>
+              </div>
+              <div className="m-chat-lang-chips">
+                {SUPPORTED_LANGUAGES.map((l) => (
+                  <button
+                    key={l.code}
+                    type="button"
+                    className={`m-chat-lang-chip ${saathiLang === l.code ? "active" : ""}`}
+                    onClick={() => setSaathiLang(l.code)}
+                  >
+                    {l.native}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Suggestion Chips in current Saathi language */}
             <div className="m-quick-chips">
               {[
-                t("chipWeather"),
-                t("chipPFZ"),
-                t("chipWind"),
-                t("chipSafety"),
+                tSaathi("chipWeather"),
+                tSaathi("chipPFZ"),
+                tSaathi("chipWind"),
+                tSaathi("chipSafety"),
               ].map((txt) => (
                 <button
                   key={txt}
@@ -1537,7 +1569,7 @@ export default function MobileAppPage() {
                     {msg.sender === "bot" && (
                       <VoiceSpeaker
                         text={msg.text}
-                        lang={voiceCode}
+                        lang={saathiVoiceCode}
                       />
                     )}
                   </div>
@@ -1547,7 +1579,7 @@ export default function MobileAppPage() {
               {chatLoading && (
                 <div className="m-bubble bot">
                   <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <LoaderCircle size={14} className="spin" /> {t("orcaThinking")}
+                    <LoaderCircle size={14} className="spin" /> {tSaathi("orcaThinking")}
                   </span>
                 </div>
               )}
@@ -1564,7 +1596,7 @@ export default function MobileAppPage() {
                 }}
               >
                 <VoiceMic
-                  selectedLang={voiceCode}
+                  selectedLang={saathiVoiceCode}
                   compact={true}
                   onTranscript={(transcript) => {
                     setQueryInput(transcript);
@@ -1582,7 +1614,7 @@ export default function MobileAppPage() {
                       void handleSendChat(queryInput);
                     }
                   }}
-                  placeholder={t("askPlaceholder")}
+                  placeholder={tSaathi("askPlaceholder")}
                   disabled={chatLoading}
                   className="m-chat-textarea"
                 />
