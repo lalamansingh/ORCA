@@ -1088,7 +1088,13 @@ export default function MobileAppPage() {
       <header className="mobile-top-bar">
         <Link href="/dashboard" className="mobile-bar-brand" title="Web Command Center">
           <div className="mobile-brand-icon">
-            <Anchor size={16} />
+            <img
+              src="/icon-192.png"
+              alt="ORCA"
+              width={26}
+              height={26}
+              style={{ objectFit: "contain", borderRadius: "6px" }}
+            />
           </div>
           ORCA
         </Link>
