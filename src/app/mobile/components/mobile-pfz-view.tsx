@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Fish, Compass, Navigation, Waves, Thermometer, Sparkles, LoaderCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Fish, Compass, Waves, Thermometer, Sparkles, LoaderCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { getNearestPFZ } from "@/lib/api/pfz";
-import type { PFZResponse, PotentialFishingZone } from "@/features/pfz/types";
+import type { PFZResponse } from "@/features/pfz/types";
 import type { MobileLocation } from "./location-detector";
 
 interface MobilePFZViewProps {
@@ -15,7 +15,7 @@ export function MobilePFZView({ location }: MobilePFZViewProps) {
   const [data, setData] = useState<PFZResponse | null>(null);
   const [error, setError] = useState("");
 
-  const fetchPFZ = async () => {
+  const fetchPFZ = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -26,10 +26,26 @@ export function MobilePFZView({ location }: MobilePFZViewProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [location.latitude, location.longitude]);
 
   useEffect(() => {
-    void fetchPFZ();
+    let active = true;
+    void getNearestPFZ(location.latitude, location.longitude, 400)
+      .then((res) => {
+        if (active) {
+          setData(res);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setError("Unable to fetch live PFZ data from INCOIS WebGIS. Showing local coastal advisory.");
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, [location.latitude, location.longitude]);
 
   return (

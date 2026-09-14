@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Waves, Wind, Thermometer, Eye, ShieldCheck, ShieldAlert, Shield, LoaderCircle, RefreshCw, AlertTriangle } from "lucide-react";
 import { getCombinedConditions } from "@/lib/api/conditions";
 import type { CombinedConditions } from "@/features/conditions/types";
@@ -15,7 +15,7 @@ export function MobileWeatherView({ location }: MobileWeatherViewProps) {
   const [data, setData] = useState<CombinedConditions | null>(null);
   const [error, setError] = useState("");
 
-  const fetchConditions = async () => {
+  const fetchConditions = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -29,10 +29,29 @@ export function MobileWeatherView({ location }: MobileWeatherViewProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [location.latitude, location.longitude]);
 
   useEffect(() => {
-    void fetchConditions();
+    let active = true;
+    void getCombinedConditions({
+      latitude: location.latitude,
+      longitude: location.longitude,
+    })
+      .then((res) => {
+        if (active) {
+          setData(res);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setError("Unable to load real-time coastal meteorological data. Please check internet connection.");
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, [location.latitude, location.longitude]);
 
   const marine = data?.marine?.current;
