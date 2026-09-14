@@ -1,5 +1,5 @@
-import MobileAppPage from "../mobile/page";
+import { redirect } from "next/navigation";
 
 export default function AppPage() {
-  return <MobileAppPage />;
+  redirect("/mobile");
 }

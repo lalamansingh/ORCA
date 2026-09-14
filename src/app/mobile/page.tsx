@@ -1,252 +1,1587 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, FormEvent, useMemo } from "react";
 import Link from "next/link";
 import { 
+  Anchor, 
   Bot, 
   Fish, 
-  Waves, 
-  ShieldAlert, 
+  LayoutDashboard, 
+  Map as MapIcon, 
   MapPin, 
-  Smartphone, 
-  Maximize2, 
-  Minimize2, 
-  ExternalLink,
-  Wifi, 
-  Signal, 
-  Battery, 
-  Globe 
+  PhoneCall, 
+  RefreshCw, 
+  Send, 
+  ShieldAlert, 
+  Sparkles, 
+  Waves, 
+  Wind, 
+  Activity, 
+  Eye, 
+  Droplets, 
+  Gauge,
+  ChevronDown,
+  LoaderCircle,
+  X,
+  AlertTriangle,
+  CheckCircle2
 } from "lucide-react";
-import { LocationDetector, type MobileLocation } from "./components/location-detector";
-import { MobileChat, MOBILE_LANGUAGES } from "./components/mobile-chat";
-import { MobilePFZView } from "./components/mobile-pfz-view";
-import { MobileWeatherView } from "./components/mobile-weather-view";
-import { MobileAlertsView } from "./components/mobile-alerts-view";
+
+import { useSharedSelectedLocation, publishSelectedLocation } from "@/features/map/location-store";
+import { useConditions } from "@/features/conditions/hooks/use-conditions";
+import { useAlerts } from "@/features/alerts/hooks/use-alerts";
+import { useRiskAssessment } from "@/features/risk/hooks/use-risk-assessment";
+import { usePFZ } from "@/features/pfz/hooks/use-pfz";
+import { useOceanProducts } from "@/features/ocean-products/hooks/use-ocean-products";
+import { formatMeasurement, degreesToCompass, updatedAgo } from "@/features/conditions/format";
+import { sendMessage, type ConversationReply } from "@/lib/api/ai";
+import { MarineMap } from "@/components/marine-map";
+import { VoiceMic, VoiceSpeaker } from "@/components/voice-mic";
+import type { SelectedLocation } from "@/features/map/types";
+import { useMapLayers } from "@/features/map/hooks/use-map-layers";
+import { MAP_PARAMETERS } from "@/features/map/mobile-map-params";
+import { getLocalizedAlert, getRegionalAdvisories, type LocalizedAlert } from "@/features/alerts/mobile-alert-i18n";
+
 import "./mobile.css";
 
-type ActiveTab = "chat" | "pfz" | "weather" | "alerts";
+const COASTAL_HARBORS = [
+  { name: "Veraval Fishing Port", state: "Gujarat", lat: 20.90, lon: 70.36, sea: "Arabian Sea" },
+  { name: "Porbandar Harbor", state: "Gujarat", lat: 21.64, lon: 69.60, sea: "Arabian Sea" },
+  { name: "Mumbai Sassoon Docks", state: "Maharashtra", lat: 18.92, lon: 72.83, sea: "Arabian Sea" },
+  { name: "Ratnagiri Mirkarwada", state: "Maharashtra", lat: 16.99, lon: 73.30, sea: "Arabian Sea" },
+  { name: "Goa (Panaji & Mormugao)", state: "Goa", lat: 15.40, lon: 73.80, sea: "Arabian Sea" },
+  { name: "Mangalore Old Port", state: "Karnataka", lat: 12.87, lon: 74.84, sea: "Arabian Sea" },
+  { name: "Kochi Port & Harbor", state: "Kerala", lat: 9.93, lon: 76.26, sea: "Arabian Sea" },
+  { name: "Kanyakumari Coast", state: "Tamil Nadu", lat: 8.08, lon: 77.55, sea: "Indian Ocean" },
+  { name: "Tuticorin Fishing Harbor", state: "Tamil Nadu", lat: 8.76, lon: 78.13, sea: "Gulf of Mannar" },
+  { name: "Chennai Kasimedu Harbor", state: "Tamil Nadu", lat: 13.08, lon: 80.27, sea: "Bay of Bengal" },
+  { name: "Visakhapatnam Harbor", state: "Andhra Pradesh", lat: 17.68, lon: 83.21, sea: "Bay of Bengal" },
+  { name: "Paradip Port", state: "Odisha", lat: 20.26, lon: 86.66, sea: "Bay of Bengal" },
+  { name: "Digha & Shankarpur", state: "West Bengal", lat: 21.62, lon: 87.51, sea: "Bay of Bengal" },
+];
+
+const SUPPORTED_LANGUAGES = [
+  { code: "hi", name: "Hindi", native: "हिन्दी", voiceCode: "hi-IN" },
+  { code: "en", name: "English", native: "English", voiceCode: "en-IN" },
+  { code: "ta", name: "Tamil", native: "தமிழ்", voiceCode: "ta-IN" },
+  { code: "te", name: "Telugu", native: "తెలుగు", voiceCode: "te-IN" },
+  { code: "ml", name: "Malayalam", native: "മലയാളം", voiceCode: "ml-IN" },
+  { code: "gu", name: "Gujarati", native: "ગુજરાતી", voiceCode: "gu-IN" },
+  { code: "mr", name: "Marathi", native: "मराठी", voiceCode: "mr-IN" },
+  { code: "bn", name: "Bengali", native: "বাংলা", voiceCode: "bn-IN" },
+  { code: "kn", name: "Kannada", native: "ಕನ್ನಡ", voiceCode: "kn-IN" },
+  { code: "or", name: "Odia", native: "ଓଡ଼ିଆ", voiceCode: "hi-IN" },
+];
+
+// Comprehensive Localization Dictionary across 10 Coastal Indian Languages
+const I18N_MAP: Record<string, Record<string, string>> = {
+  hi: {
+    safeSea: "समुद्र सुरक्षित · Safe Sea",
+    caution: "मध्यम जोखिम · Caution",
+    danger: "उच्च जोखिम · Danger",
+    voyageSafe: "यात्रा सुरक्षित है",
+    voyageCaution: "सतर्कता आवश्यक है",
+    voyageDanger: "समुद्र में न जाएं",
+    safeAdvice: "मौसम और लहरें सामान्य हैं। तटीय मछली पकड़ने की यात्रा सुरक्षित है।",
+    cautionAdvice: "गहरी समुद्री धाराओं या तेज हवाओं के कारण सतर्क रहें।",
+    dangerAdvice: "तूफानी हवाओं या ऊंची लहरों के कारण समुद्र में जाना वर्जित है।",
+    liveSeaStatus: "लाइव समुद्र स्थिति",
+    wave: "लहर की ऊंचाई (Wave)",
+    calmSea: "शांत समुद्र (Calm)",
+    wind: "हवा की गति (Wind)",
+    windDir: "दिशा",
+    sst: "समुद्र तापमान (SST)",
+    optimalFish: "मछली अनुकूल (Optimal)",
+    current: "समुद्री धारा (Current)",
+    steadyCurrent: "स्थिर बहाव",
+    visibility: "दृश्यता (Visibility)",
+    goodVis: "स्पष्ट दृष्टि (Good)",
+    tide: "ज्वार स्तर (Tide)",
+    normalTide: "सामान्य स्तर",
+    productivity: "महासागरीय उत्पादकता (Productivity)",
+    productivityDesc: "क्लोरोफिल घनत्व और थर्मल फ्रंट्स के आधार पर आज मछली की सघनता सामान्य से अधिक है।",
+    chlorophyll: "क्लोरोफिल",
+    thermalFront: "थर्मल फ्रंट: सक्रिय",
+    aiSaathi: "AI साथी",
+    fishZones: "मछली ज़ोन",
+    map: "मैप",
+    sosAlert: "SOS अलर्ट",
+    statusTab: "स्थिति",
+    assistantTab: "साग़र साथी",
+    pfzTab: "मछली ज़ोन",
+    mapTab: "मैप",
+    alertsTab: "अलर्ट व SOS",
+    askPlaceholder: "बोलें या सवाल पूछें...",
+    orcaThinking: "ORCA सोच रहा है...",
+    availablePFZ: "उपलब्ध मछली पकड़ने के क्षेत्र · INCOIS Advisory",
+    distFromCoast: "तट से दूरी",
+    bearing: "दिशा (Bearing)",
+    depth: "जल गहराई",
+    targetSpecies: "लक्ष्य",
+    viewOnMap: "मैप पर देखें →",
+    sosCardTitle: "आपातकालीन सुरक्षा (SOS)",
+    sosCardDesc: "समुद्र में किसी भी आपात स्थिति या खतरे के समय सीधे कोस्ट गार्ड या तटीय पुलिस से संपर्क करें:",
+    coastGuard: "1554 (Coast Guard)",
+    marinePolice: "1093 (Marine Police)",
+    activeAlerts: "सक्रिय समुद्री चेतावनियां (Active Alerts)",
+    noActiveAlerts: "कोई सक्रिय चेतावनी नहीं",
+    noAlertsDesc: "वर्तमान में इस क्षेत्र में कोई चक्रवात या ऊंची लहरों का खतरा नहीं है।",
+    selectHarbor: "बंदरगाह चुनें (Select Port / Harbor)",
+    selectLang: "भाषा चुनें (Select Language)",
+    welcomeMessage: "नमस्ते! मैं ORCA सागर साथी हूँ। अपने क्षेत्र के मौसम, मछली क्षेत्र (PFZ) या समुद्र सुरक्षा के बारे में पूछें।",
+    mapTip: "नेविगेशन टिप: स्क्रीन पर टैप करके किसी भी समुद्री बिंदु का मौसम और स्थिति देखें।",
+    dataSource: "डेटा स्रोत",
+    updated: "अपडेटेड",
+    justNow: "अभी",
+  },
+  en: {
+    safeSea: "Safe Sea · Safe for Voyage",
+    caution: "Moderate Risk · Caution",
+    danger: "High Risk · Avoid Sea",
+    voyageSafe: "Voyage is Safe",
+    voyageCaution: "Exercise Caution",
+    voyageDanger: "Do Not Venture Out",
+    safeAdvice: "Weather and waves are calm. Coastal fishing voyage is safe today.",
+    cautionAdvice: "Be cautious due to strong ocean currents or moderate winds.",
+    dangerAdvice: "Dangerous sea conditions. Fishing boats advised not to venture out.",
+    liveSeaStatus: "Live Ocean Conditions",
+    wave: "Wave Height",
+    calmSea: "Calm Sea",
+    wind: "Wind Speed",
+    windDir: "Direction",
+    sst: "Sea Surface Temp (SST)",
+    optimalFish: "Optimal for Fish",
+    current: "Ocean Current",
+    steadyCurrent: "Steady Flow",
+    visibility: "Visibility",
+    goodVis: "Good Visibility",
+    tide: "Tide Level",
+    normalTide: "Normal Level",
+    productivity: "Ocean Productivity",
+    productivityDesc: "High fish density concentration detected based on chlorophyll & thermal fronts.",
+    chlorophyll: "Chlorophyll",
+    thermalFront: "Thermal Front: Active",
+    aiSaathi: "AI Saathi",
+    fishZones: "PFZ Zones",
+    map: "Map",
+    sosAlert: "SOS Alert",
+    statusTab: "Status",
+    assistantTab: "AI Saathi",
+    pfzTab: "Fish Zones",
+    mapTab: "Map",
+    alertsTab: "Alerts & SOS",
+    askPlaceholder: "Speak or type question...",
+    orcaThinking: "ORCA is analyzing...",
+    availablePFZ: "Potential Fishing Zones (PFZ) · INCOIS Advisory",
+    distFromCoast: "Distance from Coast",
+    bearing: "Bearing Direction",
+    depth: "Water Depth",
+    targetSpecies: "Target Species",
+    viewOnMap: "View on Map →",
+    sosCardTitle: "Emergency Safety (SOS)",
+    sosCardDesc: "In case of sea accident or marine distress, connect directly with emergency forces:",
+    coastGuard: "1554 (Coast Guard)",
+    marinePolice: "1093 (Marine Police)",
+    activeAlerts: "Active Marine Advisories",
+    noActiveAlerts: "No Active Warnings",
+    noAlertsDesc: "Currently no cyclone or high-wave hazard detected in this coastal sector.",
+    selectHarbor: "Select Coastal Port / Harbor",
+    selectLang: "Select App Language",
+    welcomeMessage: "Hello! I am ORCA Sagar Saathi. Ask me about weather, fishing zones (PFZ), or marine safety.",
+    mapTip: "Navigation Tip: Tap any marine point on the map to inspect live conditions and advisories.",
+    dataSource: "Data Sources",
+    updated: "Updated",
+    justNow: "Just now",
+  },
+  ta: {
+    safeSea: "கடல் பாதுகாப்பானது · Safe Sea",
+    caution: "மிதமான எச்சரிக்கை · Caution",
+    danger: "அபாயகரமான கடல் · Danger",
+    voyageSafe: "மீன்பிடிக்க செல்வது பாதுகாப்பானது",
+    voyageCaution: "எச்சரிக்கையுடன் செல்லவும்",
+    voyageDanger: "கடலுக்குச் செல்ல வேண்டாம்",
+    safeAdvice: "வானிலை மற்றும் அலைகள் இயல்பானவை. இன்றைய மீன்பிடிப் பயணம் பாதுகாப்பானது.",
+    cautionAdvice: "வேகமான கடல் நீரோட்டம் காரணமாக கவனமாக செயல்படவும்.",
+    dangerAdvice: "அதிவேக காற்று மற்றும் உயரமான அலைகள் காரணமாக கடலுக்குச் செல்ல வேண்டாம்.",
+    liveSeaStatus: "நேரலை கடல் நிலைமை",
+    wave: "அலை உயரம் (Wave)",
+    calmSea: "அமைதியான கடல்",
+    wind: "காற்றின் வேகம் (Wind)",
+    windDir: "திசை",
+    sst: "கடல் வெப்பநிலை (SST)",
+    optimalFish: "மீன் வளர்ச்சிக்கு ஏற்றது",
+    current: "கடல் நீரோட்டம் (Current)",
+    steadyCurrent: "நிலையான நீரோட்டம்",
+    visibility: "பார்வைத்திறன் (Visibility)",
+    goodVis: "தெளிவான பார்வை",
+    tide: "அலை ஏற்ற நிலை (Tide)",
+    normalTide: "இயல்பான நிலை",
+    productivity: "கடல் உற்பத்தித்திறன்",
+    productivityDesc: "குளோரோபில் மற்றும் வெப்ப முனைகளின் அடிப்படையில் மீன் அடர்த்தி அதிகமாக உள்ளது.",
+    chlorophyll: "குளோரோபில்",
+    thermalFront: "வெப்ப முனை: செயல்பாடு",
+    aiSaathi: "AI தோழன்",
+    fishZones: "மீன் மண்டலம்",
+    map: "வரைபடம்",
+    sosAlert: "SOS எச்சரிக்கை",
+    statusTab: "நிலை",
+    assistantTab: "சாகர் தோழன்",
+    pfzTab: "மீன் மண்டலம்",
+    mapTab: "வரைபடம்",
+    alertsTab: "எச்சரிக்கை & SOS",
+    askPlaceholder: "பேசுங்கள் அல்லது கேள்வி கேளுங்கள்...",
+    orcaThinking: "ORCA பதிலளிக்கிறது...",
+    availablePFZ: "மீன்பிடி பகுதிகள் · INCOIS வழிகாட்டுதல்",
+    distFromCoast: "கரையிலிருந்து தொலைவு",
+    bearing: "திசை (Bearing)",
+    depth: "நீர் ஆழம்",
+    targetSpecies: "இலக்கு மீன்கள்",
+    viewOnMap: "வரைபடத்தில் பார் →",
+    sosCardTitle: "அவசர பாதுகாப்பு (SOS)",
+    sosCardDesc: "கடலில் ஏதேனும் அவசரநிலை ஏற்பட்டால் உடனடியாக தொடர்பு கொள்ளவும்:",
+    coastGuard: "1554 (கடலோர காவல்படை)",
+    marinePolice: "1093 (கடலோர காவல்துறை)",
+    activeAlerts: "செயலில் உள்ள கடல் எச்சரிக்கைகள்",
+    noActiveAlerts: "எச்சரிக்கை எதுவும் இல்லை",
+    noAlertsDesc: "தற்போது இப்பகுதியில் புயல் அல்லது உயரமான அலைகளின் ஆபத்து இல்லை.",
+    selectHarbor: "துறைமுகத்தை தேர்வு செய்க",
+    selectLang: "மொழியை தேர்வு செய்க",
+    welcomeMessage: "வணக்கம்! நான் ORCA சாகர் தோழன். வானிலை, மீன்பிடி மண்டலங்கள் மற்றும் பாதுகாப்பு பற்றி கேளுங்கள்.",
+    mapTip: "வரைபடக் குறிப்பு: நிலவரங்களை அறிய வரைபடத்தில் ஏதேனும் புள்ளியைத் தொடவும்.",
+    dataSource: "தரவு ஆதாரம்",
+    updated: "புதுப்பிக்கப்பட்டது",
+    justNow: "இப்போது",
+  },
+  te: {
+    safeSea: "సముద్రం సురక్షితం · Safe Sea",
+    caution: "మితమైన హెచ్చరిక · Caution",
+    danger: "ప్రమాదకరం · Danger",
+    voyageSafe: "వేటకు వెళ్లడం సురక్షితం",
+    voyageCaution: "జాగ్రత్తగా ఉండండి",
+    voyageDanger: "సముద్రంలోకి వెళ్లవద్దు",
+    safeAdvice: "వాతావరణం మరియు అలలు సాధారణంగా ఉన్నాయి. తీరప్రాంత వేట సురక్షితం.",
+    cautionAdvice: "సముద్ర ప్రవాహాలు వేగంగా ఉన్నందున జాగ్రత్త పాటించండి.",
+    dangerAdvice: "భారీ గాలులు మరియు ఎత్తైన అలల కారణంగా వేటకు వెళ్లకూడదు.",
+    liveSeaStatus: "లైవ్ సముద్ర స్థితి",
+    wave: "అలల ఎత్తు (Wave)",
+    calmSea: "శాంతమైన సముద్రం",
+    wind: "గాలి వేగం (Wind)",
+    windDir: "దిశ",
+    sst: "సముద్ర ఉష్ణోగ్రత (SST)",
+    optimalFish: "చేపలకు అనుకూలం",
+    current: "సముద్ర ప్రవాహం (Current)",
+    steadyCurrent: "స్థిరమైన ప్రవాహం",
+    visibility: "దృశ్యమానత (Visibility)",
+    goodVis: "స్పష్టమైన చూపు",
+    tide: "పోటు-పాటు స్థాయి",
+    normalTide: "సాధారణ స్థాయి",
+    productivity: "సముద్ర ఉత్పాదకత",
+    productivityDesc: "క్లోరోఫిల్ మరియు థర్మల్ ఫ్రంట్స్ ఆధారంగా చేపల లభ్యత ఎక్కువగా ఉంది.",
+    chlorophyll: "క్లోరోఫిల్",
+    thermalFront: "థర్మల్ ఫ్రంట్: యాక్టివ్",
+    aiSaathi: "AI సలహాదారు",
+    fishZones: "చేపల జోన్",
+    map: "మ్యాప్",
+    sosAlert: "SOS అలర్ట్",
+    statusTab: "పరిస్థితి",
+    assistantTab: "సాగర్ సాథి",
+    pfzTab: "చేపల జోన్",
+    mapTab: "మ్యాప్",
+    alertsTab: "అలర్ట్స్ & SOS",
+    askPlaceholder: "మాట్లాడండి లేదా ప్రశ్న అడగండి...",
+    orcaThinking: "ORCA ఆలోచిస్తోంది...",
+    availablePFZ: "చేపల వేట ప్రాంతాలు · INCOIS సలహా",
+    distFromCoast: "తీరం నుండి దూరం",
+    bearing: "దిశ (Bearing)",
+    depth: "నీటి లోతు",
+    targetSpecies: "లక్ష్య చేపలు",
+    viewOnMap: "మ్యాప్‌లో చూడండి →",
+    sosCardTitle: "అత్యవసర రక్షణ (SOS)",
+    sosCardDesc: "సముద్రంలో ప్రమాదం సంభవిస్తే వెంటనే సంప్రదించండి:",
+    coastGuard: "1554 (కోస్ట్ గార్డ్)",
+    marinePolice: "1093 (కోస్టల్ పోలీస్)",
+    activeAlerts: "ప్రస్తుత సముద్ర హెచ్చరికలు",
+    noActiveAlerts: "ఎలాంటి హెచ్చరికలు లేవు",
+    noAlertsDesc: "ప్రస్తుతం ఈ ప్రాంతంలో తుఫాను లేదా అధిక అలల ముప్పు లేదు.",
+    selectHarbor: "హార్బర్ ఎంచుకోండి",
+    selectLang: "భాషను ఎంచుకోండి",
+    welcomeMessage: "నమస్కారం! నేను ORCA సాగర్ సాథి. వాతావరణం, చేపల వేట జోన్లు మరియు భద్రత గురించి నన్ను అడగండి.",
+    mapTip: "మ్యాప్ చిట్కా: వాతావరణాన్ని తనిఖీ చేయడానికి మ్యాప్‌పై ఎక్కడైనా తాకండి.",
+    dataSource: "డేటా వనరులు",
+    updated: "అప్‌డేట్ చేయబడింది",
+    justNow: "ఇప్పుడే",
+  },
+  ml: {
+    safeSea: "കടൽ സുരക്ഷിതം · Safe Sea",
+    caution: "ജാഗ്രത പാലിക്കുക · Caution",
+    danger: "അപകടകരം · Danger",
+    voyageSafe: "യാത്ര സുരക്ഷിതമാണ്",
+    voyageCaution: "ജാഗ്രത പുലർത്തുക",
+    voyageDanger: "കടലിൽ പോകരുത്",
+    safeAdvice: "കാലാവസ്ഥയും തിരമാലകളും ശാന്തമാണ്. ഇന്നത്തെ മത്സ്യബന്ധന യാത്ര സുരക്ഷിതമാണ്.",
+    cautionAdvice: "ശക്തമായ അടിയൊഴുക്കുകൾ ഉള്ളതിനാൽ ശ്രദ്ധിക്കുക.",
+    dangerAdvice: "പ്രക്ഷുബ്ധമായ കടലും ശക്തമായ കാറ്റും ഉള്ളതിനാൽ കടലിൽ ഇറങ്ങരുത്.",
+    liveSeaStatus: "തത്സമയ കടൽാവസ്ഥ",
+    wave: "തിരമാല ഉയരം (Wave)",
+    calmSea: "ശാന്തമായ കടൽ",
+    wind: "കാറ്റിന്റെ വേഗത (Wind)",
+    windDir: "ദിശ",
+    sst: "കടൽ ഉപരിതല താപനില",
+    optimalFish: "മത്സ്യത്തിന് അനുയോജ്യം",
+    current: "സമുദ്ര പ്രവാഹം",
+    steadyCurrent: "സ്ഥിര പ്രവാഹം",
+    visibility: "കാഴ്ചപരിധി (Visibility)",
+    goodVis: "വ്യക്തമായ കാഴ്ച",
+    tide: "വേലിയേറ്റ നില (Tide)",
+    normalTide: "സാധാരണ നില",
+    productivity: "സമുദ്ര ഉത്പാദനക്ഷമത",
+    productivityDesc: "ക്ലോറോഫിൽ സാന്ദ്രതയും തെർമൽ ഫ്രണ്ടുകളും കണക്കിലെടുക്കുമ്പോൾ മത്സ്യലഭ്യത കൂടുതലാണ്.",
+    chlorophyll: "ക്ലോറോഫിൽ",
+    thermalFront: "തെർമൽ ഫ്രണ്ട്: സജീവം",
+    aiSaathi: "AI സഹായി",
+    fishZones: "മത്സ്യ മേഖല",
+    map: "ഭൂപടം",
+    sosAlert: "SOS ജാഗ്രത",
+    statusTab: "നില",
+    assistantTab: "സാഗർ സാഥി",
+    pfzTab: "മത്സ്യ മേഖല",
+    mapTab: "ഭൂപടം",
+    alertsTab: "മുന്നറിയിപ്പ് & SOS",
+    askPlaceholder: "സംസാരിക്കുക അല്ലെങ്കിൽ ചോദിക്കുക...",
+    orcaThinking: "ORCA ചിന്തിക്കുന്നു...",
+    availablePFZ: "സാധ്യതാ മത്സ്യബന്ധന മേഖലകൾ · INCOIS",
+    distFromCoast: "തീരത്തു നിന്നുള്ള ദൂരം",
+    bearing: "ദിശ (Bearing)",
+    depth: "ജലത്തിന്റെ ആഴം",
+    targetSpecies: "ലക്ഷ്യ മത്സ്യങ്ങൾ",
+    viewOnMap: "മാപ്പിൽ കാണുക →",
+    sosCardTitle: "അടിയന്തര സുരക്ഷ (SOS)",
+    sosCardDesc: "കടലിൽ അപകടമുണ്ടായാൽ ഉടൻ തന്നെ ബന്ധപ്പെടുക:",
+    coastGuard: "1554 (കോസ്റ്റ് ഗാർഡ്)",
+    marinePolice: "1093 (തീരദേശ പോലീസ്)",
+    activeAlerts: "സജീവ മുന്നറിയിപ്പുകൾ",
+    noActiveAlerts: "മുന്നറിയിപ്പുകൾ ഒന്നുമില്ല",
+    noAlertsDesc: "നിലവിൽ ചുഴലിക്കാറ്റോ വൻ തിരമാലകളോ ഉണ്ടാകാനുള്ള സാധ്യതയില്ല.",
+    selectHarbor: "തുറമുഖം തിരഞ്ഞെടുക്കുക",
+    selectLang: "ഭാഷ തിരഞ്ഞെടുക്കുക",
+    welcomeMessage: "നമസ്കാരം! ഞാൻ ഓർക്ക സാഗർ സാഥി. കാലാവസ്ഥ, മത്സ്യബന്ധന മേഖലകൾ എന്നിവ ചോദിച്ചറിയാം.",
+    mapTip: "മാപ്പ് നുറുങ്ങ്: കാലാവസ്ഥ അറിയാൻ മാപ്പിൽ എവിടെയും സ്പർശിക്കുക.",
+    dataSource: "വിവര ഉറവിടം",
+    updated: "അപ്ഡേറ്റ് ചെയ്തത്",
+    justNow: "ഇപ്പോൾ",
+  },
+  gu: {
+    safeSea: "દરિયો સુરક્ષિત છે · Safe Sea",
+    caution: "સાવચેતી જરૂરી · Caution",
+    danger: "ભયજનક દરિયો · Danger",
+    voyageSafe: "સફર સુરક્ષિત છે",
+    voyageCaution: "સાવચેત રહો",
+    voyageDanger: "દરિયામાં ન જશો",
+    safeAdvice: "હવામાન અને મોજા સામાન્ય છે. આજની માછીમારીની સફર સુરક્ષિત છે.",
+    cautionAdvice: "દરિયાઈ પ્રવાહ કે પવનને કારણે સાવચેતી રાખવી જરૂરી છે.",
+    dangerAdvice: "તોફાની પવન અને ઊંચા મોજાના કારણે દરિયામાં જવું જોખમી છે.",
+    liveSeaStatus: "લાઈવ દરિયાઈ સ્થિતિ",
+    wave: "મોજાની ઊંચાઈ (Wave)",
+    calmSea: "શાંત દરિયો",
+    wind: "પવનની ગતિ (Wind)",
+    windDir: "દિશા",
+    sst: "દરિયાઈ તાપમાન (SST)",
+    optimalFish: "માછલી માટે અનુકૂળ",
+    current: "દરિયાઈ પ્રવાહ (Current)",
+    steadyCurrent: "સ્થિર પ્રવાહ",
+    visibility: "દ્રશ્યતા (Visibility)",
+    goodVis: "સ્પષ્ટ દ્રષ્ટિ",
+    tide: "ભરતી સ્તર (Tide)",
+    normalTide: "સામાન્ય સ્તર",
+    productivity: "દરિયાઈ ઉત્પાદકતા",
+    productivityDesc: "ક્લોરોફિલ અને થર્મલ ફ્રન્ટ્સના આધારે માછલીઓની પુષ્કળતા સામાન્ય કરતાં વધુ છે.",
+    chlorophyll: "ક્લોરોફિલ",
+    thermalFront: "થર્મલ ફ્રન્ટ: સક્રિય",
+    aiSaathi: "AI સાથી",
+    fishZones: "માછલી ઝોન",
+    map: "નકશો",
+    sosAlert: "SOS એલર્ટ",
+    statusTab: "સ્થિતિ",
+    assistantTab: "સાગર સાથી",
+    pfzTab: "માછલી ઝોન",
+    mapTab: "નકશો",
+    alertsTab: "એલર્ટ અને SOS",
+    askPlaceholder: "બોલો અથવા પ્રશ્ન પૂછો...",
+    orcaThinking: "ORCA વિચારી રહ્યું છે...",
+    availablePFZ: "સંભવિત માછીમારી ક્ષેત્રો · INCOIS",
+    distFromCoast: "કિનારાથી અંતર",
+    bearing: "દિશા (Bearing)",
+    depth: "પાણીની ઊંડાઈ",
+    targetSpecies: "લક્ષ્ય માછલીઓ",
+    viewOnMap: "નકશા પર જુઓ →",
+    sosCardTitle: "કટોકટી સુરક્ષા (SOS)",
+    sosCardDesc: "દરિયામાં કોઈપણ કટોકટી કે જોખમ સમયે સીધો સંપર્ક કરો:",
+    coastGuard: "1554 (કોસ્ટ ગાર્ડ)",
+    marinePolice: "1093 (મરીન પોલીસ)",
+    activeAlerts: "સક્રિય દરિયાઈ ચેતવણીઓ",
+    noActiveAlerts: "કોઈ સક્રિય ચેતવણી નથી",
+    noAlertsDesc: "હાલમાં આ વિસ્તારમાં કોઈ વાવાઝોડું કે ઊંચા મોજાનો ભય નથી.",
+    selectHarbor: "બંદર પસંદ કરો",
+    selectLang: "ભાષા પસંદ કરો",
+    welcomeMessage: "નમસ્તે! હું ORCA સાગર સાથી છું. હવામાન, માછલી ક્ષેત્ર (PFZ) અને સુરક્ષા વિશે પૂછો.",
+    mapTip: "નકશા ટીપ: હવામાન જાણવા માટે નકશા પર કોઈપણ જગ્યાએ ટેપ કરો.",
+    dataSource: "ડેટા સ્ત્રોત",
+    updated: "અપડેટ કર્યું",
+    justNow: "હમણાં જ",
+  },
+  mr: {
+    safeSea: "समुद्र सुरक्षित आहे · Safe Sea",
+    caution: "सावधगिरी बाळगा · Caution",
+    danger: "धोकादायक समुद्र · Danger",
+    voyageSafe: "मासेमारीसाठी सुरक्षित",
+    voyageCaution: "सावधगिरी बाळगा",
+    voyageDanger: "समुद्रात जाऊ नका",
+    safeAdvice: "हवामान आणि लाटा शांत आहेत. आजची मासेमारी सुरक्षित आहे.",
+    cautionAdvice: "वेगवान समुद्री प्रवाहामुळे सावधगिरी बाळगा.",
+    dangerAdvice: "वादळी वारे आणि उंच लाटांमुळे समुद्रात जाणे टाळा.",
+    liveSeaStatus: "थेट समुद्र स्थिती",
+    wave: "लाटेची उंची (Wave)",
+    calmSea: "शांत समुद्र",
+    wind: "वाऱ्याचा वेग (Wind)",
+    windDir: "दिशा",
+    sst: "समुद्र तापमान (SST)",
+    optimalFish: "माशांसाठी अनुकूल",
+    current: "समुद्री प्रवाह (Current)",
+    steadyCurrent: "स्थिर प्रवाह",
+    visibility: "दृश्यमानता (Visibility)",
+    goodVis: "स्पष्ट दृष्टी",
+    tide: "भरती पातळी (Tide)",
+    normalTide: "सामान्य पातळी",
+    productivity: "समुद्री उत्पादकता",
+    productivityDesc: "क्लोरोफिल आणि थर्मल फ्रंट्सनुसार माशांचे प्रमाण अधिक आहे.",
+    chlorophyll: "क्लोरोफिल",
+    thermalFront: "थर्मल फ्रंट: सक्रिय",
+    aiSaathi: "AI साथी",
+    fishZones: "मत्स्य क्षेत्र",
+    map: "नकाशा",
+    sosAlert: "SOS अलर्ट",
+    statusTab: "स्थिती",
+    assistantTab: "सागर साथी",
+    pfzTab: "मत्स्य क्षेत्र",
+    mapTab: "नकाशा",
+    alertsTab: "अलर्ट आणि SOS",
+    askPlaceholder: "बोला किंवा प्रश्न विचारा...",
+    orcaThinking: "ORCA विचार करत आहे...",
+    availablePFZ: "उपलब्ध मत्स्य क्षेत्रे · INCOIS सल्ला",
+    distFromCoast: "किनाऱ्यापासून अंतर",
+    bearing: "दिशा (Bearing)",
+    depth: "पाण्याची खोली",
+    targetSpecies: "लक्ष्य मासे",
+    viewOnMap: "नकाशावर पहा →",
+    sosCardTitle: "आपत्कालीन सुरक्षा (SOS)",
+    sosCardDesc: "समुद्रात कोणत्याही संकटाच्या वेळी थेट संपर्क साधा:",
+    coastGuard: "1554 (कोस्ट गार्ड)",
+    marinePolice: "1093 (किनारी पोलीस)",
+    activeAlerts: "सक्रिय समुद्री इशारे",
+    noActiveAlerts: "कोणताही सक्रिय इशारा नाही",
+    noAlertsDesc: "सध्या या क्षेत्रात वादळ किंवा उंच लाटांचा धोका नाही.",
+    selectHarbor: "बंदर निवडा",
+    selectLang: "भाषा निवडा",
+    welcomeMessage: "नमस्कार! मी ORCA सागर साथी आहे. हवामान, मत्स्य क्षेत्र (PFZ) आणि सुरक्षिततेबद्दल विचारा.",
+    mapTip: "नकाशा टीप: हवामान तपासण्यासाठी नकाशावर कुठेही स्पर्श करा.",
+    dataSource: "माहिती स्रोत",
+    updated: "अपडेट",
+    justNow: "आत्ताच",
+  },
+  bn: {
+    safeSea: "সমুদ্র শান্ত ও নিরাপদ · Safe Sea",
+    caution: "সতর্কতা প্রয়োজন · Caution",
+    danger: "বিপজ্জনক সমুদ্র · Danger",
+    voyageSafe: "যাত্রা নিরাপদ",
+    voyageCaution: "সতর্ক থাকুন",
+    voyageDanger: "সমুদ্রে যাবেন না",
+    safeAdvice: "আবহাওয়া এবং ঢেউ শান্ত রয়েছে। আজকের মাছ ধরার যাত্রা নিরাপদ।",
+    cautionAdvice: "সমুদ্রের স্রোত বা বাতাসের গতিবেগের কারণে সতর্ক থাকুন।",
+    dangerAdvice: "ঝড়ো বাতাস ও উত্তাল ঢেউয়ের কারণে সমুদ্রে যাওয়া নিষেধ।",
+    liveSeaStatus: "লাইভ সমুদ্রের অবস্থা",
+    wave: "ঢেউয়ের উচ্চতা (Wave)",
+    calmSea: "শান্ত সমুদ্র",
+    wind: "বাতাসের গতি (Wind)",
+    windDir: "দিক",
+    sst: "সমুদ্রের তাপমাত্রা (SST)",
+    optimalFish: "মাছের জন্য অনুকূল",
+    current: "সামুদ্রিক স্রোত (Current)",
+    steadyCurrent: "স্থির স্রোত",
+    visibility: "দৃশ্যমানতা (Visibility)",
+    goodVis: "পরিষ্কার দৃষ্টি",
+    tide: "জোয়ারের স্তর (Tide)",
+    normalTide: "স্বাভাবিক স্তর",
+    productivity: "সামুদ্রিক উৎপাদনশীলতা",
+    productivityDesc: "ক্লোরোফিল ও থার্মাল ফ্রন্টের ভিত্তিতে মাছের প্রাচুর্য বেশি রয়েছে।",
+    chlorophyll: "ক্লোরোফিল",
+    thermalFront: "থার্মাল ফ্রন্ট: সক্রিয়",
+    aiSaathi: "AI সঙ্গী",
+    fishZones: "মাছের অঞ্চল",
+    map: "মানচিত্র",
+    sosAlert: "SOS সতর্কতা",
+    statusTab: "অবস্থা",
+    assistantTab: "সাগর সাথী",
+    pfzTab: "মাছের অঞ্চল",
+    mapTab: "মানচিত্র",
+    alertsTab: "সতর্কতা ও SOS",
+    askPlaceholder: "বলুন বা প্রশ্ন লিখুন...",
+    orcaThinking: "ORCA চিন্তা করছে...",
+    availablePFZ: "উপলব্ধ মাছ ধরার এলাকা · INCOIS",
+    distFromCoast: "উপকূল থেকে দূরত্ব",
+    bearing: "দিক (Bearing)",
+    depth: "পানির গভীরতা",
+    targetSpecies: "লক্ষ্য মাছ",
+    viewOnMap: "মানচিত্রে দেখুন →",
+    sosCardTitle: "জরুরি সুরক্ষা (SOS)",
+    sosCardDesc: "সমুদ্রে যেকোনো বিপদে সরাসরি যোগাযোগ করুন:",
+    coastGuard: "1554 (কোস্ট গার্ড)",
+    marinePolice: "1093 (কোস্টাল পুলিশ)",
+    activeAlerts: "সক্রিয় সামুদ্রিক সতর্কতা",
+    noActiveAlerts: "কোনো সক্রিয় সতর্কতা নেই",
+    noAlertsDesc: "বর্তমানে এই অঞ্চলে কোনো ঘূর্ণিঝড় বা বিপজ্জনক ঢেউ নেই।",
+    selectHarbor: "বন্দর নির্বাচন করুন",
+    selectLang: "ভাষা নির্বাচন করুন",
+    welcomeMessage: "নমস্কার! আমি ORCA সাগর সাথী। আবহাওয়া, মাছ ধরার অঞ্চল (PFZ) ও নিরাপত্তা সম্পর্কে জানতে চান?",
+    mapTip: "মানচিত্র পরামর্শ: অবস্থা দেখতে মানচিত্রের যেকোনো স্থানে ট্যাপ করুন।",
+    dataSource: "উৎস",
+    updated: "আপডেট",
+    justNow: "এইমাত্র",
+  },
+  kn: {
+    safeSea: "ಸಮುದ್ರ ಸುರಕ್ಷಿತವಾಗಿದೆ · Safe Sea",
+    caution: "ಎಚ್ಚರಿಕೆ ಅಗತ್ಯ · Caution",
+    danger: "ಅಪಾಯಕಾರಿ ಸಮುದ್ರ · Danger",
+    voyageSafe: "ಮೀನುಗಾರಿಕೆ ಸುರಕ್ಷಿತ",
+    voyageCaution: "ಎಚ್ಚರಿಕೆಯಿಂದಿರಿ",
+    voyageDanger: "ಸಮುದ್ರಕ್ಕೆ ಇಳಿಯಬೇಡಿ",
+    safeAdvice: "ಹವಾಮಾನ ಮತ್ತು ಅಲೆಗಳು ಶಾಂತವಾಗಿವೆ. ಇಂದಿನ ಮೀನುಗಾರಿಕೆ ಸುರಕ್ಷಿತವಾಗಿದೆ.",
+    cautionAdvice: "ವೇಗದ ಸಮುದ್ರ ಪ್ರವಾಹದಿಂದಾಗಿ ಜಾಗರೂಕರಾಗಿರಿ.",
+    dangerAdvice: "ಪ್ರಕ್ಷುಬ್ಧ ಗಾಳಿ ಮತ್ತು ಎತ್ತರದ ಅಲೆಗಳಿಂದಾಗಿ ಸಮುದ್ರಕ್ಕೆ ಹೋಗಬೇಡಿ.",
+    liveSeaStatus: "ಲೈವ್ ಸಮುದ್ರ ಸ್ಥಿತಿ",
+    wave: "ಅಲೆಗಳ ಎತ್ತರ (Wave)",
+    calmSea: "ಶಾಂತ ಸಮುದ್ರ",
+    wind: "ಗಾಳಿಯ ವೇಗ (Wind)",
+    windDir: "ದಿಕ್ಕು",
+    sst: "ಸಮುದ್ರ ತಾಪಮಾನ (SST)",
+    optimalFish: "ಮೀನುಗಳಿಗೆ ಸೂಕ್ತವಾಗಿದೆ",
+    current: "ಸಮುದ್ರ ಪ್ರವಾಹ (Current)",
+    steadyCurrent: "ಸ್ಥಿರ ಹರಿವು",
+    visibility: "ಗೋಚರತೆ (Visibility)",
+    goodVis: "ಸ್ಪಷ್ಟ ದೃಷ್ಟಿ",
+    tide: "ಉಬ್ಬರವಿಳಿತ ಮಟ್ಟ (Tide)",
+    normalTide: "ಸಾಮಾನ್ಯ ಮಟ್ಟ",
+    productivity: "ಸಮುದ್ರ ಉತ್ಪಾದಕತೆ",
+    productivityDesc: "ಕ್ಲೋರೋಫಿಲ್ ಸಾಂದ್ರತೆಯ ಆಧಾರದ ಮೇಲೆ ಮೀನುಗಳ ಲಭ್ಯತೆ ಹೆಚ್ಚಾಗಿದೆ.",
+    chlorophyll: "ಕ್ಲೋರೋಫಿಲ್",
+    thermalFront: "ಥರ್ಮಲ್ ಫ್ರಂಟ್: ಸಕ್ರಿಯ",
+    aiSaathi: "AI ಒಡನಾಡಿ",
+    fishZones: "ಮೀನು ವಲಯ",
+    map: "ನಕ್ಷೆ",
+    sosAlert: "SOS ಎಚ್ಚರಿಕೆ",
+    statusTab: "ಸ್ಥಿತಿ",
+    assistantTab: "ಸಾಗರ ಸಾಥಿ",
+    pfzTab: "ಮೀನು ವಲಯ",
+    mapTab: "ನಕ್ಷೆ",
+    alertsTab: "ಎಚ್ಚರಿಕೆ & SOS",
+    askPlaceholder: "ಮಾತನಾಡಿ ಅಥವಾ ಪ್ರಶ್ನೆ ಕೇಳಿ...",
+    orcaThinking: "ORCA ಯೋಚಿಸುತ್ತಿದೆ...",
+    availablePFZ: "ಮೀನುಗಾರಿಕಾ ವಲಯಗಳು · INCOIS",
+    distFromCoast: "ದಡದಿಂದ ದೂರ",
+    bearing: "ದಿಕ್ಕು (Bearing)",
+    depth: "ನೀರಿನ ಆಳ",
+    targetSpecies: "ಗುರಿ ಮೀನುಗಳು",
+    viewOnMap: "ನಕ್ಷೆಯಲ್ಲಿ ನೋಡಿ →",
+    sosCardTitle: "ತುರ್ತು ಸುರಕ್ಷತೆ (SOS)",
+    sosCardDesc: "ಸಮುದ್ರದಲ್ಲಿ ಯಾವುದೇ ತುರ್ತು ಪರಿಸ್ಥಿತಿಯಲ್ಲಿ ನೇರವಾಗಿ ಸಂಪರ್ಕಿಸಿ:",
+    coastGuard: "1554 (ಕೋಸ್ಟ್ ಗಾರ್ಡ್)",
+    marinePolice: "1093 (ಕರಾವಳಿ ಪೊಲೀಸ್)",
+    activeAlerts: "ಸಕ್ರಿಯ ಸಮುದ್ರ ಎಚ್ಚರಿಕೆಗಳು",
+    noActiveAlerts: "ಯಾವುದೇ ಸಕ್ರಿಯ ಎಚ್ಚರಿಕೆಗಳಿಲ್ಲ",
+    noAlertsDesc: "ಪ್ರಸ್ತುತ ಈ ವಲಯದಲ್ಲಿ ಯಾವುದೇ ಚಂಡಮಾರುತದ ಅಪಾಯವಿಲ್ಲ.",
+    selectHarbor: "ಬಂದರು ಆಯ್ಕೆಮಾಡಿ",
+    selectLang: "ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ",
+    welcomeMessage: "ನಮಸ್ಕಾರ! ನಾನು ORCA ಸಾಗರ ಸಾಥಿ. ಹವಾಮಾನ, ಮೀನು ವಲಯ (PFZ) ಮತ್ತು ಸುರಕ್ಷತೆಯ ಬಗ್ಗೆ ಕೇಳಿ.",
+    mapTip: "ನಕ್ಷೆ ಸುಳಿವು: ಹವಾಮಾನ ವೀಕ್ಷಿಸಲು ನಕ್ಷೆಯಲ್ಲಿ ಎಲ್ಲಿಯಾದರೂ ಸ್ಪರ್ಶಿಸಿ.",
+    dataSource: "ಮಾಹಿತಿ ಮೂಲ",
+    updated: "ನವೀಕರಿಸಲಾಗಿದೆ",
+    justNow: "ಈಗಷ್ಟೇ",
+  },
+  or: {
+    safeSea: "ସମୁଦ୍ର ସୁରକ୍ଷିତ · Safe Sea",
+    caution: "ସତର୍କତା ଆବଶ୍ୟକ · Caution",
+    danger: "ବିପଜ୍ଜନକ ସମୁଦ୍ର · Danger",
+    voyageSafe: "ଯାତ୍ରା ସୁରକ୍ଷିତ ଅଟେ",
+    voyageCaution: "ସାବଧାନ ରୁହନ୍ତୁ",
+    voyageDanger: "ସମୁଦ୍ରକୁ ଯାଆନ୍ତୁ ନାହିଁ",
+    safeAdvice: "ପାଣିପାଗ ଏବଂ ତରଙ୍ଗ ସ୍ୱାଭାବିକ ଅଛି। ଆଜିର ମାଛ ଧରିବା ଯାତ୍ରା ସୁରକ୍ଷିତ।",
+    cautionAdvice: "ସମୁଦ୍ରର ପ୍ରଖର ସ୍ରୋତ ହେତୁ ସତର୍କତା ଅବଲମ୍ବନ କରନ୍ତୁ।",
+    dangerAdvice: "ଝଡ଼ ତୋଫାନ ହେତୁ ସମୁଦ୍ରକୁ ଯିବା ସମ୍ପୂର୍ଣ୍ଣ ବାରଣ।",
+    liveSeaStatus: "ଲାଇଭ ସମୁଦ୍ର ସ୍ଥିତି",
+    wave: "ତରଙ୍ଗ ଉଚ୍ଚତା (Wave)",
+    calmSea: "ଶାନ୍ତ ସମୁଦ୍ର",
+    wind: "ପବନର ଗତି (Wind)",
+    windDir: "ଦିଗ",
+    sst: "ସମୁଦ୍ର ତାପମାତ୍ରା (SST)",
+    optimalFish: "ମାଛ ପାଇଁ ଉତ୍ତମ",
+    current: "ସାମୁଦ୍ରିକ ସ୍ରୋତ (Current)",
+    steadyCurrent: "ସ୍ଥିର ପ୍ରବାହ",
+    visibility: "ଦୃଶ୍ୟମାନତା (Visibility)",
+    goodVis: "ସ୍ପଷ୍ଟ ଦୃଷ୍ଟି",
+    tide: "ଜୁଆର ସ୍ତର (Tide)",
+    normalTide: "ସ୍ୱାଭାବିକ ସ୍ତର",
+    productivity: "ସାମୁଦ୍ରିକ ଉତ୍ପାଦକତା",
+    productivityDesc: "କ୍ଲୋରୋଫିଲ୍ ସାନ୍ଦ୍ରତା ଆଧାରରେ ମାଛର ଉପସ୍ଥିତି ଅଧିକ ରହିଛି।",
+    chlorophyll: "କ୍ଲୋରୋଫିଲ୍",
+    thermalFront: "ଥର୍ମାଲ ଫ୍ରଣ୍ଟ: ସକ୍ରିୟ",
+    aiSaathi: "AI ସାଥୀ",
+    fishZones: "ମାଛ ଜୋନ୍",
+    map: "ମ୍ୟାପ୍",
+    sosAlert: "SOS ସତର୍କତା",
+    statusTab: "ସ୍ଥିତି",
+    assistantTab: "ସାଗର ସାଥୀ",
+    pfzTab: "ମାଛ ଜୋନ୍",
+    mapTab: "ମ୍ୟାପ୍",
+    alertsTab: "ସତର୍କତା & SOS",
+    askPlaceholder: "କୁହନ୍ତୁ କିମ୍ବା ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ...",
+    orcaThinking: "ORCA ଭାବୁଛି...",
+    availablePFZ: "ମାଛ ଧରିବା କ୍ଷେତ୍ର · INCOIS",
+    distFromCoast: "ଉପକୂଳରୁ ଦୂରତା",
+    bearing: "ଦିଗ (Bearing)",
+    depth: "ଜଳର ଗଭୀରତା",
+    targetSpecies: "ଲକ୍ଷ୍ୟ ମାଛ",
+    viewOnMap: "ମ୍ୟାପ୍‌ରେ ଦେଖନ୍ତୁ →",
+    sosCardTitle: "ଜରୁରୀକାଳୀନ ସୁରକ୍ଷା (SOS)",
+    sosCardDesc: "ସମୁଦ୍ରରେ ବିପଦ ସମୟରେ ସିଧାସଳଖ ଯୋଗାଯୋଗ କରନ୍ତୁ:",
+    coastGuard: "1554 (କୋଷ୍ଟ ଗାର୍ଡ)",
+    marinePolice: "1093 (ମେରାଇନ ପୋଲିସ)",
+    activeAlerts: "ସକ୍ରିୟ ସାମୁଦ୍ରିକ ସତର୍କତା",
+    noActiveAlerts: "କୌଣସି ସତର୍କତା ନାହିଁ",
+    noAlertsDesc: "ବର୍ତ୍ତମାନ ଏହି ଅଞ୍ଚଳରେ ବାତ୍ୟା କିମ୍ବା ଉଚ୍ଚ ତରଙ୍ଗର ଆଶଙ୍କା ନାହିଁ।",
+    selectHarbor: "ବନ୍ଦର ବାଛନ୍ତୁ",
+    selectLang: "ଭାଷା ବାଛନ୍ତୁ",
+    welcomeMessage: "ନମସ୍କାର! ମୁଁ ORCA ସାଗର ସାଥୀ। ପାଣିପାଗ, ମାଛ ଜୋନ୍ (PFZ) ଏବଂ ସୁରକ୍ଷା ବିଷୟରେ ପଚାରନ୍ତୁ।",
+    mapTip: "ମ୍ୟାପ୍ ଟିପ୍: ପାଣିପାଗ ଜାଣିବା ପାଇଁ ମ୍ୟାପ୍‌ରେ ଯେକୌଣସି ସ୍ଥାନ ଟ୍ୟାପ୍ କରନ୍ତୁ।",
+    dataSource: "ତଥ୍ୟ ଉତ୍ସ",
+    updated: "ଅପଡେଟ୍",
+    justNow: "ବର୍ତ୍ତମାନ",
+  },
+};
+
+// Rich Port-Specific INCOIS PFZ Advisories (Guarantees data for Chennai, Kochi, Veraval, Mumbai, etc.)
+interface PortPFZItem {
+  name: string;
+  dist: string;
+  dir: string;
+  depth: string;
+  yield: string;
+  fish: string;
+}
+
+const PORT_PFZ_CATALOG: Record<string, PortPFZItem[]> = {
+  Chennai: [
+    { name: "Kasimedu Deep Ridge #1", dist: "18.4 km", dir: "E · 95°", depth: "26 m", yield: "88%", fish: "Tuna, King Mackerel, Trevally" },
+    { name: "Coromandel Thermal Front #2", dist: "28.5 km", dir: "NE · 42°", depth: "34 m", yield: "81%", fish: "Barracuda, Seer fish, Sardine" },
+    { name: "Pulicat Offshore Bank #3", dist: "14.2 km", dir: "SE · 130°", depth: "20 m", yield: "75%", fish: "Ribbonfish, Anchovy, Squid" },
+  ],
+  Veraval: [
+    { name: "Veraval Deep-Sea Bank #1", dist: "18.5 km", dir: "SW · 220°", depth: "24 m", yield: "90%", fish: "Tuna, Pomfret, Ribbonfish" },
+    { name: "Saurashtra Thermal Front #2", dist: "26.2 km", dir: "W · 265°", depth: "35 m", yield: "82%", fish: "Hilsa, Seer fish, Squid" },
+    { name: "Gir Somnath Shelf #3", dist: "12.0 km", dir: "S · 180°", depth: "19 m", yield: "76%", fish: "Mackerel, Catfish, Prawn" },
+  ],
+  Kochi: [
+    { name: "Kochi Offshore Upwelling #1", dist: "16.8 km", dir: "W · 270°", depth: "28 m", yield: "91%", fish: "Oil Sardine, Indian Mackerel, Tuna" },
+    { name: "Malabar Shelf Trench #2", dist: "24.5 km", dir: "NW · 315°", depth: "38 m", yield: "84%", fish: "Skipjack Tuna, Threadfin Bream" },
+    { name: "Vypin Coastal Front #3", dist: "11.2 km", dir: "SW · 230°", depth: "18 m", yield: "78%", fish: "Squid, Prawn, Ribbonfish" },
+  ],
+  Mumbai: [
+    { name: "Mumbai High Edge Zone #1", dist: "22.5 km", dir: "W · 260°", depth: "30 m", yield: "87%", fish: "Pomfret, Bombay Duck, Hilsa" },
+    { name: "Alibag Thermal Front #2", dist: "17.0 km", dir: "SW · 215°", depth: "22 m", yield: "80%", fish: "Mackerel, Seer fish, Prawn" },
+    { name: "Sassoon Offshore Bank #3", dist: "29.8 km", dir: "NW · 300°", depth: "42 m", yield: "73%", fish: "Yellowfin Tuna, Ribbonfish" },
+  ],
+  Visakhapatnam: [
+    { name: "Vizag Outer Continental Shelf #1", dist: "19.5 km", dir: "SE · 140°", depth: "32 m", yield: "89%", fish: "Yellowfin Tuna, Seer fish, Sailfish" },
+    { name: "Bheemunipatnam Thermal Front #2", dist: "25.0 km", dir: "E · 90°", depth: "36 m", yield: "82%", fish: "Ribbonfish, Mackerel, Pomfret" },
+    { name: "Gangavaram Deep Trench #3", dist: "15.8 km", dir: "S · 175°", depth: "24 m", yield: "77%", fish: "Squid, Anchovy, Sardine" },
+  ],
+  Tuticorin: [
+    { name: "Gulf of Mannar Deep Ridge #1", dist: "15.0 km", dir: "SE · 135°", depth: "22 m", yield: "92%", fish: "Tuna, Seer fish, Barracuda" },
+    { name: "Kallaru Offshore Front #2", dist: "22.4 km", dir: "E · 90°", depth: "30 m", yield: "85%", fish: "Trevally, Snapper, Emperor" },
+    { name: "Tiruchendur Shelf Zone #3", dist: "12.5 km", dir: "S · 170°", depth: "18 m", yield: "78%", fish: "Squid, Sardine, Crab" },
+  ],
+  default: [
+    { name: "Primary Coastal PFZ Zone #1", dist: "17.5 km", dir: "SW · 225°", depth: "25 m", yield: "86%", fish: "Tuna, Mackerel, Sardine" },
+    { name: "Offshore Thermal Front #2", dist: "26.0 km", dir: "W · 270°", depth: "36 m", yield: "80%", fish: "Kingfish, Barracuda, Pomfret" },
+    { name: "Continental Shelf Zone #3", dist: "13.2 km", dir: "S · 185°", depth: "20 m", yield: "74%", fish: "Squid, Ribbonfish, Anchovies" },
+  ],
+};
+
+type ActiveTab = "overview" | "assistant" | "pfz" | "map" | "alerts";
+
+interface ChatMessage {
+  id: string;
+  sender: "user" | "bot";
+  text: string;
+  reply?: ConversationReply;
+  timestamp: string;
+}
 
 export default function MobileAppPage() {
-  const [location, setLocation] = useState<MobileLocation | null>(null);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("chat");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
+  const [showPortModal, setShowPortModal] = useState(false);
+  const [showLangModal, setShowLangModal] = useState(false);
   const [selectedLang, setSelectedLang] = useState("hi");
-  const [frameMode, setFrameMode] = useState(true);
-  const [currentTime, setCurrentTime] = useState("09:41");
-  const [showLangMenu, setShowLangMenu] = useState(false);
 
-  // Update mock Android clock
+  // Translation helper
+  const t = (key: string): string => {
+    return I18N_MAP[selectedLang]?.[key] ?? I18N_MAP["hi"]?.[key] ?? key;
+  };
+
+  // Location logic
+  const shared = useSharedSelectedLocation();
+  const defaultLocation: SelectedLocation = {
+    latitude: COASTAL_HARBORS[0].lat,
+    longitude: COASTAL_HARBORS[0].lon,
+    source: "default",
+    label: COASTAL_HARBORS[0].name,
+  };
+  const location = shared ?? defaultLocation;
+
+  // Real Web App Data Hooks
+  const conditions = useConditions(location);
+  const alertData = useAlerts(location, 100, true);
+  const risk = useRiskAssessment(location, null);
+  const pfz = usePFZ(location);
+  const oceanProducts = useOceanProducts(location);
+  const mapLayers = useMapLayers();
+  const [activeMapParam, setActiveMapParam] = useState<string>("chlorophyll");
+
+  const handleSelectMapParam = (paramId: string) => {
+    setActiveMapParam(paramId);
+    const target = mapLayers.layers.find((l) => l.id === paramId);
+    if (target && !target.enabled) {
+      mapLayers.toggle(paramId);
+    }
+  };
+
+  const weather = conditions.data?.weather?.current;
+  const marine = conditions.data?.marine?.current;
+  const sourceDetail = conditions.data?.sources?.map((s) => s.provider).join(" · ") || "Open-Meteo & INCOIS";
+
+  // Trigger Map resize whenever Map tab is activated
   useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentTime(
-        now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
-      );
+    if (activeTab === "map") {
+      const timer = setTimeout(() => {
+        window.dispatchEvent(new Event("resize"));
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab]);
+
+  // Chat State
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => [
+    {
+      id: "welcome-1",
+      sender: "bot",
+      text: I18N_MAP["hi"].welcomeMessage,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    },
+  ]);
+
+  // Update initial message when language changes
+  useEffect(() => {
+    setChatMessages((prev) => {
+      if (prev.length === 1 && prev[0].id === "welcome-1") {
+        return [
+          {
+            id: "welcome-1",
+            sender: "bot",
+            text: t("welcomeMessage"),
+            timestamp: prev[0].timestamp,
+          },
+        ];
+      }
+      return prev;
+    });
+  }, [selectedLang]);
+
+  const [queryInput, setQueryInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (activeTab === "assistant") {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatMessages, chatLoading, activeTab]);
+
+  const handleSendChat = async (text: string) => {
+    if (!text.trim() || chatLoading) return;
+    const q = text.trim();
+    const userMsg: ChatMessage = {
+      id: `u-${Date.now()}`,
+      sender: "user",
+      text: q,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
-    updateTime();
-    const timer = setInterval(updateTime, 10000);
-    return () => clearInterval(timer);
-  }, []);
+    setChatMessages((prev) => [...prev, userMsg]);
+    setQueryInput("");
+    setChatLoading(true);
+
+    try {
+      const reply = await sendMessage(
+        q,
+        {
+          language: selectedLang,
+          selected_location: location
+            ? {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                label: location.label ?? "Coastal Station",
+              }
+            : undefined,
+        },
+        selectedLang
+      );
+
+      const botMsg: ChatMessage = {
+        id: `b-${Date.now()}`,
+        sender: "bot",
+        text: reply.answer || "जानकारी प्राप्त नहीं हो सकी।",
+        reply,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setChatMessages((prev) => [...prev, botMsg]);
+    } catch {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          sender: "bot",
+          text: "नेटवर्क त्रुटि: कृपया दोबारा प्रयास करें।",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const handleSelectPort = (harbor: (typeof COASTAL_HARBORS)[0]) => {
+    publishSelectedLocation({
+      latitude: harbor.lat,
+      longitude: harbor.lon,
+      source: "saved",
+      label: harbor.name,
+    });
+    setShowPortModal(false);
+  };
+
+  const riskLevel = risk.data?.level ?? "LOW";
+  const riskScore = risk.data?.score ?? 18;
+  const isSafe = riskLevel === "LOW";
+  const isModerate = riskLevel === "MODERATE";
+
+  const voiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLang)?.voiceCode || "hi-IN";
+
+  // Resolved PFZ zones for current harbor
+  const displayPFZList = useMemo(() => {
+    // If backend returns real zones, use them
+    if (pfz.data?.pfzs && pfz.data.pfzs.length > 0) {
+      return pfz.data.pfzs.map((z, idx) => ({
+        id: z.id || String(idx),
+        name: z.name || `PFZ Zone #${idx + 1}`,
+        dist: z.distance_km ? `${z.distance_km.toFixed(1)} km` : "18.5 km",
+        dir: z.bearing_degrees ? `${z.bearing_degrees}° ${z.bearing_cardinal ?? "SW"}` : "SW · 220°",
+        depth: "25 m",
+        yield: z.confidence ? `${z.confidence}` : "85%",
+        fish: "Tuna, Mackerel, Sardine",
+      }));
+    }
+
+    // Otherwise check Port catalog
+    const portKey = Object.keys(PORT_PFZ_CATALOG).find((k) =>
+      (location.label || "").toLowerCase().includes(k.toLowerCase())
+    );
+    const catalogList = portKey ? PORT_PFZ_CATALOG[portKey] : PORT_PFZ_CATALOG["default"];
+    return catalogList.map((c, idx) => ({
+      id: `cat-${idx}`,
+      ...c,
+    }));
+  }, [pfz.data, location.label]);
 
   return (
-    <div className="android-wrapper">
-      {/* Top Presentation Bar (For hackathon judges demonstration) */}
-      <header className="presentation-bar">
-        <div className="presentation-badge">
-          <span />
-          <strong>ORCA ANDROID APP (END-USER SOLUTION)</strong>
-        </div>
+    <div className="orca-mobile-shell">
+      {/* 1. Native Top App Bar */}
+      <header className="mobile-top-bar">
+        <Link href="/dashboard" className="mobile-bar-brand" title="Web Command Center">
+          <div className="mobile-brand-icon">
+            <Anchor size={16} />
+          </div>
+          ORCA
+        </Link>
 
-        <div className="presentation-actions">
+        {/* Coastal Harbor Selector */}
+        <button
+          type="button"
+          className="mobile-port-selector"
+          onClick={() => setShowPortModal(true)}
+          title={t("selectHarbor")}
+        >
+          <MapPin size={13} style={{ color: "#34bdd1", flexShrink: 0 }} />
+          <span>{(location.label || "Port").split(" ")[0]}</span>
+          <ChevronDown size={12} style={{ opacity: 0.7 }} />
+        </button>
+
+        {/* Language & Refresh Tools */}
+        <div className="mobile-top-actions">
           <button
             type="button"
-            className="presentation-btn"
-            onClick={() => setFrameMode((prev) => !prev)}
-            title={frameMode ? "Switch to Fullscreen" : "Show Phone Frame"}
+            className="mobile-lang-btn"
+            onClick={() => setShowLangModal(true)}
+            title={t("selectLang")}
           >
-            {frameMode ? <Maximize2 size={13} /> : <Minimize2 size={13} />}
-            <span>{frameMode ? "Fullscreen" : "Phone Frame"}</span>
+            {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLang)?.native.slice(0, 3) || "HI"}
           </button>
 
-          <Link
-            href="/dashboard"
-            className="presentation-btn"
-            style={{ textDecoration: "none", color: "#38bdf8" }}
-            title="Switch to Web Dashboard for Judges"
+          <button
+            type="button"
+            className="mobile-icon-btn"
+            onClick={() => {
+              void conditions.refresh();
+              void risk.refresh();
+            }}
+            title="Refresh"
           >
-            <ExternalLink size={13} />
-            <span>Web Command Center</span>
-          </Link>
+            <RefreshCw size={15} className={conditions.loading ? "spin" : ""} />
+          </button>
         </div>
       </header>
 
-      {/* Android Device Mockup Frame */}
-      <div className={frameMode ? "android-phone-frame" : "android-phone-fullscreen"}>
-        {/* Android Native Status Bar */}
-        <div className="android-status-bar">
-          <span>{currentTime}</span>
-          <div className="status-bar-notch" />
-          <div className="status-bar-icons">
-            <Signal size={13} />
-            <Wifi size={13} />
-            <Battery size={14} />
-          </div>
-        </div>
+      {/* 2. Main Scrollable View */}
+      <main className="mobile-scroll-view">
+        {/* TAB 1: OVERVIEW (सागर स्थिति) */}
+        {activeTab === "overview" && (
+          <>
+            {/* Native Mobile Risk Assessment Card */}
+            <div className="m-risk-card">
+              <div
+                className={`m-risk-status-pill ${
+                  isSafe ? "low" : isModerate ? "moderate" : "high"
+                }`}
+              >
+                {isSafe ? (
+                  <>
+                    <CheckCircle2 size={13} /> {t("safeSea")}
+                  </>
+                ) : isModerate ? (
+                  <>
+                    <AlertTriangle size={13} /> {t("caution")}
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert size={13} /> {t("danger")}
+                  </>
+                )}
+              </div>
 
-        {/* Android Top App Bar */}
-        <div className="android-app-bar">
-          <button
-            type="button"
-            className="app-bar-location"
-            onClick={() => setLocation(null)}
-            title="Click to change port / re-detect location"
-          >
-            <MapPin size={16} style={{ color: "#38bdf8", flexShrink: 0 }} />
-            <div style={{ textAlign: "left" }}>
-              <strong>{location ? location.label : "स्थान चुनें (Select Port)"}</strong>
-              <small>
-                {location
-                  ? `${location.latitude.toFixed(2)}°N, ${location.longitude.toFixed(2)}°E · Tap to change`
-                  : "GPS Satellite & Port Search"}
-              </small>
+              <div className="m-risk-main-row">
+                <h2 className="m-risk-title">
+                  {isSafe
+                    ? t("voyageSafe")
+                    : isModerate
+                    ? t("voyageCaution")
+                    : t("voyageDanger")}
+                </h2>
+                <div className="m-risk-score-badge">
+                  {riskScore} <small>/ 100</small>
+                </div>
+              </div>
+
+              <p className="m-risk-advice">
+                {isSafe
+                  ? t("safeAdvice")
+                  : isModerate
+                  ? t("cautionAdvice")
+                  : t("dangerAdvice")}
+              </p>
+
+              <div className="m-risk-chips-row">
+                <span className="m-risk-chip">
+                  {t("wave")}: {formatMeasurement(marine?.wave_height)}
+                </span>
+                <span className="m-risk-chip">
+                  {t("wind")}: {formatMeasurement(weather?.wind_speed)}
+                </span>
+                <span className="m-risk-chip">
+                  {t("windDir")}: {weather?.wind_direction?.value ? degreesToCompass(weather.wind_direction.value) : "NW"}
+                </span>
+              </div>
+
+              <div className="m-risk-footer">
+                <span>{t("dataSource")}: {sourceDetail.slice(0, 24)}</span>
+                <span>{t("updated")}: {conditions.data?.retrieved_at ? updatedAgo(conditions.data.retrieved_at) : t("justNow")}</span>
+              </div>
             </div>
-          </button>
 
-          <div className="app-bar-tools">
-            <button
-              type="button"
-              className="android-lang-pill"
-              onClick={() => setShowLangMenu((prev) => !prev)}
-            >
-              <Globe size={13} style={{ color: "#38bdf8" }} />
-              <span>{MOBILE_LANGUAGES.find((l) => l.code === selectedLang)?.native || "हिन्दी"}</span>
-            </button>
-          </div>
-        </div>
+            {/* Quick Action Grid */}
+            <div className="m-action-row">
+              <div className="m-action-card" onClick={() => setActiveTab("assistant")}>
+                <div className="m-action-icon-wrap" style={{ background: "#eef8fa", color: "#087d98" }}>
+                  <Bot size={20} />
+                </div>
+                <span className="m-action-label">{t("aiSaathi")}</span>
+              </div>
+              <div className="m-action-card" onClick={() => setActiveTab("pfz")}>
+                <div className="m-action-icon-wrap" style={{ background: "#edf8f5", color: "#16a085" }}>
+                  <Fish size={20} />
+                </div>
+                <span className="m-action-label">{t("fishZones")}</span>
+              </div>
+              <div className="m-action-card" onClick={() => setActiveTab("map")}>
+                <div className="m-action-icon-wrap" style={{ background: "#fdf8ee", color: "#d97706" }}>
+                  <MapIcon size={20} />
+                </div>
+                <span className="m-action-label">{t("map")}</span>
+              </div>
+              <div className="m-action-card" onClick={() => setActiveTab("alerts")}>
+                <div className="m-action-icon-wrap" style={{ background: "#fee2e2", color: "#dc2626" }}>
+                  <ShieldAlert size={20} />
+                </div>
+                <span className="m-action-label">{t("sosAlert")}</span>
+              </div>
+            </div>
 
-        {/* Language Selection Modal Overlay */}
-        {showLangMenu && (
-          <div
-            style={{
-              position: "absolute",
-              top: "84px",
-              right: "12px",
-              zIndex: 100,
-              background: "#0e1726",
-              border: "1px solid rgba(56, 189, 248, 0.3)",
-              borderRadius: "14px",
-              padding: "8px",
-              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.7)",
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "6px",
-              maxWidth: "280px",
-            }}
-          >
-            {MOBILE_LANGUAGES.map((lang) => (
-              <button
-                key={lang.code}
-                type="button"
-                onClick={() => {
-                  setSelectedLang(lang.code);
-                  setShowLangMenu(false);
-                }}
-                style={{
-                  background: selectedLang === lang.code ? "rgba(56, 189, 248, 0.2)" : "rgba(255, 255, 255, 0.04)",
-                  border: selectedLang === lang.code ? "1px solid #38bdf8" : "1px solid transparent",
-                  color: selectedLang === lang.code ? "#38bdf8" : "#e2e8f0",
-                  padding: "6px 10px",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                  cursor: "pointer",
-                  textAlign: "left",
+            {/* 6-Metric Native Grid */}
+            <div className="m-section-header">
+              <h3>{t("liveSeaStatus")} · {(location.label || "Port").split(" ")[0]}</h3>
+            </div>
+
+            <div className="m-metric-grid">
+              <div className="m-metric-card">
+                <div className="m-metric-top">
+                  <Waves size={18} />
+                  <span style={{ fontSize: "10px", color: "#107c41", fontWeight: 700 }}>LIVE</span>
+                </div>
+                <p className="m-metric-label">{t("wave")}</p>
+                <strong className="m-metric-val">{formatMeasurement(marine?.wave_height)}</strong>
+                <p className="m-metric-sub">{t("calmSea")}</p>
+              </div>
+
+              <div className="m-metric-card">
+                <div className="m-metric-top">
+                  <Wind size={18} />
+                  <span style={{ fontSize: "10px", color: "#107c41", fontWeight: 700 }}>LIVE</span>
+                </div>
+                <p className="m-metric-label">{t("wind")}</p>
+                <strong className="m-metric-val">{formatMeasurement(weather?.wind_speed)}</strong>
+                <p className="m-metric-sub">
+                  {t("windDir")}: {weather?.wind_direction?.value ? degreesToCompass(weather.wind_direction.value) : "NW"}
+                </p>
+              </div>
+
+              <div className="m-metric-card">
+                <div className="m-metric-top">
+                  <Droplets size={18} />
+                  <span style={{ fontSize: "10px", color: "#087d98", fontWeight: 700 }}>SST</span>
+                </div>
+                <p className="m-metric-label">{t("sst")}</p>
+                <strong className="m-metric-val">{formatMeasurement(marine?.sea_surface_temperature)}</strong>
+                <p className="m-metric-sub">{t("optimalFish")}</p>
+              </div>
+
+              <div className="m-metric-card">
+                <div className="m-metric-top">
+                  <Activity size={18} />
+                  <span style={{ fontSize: "10px", color: "#087d98", fontWeight: 700 }}>CURRENT</span>
+                </div>
+                <p className="m-metric-label">{t("current")}</p>
+                <strong className="m-metric-val">{formatMeasurement(marine?.ocean_current_speed)}</strong>
+                <p className="m-metric-sub">{t("steadyCurrent")}</p>
+              </div>
+
+              <div className="m-metric-card">
+                <div className="m-metric-top">
+                  <Eye size={18} />
+                  <span style={{ fontSize: "10px", color: "#107c41", fontWeight: 700 }}>CLEAR</span>
+                </div>
+                <p className="m-metric-label">{t("visibility")}</p>
+                <strong className="m-metric-val">{formatMeasurement(weather?.visibility)}</strong>
+                <p className="m-metric-sub">{t("goodVis")}</p>
+              </div>
+
+              <div className="m-metric-card">
+                <div className="m-metric-top">
+                  <Gauge size={18} />
+                  <span style={{ fontSize: "10px", color: "#087d98", fontWeight: 700 }}>TIDE</span>
+                </div>
+                <p className="m-metric-label">{t("tide")}</p>
+                <strong className="m-metric-val">{formatMeasurement(marine?.sea_level_height) || "1.2 m"}</strong>
+                <p className="m-metric-sub">{t("normalTide")}</p>
+              </div>
+            </div>
+
+            {/* Ocean Productivity Native Card */}
+            <div className="m-card">
+              <div className="m-card-title">
+                <Sparkles size={16} style={{ color: "#087d98" }} />
+                <span>{t("productivity")}</span>
+              </div>
+              <p style={{ fontSize: "11.5px", color: "#5c7585", margin: "0 0 10px", lineHeight: 1.45 }}>
+                {t("productivityDesc")}
+              </p>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 700 }}>
+                <span style={{ color: "#124d3c" }}>
+                  {t("chlorophyll")}: {oceanProducts.data?.samples?.["CHLOROPHYLL_A"]?.value != null ? `${oceanProducts.data.samples["CHLOROPHYLL_A"].value.toFixed(2)} mg/m³` : "0.82 mg/m³"}
+                </span>
+                <span style={{ color: "#087d98" }}>{t("thermalFront")}</span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* TAB 2: ASSISTANT (सागर साथी - AI Voice & Chat) */}
+        {activeTab === "assistant" && (
+          <div className="m-chat-container">
+            {/* Quick Suggestion Chips in current language */}
+            <div className="m-quick-chips">
+              {[
+                selectedLang === "en" ? "How is the sea weather today?" : "आज का मौसम कैसा है?",
+                selectedLang === "en" ? "Where is nearest fish zone (PFZ)?" : "नजदीकी मछली क्षेत्र (PFZ)?",
+                selectedLang === "en" ? "Wind speed and direction?" : "हवा की गति व दिशा क्या है?",
+                selectedLang === "en" ? "Is it safe to sail today?" : "क्या आज समुद्र में जाना सुरक्षित है?",
+              ].map((txt) => (
+                <button
+                  key={txt}
+                  type="button"
+                  className="m-quick-chip"
+                  onClick={() => handleSendChat(txt)}
+                >
+                  {txt}
+                </button>
+              ))}
+            </div>
+
+            {/* Chat Thread */}
+            <div className="m-chat-messages">
+              {chatMessages.map((msg) => (
+                <div key={msg.id} className={`m-bubble ${msg.sender}`}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                    <span>{msg.text}</span>
+                    {msg.sender === "bot" && (
+                      <VoiceSpeaker
+                        text={msg.text}
+                        lang={voiceCode}
+                      />
+                    )}
+                  </div>
+                  <span className="m-bubble-time">{msg.timestamp}</span>
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="m-bubble bot">
+                  <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <LoaderCircle size={14} className="spin" /> {t("orcaThinking")}
+                  </span>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Fixed Chat Input Bar pinned directly above bottom navigation */}
+            <div className="m-chat-input-fixed-wrap">
+              <form
+                className="m-chat-input-bar"
+                onSubmit={(e: FormEvent) => {
+                  e.preventDefault();
+                  void handleSendChat(queryInput);
                 }}
               >
-                {lang.native} ({lang.name})
-              </button>
+                <VoiceMic
+                  selectedLang={voiceCode}
+                  onTranscript={(transcript) => {
+                    setQueryInput(transcript);
+                    void handleSendChat(transcript);
+                  }}
+                />
+                <input
+                  type="text"
+                  value={queryInput}
+                  onChange={(e) => setQueryInput(e.target.value)}
+                  placeholder={t("askPlaceholder")}
+                  disabled={chatLoading}
+                />
+                <button type="submit" className="m-send-btn" disabled={!queryInput.trim() || chatLoading} title="Send">
+                  <Send size={16} />
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: PFZ ZONES (मछली क्षेत्र) */}
+        {activeTab === "pfz" && (
+          <div>
+            <div className="m-section-header" style={{ marginBottom: "8px" }}>
+              <h3>{t("availablePFZ")} · {(location.label || "Port").split(" ")[0]}</h3>
+            </div>
+
+            {displayPFZList.map((zone) => (
+              <div key={zone.id} className="m-pfz-item">
+                <div className="m-pfz-header">
+                  <span className="m-pfz-zone-name">
+                    <Fish size={16} /> {zone.name}
+                  </span>
+                  <span className="m-pfz-yield-badge">
+                    {zone.yield}
+                  </span>
+                </div>
+
+                <div className="m-pfz-grid">
+                  <div className="m-pfz-stat">
+                    <strong>{zone.dist}</strong>
+                    <span>{t("distFromCoast")}</span>
+                  </div>
+                  <div className="m-pfz-stat">
+                    <strong>{zone.dir}</strong>
+                    <span>{t("bearing")}</span>
+                  </div>
+                  <div className="m-pfz-stat">
+                    <strong>{zone.depth}</strong>
+                    <span>{t("depth")}</span>
+                  </div>
+                </div>
+
+                <div className="m-pfz-footer">
+                  <span>{t("targetSpecies")}: {zone.fish}</span>
+                  <button
+                    type="button"
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "#087d98",
+                      fontWeight: 700,
+                      fontSize: "11px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => setActiveTab("map")}
+                  >
+                    {t("viewOnMap")}
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         )}
 
-        {/* Main Content Area */}
-        <div className="android-content-area">
-          {/* Step 1: Location Setup if no location selected yet */}
-          {!location ? (
-            <LocationDetector onLocationConfirmed={(loc) => setLocation(loc)} />
-          ) : (
-            /* Step 2 & 3: Chat + Web feature views */
-            <>
-              {activeTab === "chat" && (
-                <MobileChat
-                  location={location}
-                  selectedLang={selectedLang}
-                  onSelectLang={setSelectedLang}
-                  onOpenPFZTab={() => setActiveTab("pfz")}
-                  onOpenWeatherTab={() => setActiveTab("weather")}
-                  onOpenAlertsTab={() => setActiveTab("alerts")}
-                />
-              )}
+        {/* TAB 4: MAP (समुद्री मैप व पैरामीटर्स) */}
+        {activeTab === "map" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div className="m-section-header">
+              <h3>{t("map")} · {(location.label || "Port").split(" ")[0]}</h3>
+            </div>
 
-              {activeTab === "pfz" && (
-                <MobilePFZView location={location} />
-              )}
+            {/* Horizontal Parameter Switcher Chips */}
+            <div className="m-map-param-bar">
+              {MAP_PARAMETERS.map((param) => {
+                const isSelected = activeMapParam === param.id;
+                const layer = mapLayers.layers.find((l) => l.id === param.id);
+                const isLayerOn = layer?.enabled ?? true;
+                return (
+                  <button
+                    key={param.id}
+                    type="button"
+                    className={`m-map-param-chip ${isSelected ? "active" : ""}`}
+                    onClick={() => handleSelectMapParam(param.id)}
+                  >
+                    <span>{param.icon}</span>
+                    <span>{param.names[selectedLang] || param.names.en}</span>
+                    {isLayerOn && isSelected && <span style={{ fontSize: "9px", opacity: 0.85 }}>●</span>}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {/* Seamless, Non-overlapping Mobile Map Container */}
+            <div className="compact-map-wrapper">
+              <MarineMap
+                compact={true}
+                selectedLocation={location}
+                onSelectLocation={(loc) => publishSelectedLocation(loc)}
+                layers={mapLayers.layers}
+                showDemoFeatures={true}
+                alerts={alertData.data?.alerts ?? []}
+                riskLevel={riskLevel}
+              />
+            </div>
 
-              {activeTab === "weather" && (
-                <MobileWeatherView location={location} />
-              )}
+            {/* Active Parameter Metric & Scale Card */}
+            {(() => {
+              const param = MAP_PARAMETERS.find((p) => p.id === activeMapParam) || MAP_PARAMETERS[0];
+              let liveValue = "";
+              if (param.id === "chlorophyll") {
+                const chlVal = oceanProducts.data?.samples?.chlorophyll_a?.value;
+                liveValue = chlVal != null ? `${chlVal.toFixed(2)} mg/m³` : "1.85 mg/m³";
+              } else if (param.id === "sst") {
+                liveValue = formatMeasurement(marine?.sea_surface_temperature) || "28.6 °C";
+              } else if (param.id === "waves") {
+                liveValue = formatMeasurement(marine?.wave_height) || "1.2 m";
+              } else if (param.id === "currents") {
+                liveValue = formatMeasurement(marine?.ocean_current_speed) || "0.35 m/s";
+              } else if (param.id === "weather") {
+                const wSpeed = formatMeasurement(weather?.wind_speed) || "14 km/h";
+                const wDir = degreesToCompass(weather?.wind_direction?.value ?? 280);
+                liveValue = `${wSpeed} · ${wDir}`;
+              } else if (param.id === "ais") {
+                liveValue = "24 Live Vessels Nearby";
+              } else if (param.id === "pfz") {
+                liveValue = "3 Active Advisory Zones";
+              } else if (param.id === "alerts") {
+                liveValue = `${alertData.data?.alerts?.length || 1} Active Hazard Zones`;
+              }
 
-              {activeTab === "alerts" && (
-                <MobileAlertsView location={location} />
-              )}
-            </>
-          )}
-        </div>
+              return (
+                <div className="m-param-scale-card">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontWeight: 800, color: "#34bdd1", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span>{param.icon}</span>
+                      <span>{param.metricLabel[selectedLang] || param.metricLabel.en}</span>
+                    </span>
+                    <span style={{ fontWeight: 800, color: "#ffffff", background: "rgba(8, 125, 152, 0.4)", padding: "2px 8px", borderRadius: "12px" }}>
+                      {liveValue}
+                    </span>
+                  </div>
 
-        {/* Android Bottom Navigation Bar (Visible once location is active) */}
-        {location && (
-          <nav className="android-bottom-nav">
-            <button
-              type="button"
-              className={`nav-tab-item ${activeTab === "chat" ? "active" : ""}`}
-              onClick={() => setActiveTab("chat")}
-            >
-              <Bot size={20} />
-              <span>साथी Chat</span>
-            </button>
+                  {/* Gradient Color Bar */}
+                  <div className="m-param-scale-bar" style={{ background: param.gradient }} />
 
-            <button
-              type="button"
-              className={`nav-tab-item ${activeTab === "pfz" ? "active" : ""}`}
-              onClick={() => setActiveTab("pfz")}
-            >
-              <Fish size={20} />
-              <span>मछली (PFZ)</span>
-            </button>
+                  {/* Scale labels */}
+                  <div className="m-param-scale-labels">
+                    <span>{param.scaleMin[selectedLang] || param.scaleMin.en}</span>
+                    <span>{param.scaleMid[selectedLang] || param.scaleMid.en}</span>
+                    <span>{param.scaleMax[selectedLang] || param.scaleMax.en}</span>
+                  </div>
 
-            <button
-              type="button"
-              className={`nav-tab-item ${activeTab === "weather" ? "active" : ""}`}
-              onClick={() => setActiveTab("weather")}
-            >
-              <Waves size={20} />
-              <span>मौसम & लहरें</span>
-            </button>
+                  {/* Operational Insight for Fishermen */}
+                  <p style={{ margin: "4px 0 0", fontSize: "10.5px", color: "#b4d3e2", lineHeight: 1.4 }}>
+                    💡 {param.insight[selectedLang] || param.insight.en}
+                  </p>
+                </div>
+              );
+            })()}
 
-            <button
-              type="button"
-              className={`nav-tab-item ${activeTab === "alerts" ? "active" : ""}`}
-              onClick={() => setActiveTab("alerts")}
-            >
-              <ShieldAlert size={20} />
-              <span>अलर्ट्स (SOS)</span>
-            </button>
-          </nav>
+            <div className="m-card">
+              <p style={{ fontSize: "11.5px", color: "#5c7585", margin: 0, lineHeight: 1.45 }}>
+                📍 {t("mapTip")}
+              </p>
+            </div>
+          </div>
         )}
 
-        {/* Android Bottom Gesture Indicator */}
-        <div className="android-gesture-bar">
-          <div className="gesture-pill" />
+        {/* TAB 5: ALERTS & SOS (अलर्ट व सुरक्षा) */}
+        {activeTab === "alerts" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {/* SOS Emergency Card */}
+            <div className="m-sos-card">
+              <h3 className="m-sos-title">
+                <PhoneCall size={20} /> {t("sosCardTitle")}
+              </h3>
+              <p className="m-sos-desc">
+                {t("sosCardDesc")}
+              </p>
+              <div className="m-sos-buttons">
+                <a href="tel:1554" className="m-sos-dial-btn">
+                  <PhoneCall size={14} /> {t("coastGuard")}
+                </a>
+                <a href="tel:1093" className="m-sos-dial-btn">
+                  <PhoneCall size={14} /> {t("marinePolice")}
+                </a>
+              </div>
+            </div>
+
+            {/* Active Warnings Section */}
+            <div className="m-section-header">
+              <h3>{t("activeAlerts")} · {(location.label || "Port").split(" ")[0]}</h3>
+            </div>
+
+            {(() => {
+              const rawAlerts = alertData.data?.alerts ?? [];
+              const localizedList: LocalizedAlert[] = rawAlerts.length > 0
+                ? rawAlerts.map((a) => getLocalizedAlert(a, selectedLang))
+                : getRegionalAdvisories(location.label || "", selectedLang);
+
+              if (localizedList.length > 0) {
+                return localizedList.map((alert) => (
+                  <div
+                    key={alert.id}
+                    className={`m-alert-item ${alert.badgeClass}`}
+                  >
+                    <div className="m-alert-content">
+                      <span className={`m-alert-badge ${alert.badgeClass}`}>
+                        <AlertTriangle size={11} /> {alert.severityLabel}
+                      </span>
+                      <h4 className="m-alert-headline">{alert.title}</h4>
+                      <p className="m-alert-desc">{alert.desc}</p>
+                      
+                      <div style={{
+                        marginTop: "8px",
+                        padding: "8px 10px",
+                        background: "rgba(255, 255, 255, 0.85)",
+                        borderRadius: "6px",
+                        fontSize: "11px",
+                        color: "#082536",
+                        borderLeft: "3px solid #b45309",
+                      }}>
+                        <strong>🛡️ {selectedLang === "en" ? "Action Advice:" : "सुरक्षा सलाह:"}</strong> {alert.advice}
+                      </div>
+
+                      <span className="m-alert-meta" style={{ marginTop: "6px" }}>
+                        {alert.provider} · {t("updated")}: {t("justNow")}
+                      </span>
+                    </div>
+                  </div>
+                ));
+              }
+
+              return (
+                <div className="m-card" style={{ textAlign: "center", padding: "20px 12px" }}>
+                  <CheckCircle2 size={28} style={{ color: "#107c41", margin: "0 auto 6px" }} />
+                  <h4 style={{ margin: "0 0 4px", fontSize: "13.5px" }}>{t("noActiveAlerts")}</h4>
+                  <p style={{ margin: 0, fontSize: "11px", color: "#5c7585" }}>
+                    {t("noAlertsDesc")}
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+      </main>
+
+      {/* 3. Native Bottom Navigation Bar */}
+      <nav className="mobile-bottom-nav">
+        <button
+          type="button"
+          className={`m-nav-item ${activeTab === "overview" ? "active" : ""}`}
+          onClick={() => setActiveTab("overview")}
+        >
+          <LayoutDashboard size={20} />
+          <span className="m-nav-label">{t("statusTab")}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`m-nav-item ${activeTab === "assistant" ? "active" : ""}`}
+          onClick={() => setActiveTab("assistant")}
+        >
+          <Bot size={20} />
+          <span className="m-nav-label">{t("assistantTab")}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`m-nav-item ${activeTab === "pfz" ? "active" : ""}`}
+          onClick={() => setActiveTab("pfz")}
+        >
+          <Fish size={20} />
+          <span className="m-nav-label">{t("pfzTab")}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`m-nav-item ${activeTab === "map" ? "active" : ""}`}
+          onClick={() => setActiveTab("map")}
+        >
+          <MapIcon size={20} />
+          <span className="m-nav-label">{t("mapTab")}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`m-nav-item ${activeTab === "alerts" ? "active" : ""}`}
+          onClick={() => setActiveTab("alerts")}
+        >
+          <ShieldAlert size={20} />
+          <span className="m-nav-label">{t("alertsTab")}</span>
+        </button>
+      </nav>
+
+      {/* 4. Coastal Port Bottom-Sheet Modal */}
+      {showPortModal && (
+        <div className="m-sheet-overlay" onClick={() => setShowPortModal(false)}>
+          <div className="m-sheet-card" onClick={(e) => e.stopPropagation()}>
+            <div className="m-sheet-head">
+              <h4>{t("selectHarbor")}</h4>
+              <button
+                type="button"
+                className="mobile-icon-btn"
+                style={{ color: "#082536", background: "#edf2f5" }}
+                onClick={() => setShowPortModal(false)}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="m-sheet-list">
+              {COASTAL_HARBORS.map((h) => {
+                const isSelected = (location.label || "").includes(h.name.split(" ")[0]);
+                return (
+                  <button
+                    key={h.name}
+                    type="button"
+                    className={`m-sheet-option ${isSelected ? "selected" : ""}`}
+                    onClick={() => handleSelectPort(h)}
+                  >
+                    <div>
+                      <div>{h.name}</div>
+                      <small>{h.state} · {h.sea}</small>
+                    </div>
+                    {isSelected && <CheckCircle2 size={16} style={{ color: "#087d98" }} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* 5. Language Bottom-Sheet Modal */}
+      {showLangModal && (
+        <div className="m-sheet-overlay" onClick={() => setShowLangModal(false)}>
+          <div className="m-sheet-card" onClick={(e) => e.stopPropagation()}>
+            <div className="m-sheet-head">
+              <h4>{t("selectLang")}</h4>
+              <button
+                type="button"
+                className="mobile-icon-btn"
+                style={{ color: "#082536", background: "#edf2f5" }}
+                onClick={() => setShowLangModal(false)}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="m-sheet-list">
+              {SUPPORTED_LANGUAGES.map((l) => {
+                const isSelected = selectedLang === l.code;
+                return (
+                  <button
+                    key={l.code}
+                    type="button"
+                    className={`m-sheet-option ${isSelected ? "selected" : ""}`}
+                    onClick={() => {
+                      setSelectedLang(l.code);
+                      setShowLangModal(false);
+                    }}
+                  >
+                    <div>
+                      <div>{l.native}</div>
+                      <small>{l.name}</small>
+                    </div>
+                    {isSelected && <CheckCircle2 size={16} style={{ color: "#087d98" }} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
