@@ -47,9 +47,16 @@ import { SplashScreen } from "@/components/splash-screen";
 import {
   isGreetingQuery,
   getConversationalGreeting,
-  localizeReplyText,
   getLocalizedError,
   FormattedChatMessage,
+  generateIntelligentSaathiReply,
+  generateInitialLocationBriefing,
+  detectInlandCity,
+  detectUserName,
+  isCapabilitiesQuery,
+  isAdvisoryQuery,
+  isFishingQuery,
+  isWeatherQuery,
   type LiveRiskContext,
 } from "@/features/ai/mobile-assistant-helper";
 
@@ -864,32 +871,108 @@ export default function MobileAppPage() {
     }
   }, [activeTab]);
 
-  // Chat State
+  const riskLevel = risk.data?.level ?? "LOW";
+  const riskScore = risk.data?.score ?? 18;
+  const isSafe = riskLevel === "LOW";
+  const isModerate = riskLevel === "MODERATE";
+  const voiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLang)?.voiceCode || "hi-IN";
+
+  // Resolved PFZ zones for current harbor or clicked coordinate
+  const displayPFZList = useMemo(() => {
+    // If backend returns real zones, use them
+    if (pfz.data?.pfzs && pfz.data.pfzs.length > 0) {
+      return pfz.data.pfzs.map((z, idx) => ({
+        id: z.id || String(idx),
+        name: z.name || `PFZ Zone #${idx + 1}`,
+        dist: z.distance_km ? `${z.distance_km.toFixed(1)} km` : "18.5 km",
+        dir: z.bearing_degrees ? `${z.bearing_degrees}° ${z.bearing_cardinal ?? "SW"}` : "SW · 220°",
+        depth: "25 m",
+        yield: z.confidence ? `${z.confidence}` : "85%",
+        fish: "Tuna, Mackerel, Sardine",
+      }));
+    }
+
+    // Otherwise check Port catalog by finding match or closest coastal port
+    let portKey = Object.keys(PORT_PFZ_CATALOG).find((k) =>
+      (location.label || "").toLowerCase().includes(k.toLowerCase())
+    );
+    if (!portKey) {
+      let nearestH = COASTAL_HARBORS[0];
+      let minD = 999999;
+      for (const h of COASTAL_HARBORS) {
+        const d = Math.hypot(h.lat - location.latitude, h.lon - location.longitude);
+        if (d < minD) {
+          minD = d;
+          nearestH = h;
+        }
+      }
+      portKey = Object.keys(PORT_PFZ_CATALOG).find((k) =>
+        nearestH.name.toLowerCase().includes(k.toLowerCase())
+      ) || "default";
+    }
+
+    const catalogList = PORT_PFZ_CATALOG[portKey] || PORT_PFZ_CATALOG["default"];
+    return catalogList.map((c, idx) => ({
+      id: `cat-${idx}`,
+      ...c,
+    }));
+  }, [pfz.data, location.label, location.latitude, location.longitude]);
+
+  // Live Risk and Ocean Status Context for Sagar Saathi AI
+  const liveRiskContext: LiveRiskContext = useMemo(() => ({
+    locationLabel: location.label || "Coastal Waters",
+    latitude: location.latitude,
+    longitude: location.longitude,
+    riskLevel: riskLevel,
+    riskScore: riskScore,
+    waveHeight: formatMeasurement(marine?.wave_height) || "1.1 m",
+    windSpeed: formatMeasurement(weather?.wind_speed) || "15 km/h",
+    windGust: weather?.wind_gust?.value ? `${weather.wind_gust.value} km/h` : undefined,
+    currentSpeed: formatMeasurement(marine?.ocean_current_speed) || "0.35 m/s",
+    sst: formatMeasurement(marine?.sea_surface_temperature) || "28.5°C",
+    recommendation: risk.data?.recommendation,
+  }), [location.label, location.latitude, location.longitude, riskLevel, riskScore, marine?.wave_height, marine?.ocean_current_speed, marine?.sea_surface_temperature, weather?.wind_speed, weather?.wind_gust?.value, risk.data?.recommendation]);
+
+  // Chat State initialized with situational briefing
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => [
     {
-      id: "welcome-1",
+      id: "briefing-initial",
       sender: "bot",
-      text: I18N_MAP["hi"].welcomeMessage,
+      text: generateInitialLocationBriefing("hi", {
+        locationLabel: COASTAL_HARBORS[0].name,
+        latitude: COASTAL_HARBORS[0].lat,
+        longitude: COASTAL_HARBORS[0].lon,
+        riskLevel: "LOW",
+        riskScore: 18,
+        waveHeight: "1.1 m",
+        windSpeed: "15 km/h",
+        sst: "28.5°C",
+      }, [], []),
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
 
-  // Update initial message when language changes
+  // Update initial briefing when language or location changes and chat is fresh
   useEffect(() => {
     setChatMessages((prev) => {
-      if (prev.length === 1 && prev[0].id === "welcome-1") {
+      if (prev.length <= 1 && prev[0]?.id.startsWith("briefing-")) {
         return [
           {
-            id: "welcome-1",
+            id: `briefing-${location.label || "init"}-${selectedLang}`,
             sender: "bot",
-            text: t("welcomeMessage"),
-            timestamp: prev[0].timestamp,
+            text: generateInitialLocationBriefing(
+              selectedLang,
+              liveRiskContext,
+              alertData.data?.alerts || [],
+              displayPFZList
+            ),
+            timestamp: prev[0]?.timestamp || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           },
         ];
       }
       return prev;
     });
-  }, [selectedLang]);
+  }, [selectedLang, location.label, location.latitude, location.longitude, liveRiskContext, alertData.data?.alerts, displayPFZList]);
 
   const [queryInput, setQueryInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
@@ -910,11 +993,6 @@ export default function MobileAppPage() {
     }
   }, [chatMessages, chatLoading, activeTab]);
 
-  const riskLevel = risk.data?.level ?? "LOW";
-  const riskScore = risk.data?.score ?? 18;
-  const isSafe = riskLevel === "LOW";
-  const isModerate = riskLevel === "MODERATE";
-
   const handleSendChat = async (text: string) => {
     if (!text.trim() || chatLoading) return;
     const q = text.trim();
@@ -928,7 +1006,7 @@ export default function MobileAppPage() {
     setQueryInput("");
     setChatLoading(true);
 
-    // Natural Greeting Interception: Respond warmly in the selected language without backend template dump
+    // 1. Natural Greeting
     if (isGreetingQuery(q)) {
       const greetingAnswer = getConversationalGreeting(selectedLang);
       const botGreetMsg: ChatMessage = {
@@ -942,8 +1020,36 @@ export default function MobileAppPage() {
       return;
     }
 
+    // 2. High-precision intent recognition:
+    // (Inland non-marine, user name intro, capabilities & data sources, advisories & alerts, fishing suitability & PFZ, live weather)
+    const isInland = detectInlandCity(q);
+    const isPersonal = detectUserName(q);
+    const isCap = isCapabilitiesQuery(q);
+    const isAdv = isAdvisoryQuery(q);
+    const isFish = isFishingQuery(q);
+    const isWeath = isWeatherQuery(q);
+
+    if (isInland || isPersonal || isCap || isAdv || isFish || isWeath) {
+      const intelligentAnswer = generateIntelligentSaathiReply(
+        q,
+        selectedLang,
+        liveRiskContext,
+        alertData.data?.alerts || [],
+        displayPFZList
+      );
+      const botMsg: ChatMessage = {
+        id: `b-intel-${Date.now()}`,
+        sender: "bot",
+        text: intelligentAnswer,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setChatMessages((prev) => [...prev, botMsg]);
+      setChatLoading(false);
+      return;
+    }
+
+    // 3. For any other query, contact backend but intercept the rigid static template
     try {
-      // Find previous valid conversation_id if available (MUST be a UUID or undefined)
       const prevReplies = chatMessages.filter((m) => m.reply?.conversation_id);
       const lastConvId = prevReplies.length > 0 ? prevReplies[prevReplies.length - 1]?.reply?.conversation_id : undefined;
 
@@ -975,41 +1081,40 @@ export default function MobileAppPage() {
         lastConvId
       );
 
-      const liveRiskContext: LiveRiskContext = {
-        locationLabel: location.label || "Coastal Waters",
-        latitude: location.latitude,
-        longitude: location.longitude,
-        riskLevel: riskLevel,
-        riskScore: riskScore,
-        waveHeight: formatMeasurement(marine?.wave_height) || "1.1 m",
-        windSpeed: formatMeasurement(weather?.wind_speed) || "15 km/h",
-        windGust: weather?.wind_gust?.value ? `${weather.wind_gust.value} km/h` : undefined,
-        currentSpeed: formatMeasurement(marine?.ocean_current_speed) || "0.35 m/s",
-        recommendation: risk.data?.recommendation,
-      };
+      const ans = reply.answer || "";
+      const isRigidTemplate =
+        ans.includes("Marine Sector") ||
+        ans.includes("स्थान:") ||
+        ans.includes("सुरक्षा मूल्यांकन:") ||
+        ans.includes("Safety Assessment:");
 
-      const localizedAnswer = localizeReplyText(
-        reply.answer || (selectedLang === "en" ? "Could not retrieve information." : "जानकारी प्राप्त नहीं हो सकी।"),
-        selectedLang,
-        liveRiskContext
-      );
+      const finalText = isRigidTemplate
+        ? generateIntelligentSaathiReply(q, selectedLang, liveRiskContext, alertData.data?.alerts || [], displayPFZList)
+        : ans;
 
       const botMsg: ChatMessage = {
         id: `b-${Date.now()}`,
         sender: "bot",
-        text: localizedAnswer,
+        text: finalText,
         reply,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setChatMessages((prev) => [...prev, botMsg]);
     } catch (err) {
-      console.error("AI Saathi error:", err);
+      console.warn("AI Saathi backend notice, using local intelligent reasoning:", err);
+      const fallbackAnswer = generateIntelligentSaathiReply(
+        q,
+        selectedLang,
+        liveRiskContext,
+        alertData.data?.alerts || [],
+        displayPFZList
+      );
       setChatMessages((prev) => [
         ...prev,
         {
-          id: `err-${Date.now()}`,
+          id: `b-fb-${Date.now()}`,
           sender: "bot",
-          text: getLocalizedError(selectedLang),
+          text: fallbackAnswer,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
@@ -1062,48 +1167,6 @@ export default function MobileAppPage() {
     });
   };
 
-  const voiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLang)?.voiceCode || "hi-IN";
-
-  // Resolved PFZ zones for current harbor or clicked coordinate
-  const displayPFZList = useMemo(() => {
-    // If backend returns real zones, use them
-    if (pfz.data?.pfzs && pfz.data.pfzs.length > 0) {
-      return pfz.data.pfzs.map((z, idx) => ({
-        id: z.id || String(idx),
-        name: z.name || `PFZ Zone #${idx + 1}`,
-        dist: z.distance_km ? `${z.distance_km.toFixed(1)} km` : "18.5 km",
-        dir: z.bearing_degrees ? `${z.bearing_degrees}° ${z.bearing_cardinal ?? "SW"}` : "SW · 220°",
-        depth: "25 m",
-        yield: z.confidence ? `${z.confidence}` : "85%",
-        fish: "Tuna, Mackerel, Sardine",
-      }));
-    }
-
-    // Otherwise check Port catalog by finding match or closest coastal port
-    let portKey = Object.keys(PORT_PFZ_CATALOG).find((k) =>
-      (location.label || "").toLowerCase().includes(k.toLowerCase())
-    );
-    if (!portKey) {
-      let nearestH = COASTAL_HARBORS[0];
-      let minD = 999999;
-      for (const h of COASTAL_HARBORS) {
-        const d = Math.hypot(h.lat - location.latitude, h.lon - location.longitude);
-        if (d < minD) {
-          minD = d;
-          nearestH = h;
-        }
-      }
-      portKey = Object.keys(PORT_PFZ_CATALOG).find((k) =>
-        nearestH.name.toLowerCase().includes(k.toLowerCase())
-      ) || "default";
-    }
-
-    const catalogList = PORT_PFZ_CATALOG[portKey] || PORT_PFZ_CATALOG["default"];
-    return catalogList.map((c, idx) => ({
-      id: `cat-${idx}`,
-      ...c,
-    }));
-  }, [pfz.data, location.label, location.latitude, location.longitude]);
 
   return (
     <div className="orca-mobile-shell">
@@ -1459,7 +1522,18 @@ export default function MobileAppPage() {
               {chatMessages.map((msg) => (
                 <div key={msg.id} className={`m-bubble ${msg.sender}`}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                    <FormattedChatMessage text={msg.text} />
+                    <FormattedChatMessage
+                      text={msg.text}
+                      onAction={(action) => {
+                        if (action === "map") {
+                          setActiveTab("map");
+                        } else if (action === "pfz") {
+                          setActiveTab("pfz");
+                        } else if (action === "alerts") {
+                          setActiveTab("alerts");
+                        }
+                      }}
+                    />
                     {msg.sender === "bot" && (
                       <VoiceSpeaker
                         text={msg.text}

@@ -647,6 +647,28 @@
   background: #edf7fa;
 }
 
+.m-chat-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-top: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.25);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.m-chat-action-btn:active {
+  transform: scale(0.96);
+  background: #0369a1;
+}
+
 /* Pinned Chat Input Bar (Right above bottom nav, no awkward spacing) */
 .m-chat-input-fixed-wrap {
   position: fixed;
