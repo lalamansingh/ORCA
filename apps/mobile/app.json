@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "ORCA Marine",
+    "slug": "orca-marine",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#082536",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.orca.marine"
+    },
+    "android": {
+      "package": "com.orca.marine",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#082536"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CALL_PHONE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "orcamarine"
+  }
+}
