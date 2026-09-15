@@ -54,6 +54,8 @@ const interactiveLayerIds = [
   "orca-route",
   "orca-saved",
   "orca-ais-vessels-point",
+  "orca-sos-point",
+  "orca-sos-label",
   "orca-sst-grid-points",
   "orca-chl-grid-points",
   "orca-waves-grid-circle",
@@ -449,6 +451,48 @@ export function MarineMap({
       });
     }
 
+    // 12b. Real-time Inbound SOS Distress Pins (ISRO PS 26176)
+    if (!map.getSource("orca-sos-data")) {
+      map.addSource("orca-sos-data", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      const sosColor = [
+        "match",
+        ["get", "status"],
+        "new", "#ef4444",
+        "transmitted", "#ef4444",
+        "acknowledged", "#f59e0b",
+        "responding", "#3b82f6",
+        "resolved", "#10b981",
+        "#ef4444",
+      ] as import("maplibre-gl").ExpressionSpecification;
+
+      map.addLayer({
+        id: "orca-sos-point",
+        type: "circle",
+        source: "orca-sos-data",
+        paint: {
+          "circle-radius": 10,
+          "circle-color": sosColor,
+          "circle-stroke-width": 3,
+          "circle-stroke-color": "#ffffff",
+        },
+      });
+      map.addLayer({
+        id: "orca-sos-label",
+        type: "symbol",
+        source: "orca-sos-data",
+        layout: {
+          "text-field": ["concat", "🚨 SOS: ", ["get", "vesselName"]],
+          "text-size": 11,
+          "text-offset": [0, 1.4],
+        },
+        paint: {
+          "text-color": "#ffffff",
+          "text-halo-color": "#991b1b",
+          "text-halo-width": 3,
+        },
+      });
+    }
+
     // 13. High-Priority Calculated Route & Navigation Channel (On Top of Grids)
     if (!map.getSource("orca-calculated-route")) {
       map.addSource("orca-calculated-route", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
@@ -790,6 +834,52 @@ export function MarineMap({
       })),
     });
   }, [savedLocations, state, styleRevision]);
+
+  // 3b. Populate Real-time Inbound Distress SOS Pins (ISRO PS 26176)
+  useEffect(() => {
+    const map = mapRef.current;
+    const source = map?.getSource("orca-sos-data") as import("maplibre-gl").GeoJSONSource | undefined;
+    if (!source || state !== "ready") return;
+
+    let active = true;
+    const loadSOSReports = async () => {
+      try {
+        const res = await fetch("/api/v1/sos");
+        const data = await res.json();
+        if (active && data.success && Array.isArray(data.reports)) {
+          const sosFeatures: import("geojson").Feature[] = data.reports.map((report: any) => ({
+            type: "Feature" as const,
+            properties: {
+              id: report.id,
+              layer: "sos_incident",
+              title: `🚨 SOS: ${report.deviceProfile?.vesselName || "Distress Vessel"}`,
+              vesselName: report.deviceProfile?.vesselName || "Boat",
+              status: report.status,
+              type: "Marine Distress SOS",
+              source: `Trigger: ${report.triggerMethod}`,
+              updated: report.createdAt,
+              transcript: report.spokenDistress?.transcript || "No voice transcript",
+              feature_kind: "sos_incident",
+            },
+            geometry: {
+              type: "Point" as const,
+              coordinates: [report.location.longitude, report.location.latitude],
+            },
+          }));
+          source.setData({ type: "FeatureCollection", features: sosFeatures });
+        }
+      } catch (err) {
+        // Silently handle if offline
+      }
+    };
+
+    loadSOSReports();
+    const interval = setInterval(loadSOSReports, 15000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [state, styleRevision]);
 
   // 4. Populate Live Marine Alerts & Cyclone Tracks
   useEffect(() => {

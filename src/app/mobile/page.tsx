@@ -56,6 +56,15 @@ import {
 import { getPFZGeoJSON } from "@/lib/api/pfz";
 import type { PFZGeoJSON } from "@/features/pfz/types";
 import { SplashScreen } from "@/components/splash-screen";
+import { useSOSService } from "@/features/sos/hooks/use-sos-service";
+import { useEmergencyAlerts } from "@/features/hazards/hooks/use-emergency-alerts";
+import { useSOSStore } from "@/features/sos/sos-store";
+import { EmergencySOSCard } from "@/components/sos/emergency-sos-card";
+import { SOSCountdownModal } from "@/components/sos/sos-countdown-modal";
+import { VoiceDistressModal } from "@/components/sos/voice-distress-modal";
+import { SafetyOnboardingModal } from "@/components/sos/safety-onboarding-modal";
+import { FullScreenAlarmAlert } from "@/components/sos/full-screen-alarm-alert";
+import { DemoSimulatorBar } from "@/components/sos/demo-simulator-bar";
 import {
   isGreetingQuery,
   getConversationalGreeting,
@@ -907,6 +916,19 @@ export default function MobileAppPage() {
   const [activeMapParam, setActiveMapParam] = useState<string>("route");
   const [showSplash, setShowSplash] = useState(true);
   const [isNavAudioActive, setIsNavAudioActive] = useState(true);
+  const [showSafetyOnboardingModal, setShowSafetyOnboardingModal] = useState(false);
+
+  const { triggerDistress } = useSOSStore();
+
+  // Initialize hardware volume-key listener & offline sync
+  useSOSService();
+
+  // Initialize outbound geofence & emergency broadcast alarm monitoring
+  const emergencyAlerts = useEmergencyAlerts({
+    latitude: location.latitude,
+    longitude: location.longitude,
+    label: location.label,
+  });
 
   const handleSelectMapParam = (paramId: string) => {
     setActiveMapParam(paramId);
@@ -2242,6 +2264,9 @@ export default function MobileAppPage() {
         {/* TAB 5: ALERTS & SOS (अलर्ट व सुरक्षा) */}
         {activeTab === "alerts" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {/* Production SOS Distress & Hardware Key Card */}
+            <EmergencySOSCard onOpenOnboarding={() => setShowSafetyOnboardingModal(true)} />
+
             {/* Dynamic Location-Aware SOS Emergency Card */}
             <div className="m-sos-card">
               <h3 className="m-sos-title">
@@ -2536,6 +2561,27 @@ export default function MobileAppPage() {
           </div>
         </div>
       )}
+
+      {/* SOS Distres Modals & Alarms (ISRO PS 26176) */}
+      <SOSCountdownModal />
+      <VoiceDistressModal />
+      <SafetyOnboardingModal
+        isOpen={showSafetyOnboardingModal}
+        onClose={() => setShowSafetyOnboardingModal(false)}
+      />
+      <FullScreenAlarmAlert
+        alert={emergencyAlerts.triggeredAlert}
+        onAcknowledgeSafe={() => emergencyAlerts.acknowledgeAlert("SAFE")}
+        onRequestEmergencySOS={() => {
+          emergencyAlerts.acknowledgeAlert("NEED_HELP");
+          triggerDistress("hazard_alert");
+        }}
+        onViewSafeRoute={(alert) => {
+          emergencyAlerts.acknowledgeAlert("VIEWED_ROUTE");
+          setActiveTab("map");
+        }}
+      />
+      <DemoSimulatorBar onShowOnboarding={() => setShowSafetyOnboardingModal(true)} />
     </div>
   );
 }
