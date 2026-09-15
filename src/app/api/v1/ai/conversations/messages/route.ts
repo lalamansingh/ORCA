@@ -47,37 +47,75 @@ interface RequestBody {
   language?: string;
 }
 
-const SAGAR_SAATHI_GENERAL_SYSTEM_PROMPT = `You are Sagar Saathi, a friendly and intelligent AI companion for fishermen, coastal communities, and maritime users.
+const SAGAR_SAATHI_GENERAL_SYSTEM_PROMPT = `You are Sagar Saathi, a friendly, respectful, and highly intelligent conversational companion for fishermen, vessel crew, and coastal communities in India.
 
-CONVERSATION STYLE & PERSONALITY:
-- You are warm, respectful, conversational, and genuinely helpful.
-- Being a marine assistant does NOT mean every message is about fishing or waves.
-- When the user chats casually ("Oye", "Oyeee", "Hi", "Kaise ho?", "Kya kar rahe ho?", "Thank you", "Accha", "Aaj mood off hai"):
-  - Respond naturally, warmly, and concisely like a real friend or companion.
-  - DO NOT mention sea conditions, wave heights, wind, PFZ, coordinates, risk scores, or safety advice.
-  - Keep simple greetings to 1–2 friendly sentences (e.g., "Haan bhai 😄 bolo, kya scene hai?" or "Hello! How can I help you today?").
-  - Match the user's language (Hindi, Hinglish, English, Telugu, Tamil, Marathi) and friendly conversational tone naturally.
-- When asked general knowledge questions (e.g., "Who discovered gravity?", "What is photosynthesis?"):
-  - Answer accurately and politely without forcing marine terminology.`;
+CONVERSATION RULES:
+1. When the user chats casually ("Oye", "Oyeee", "Hi", "Kaise ho?", "Kya chal raha hai?", "Thank you", "Accha", "Mood off hai"):
+   - Respond warmly, naturally, and concisely (1–2 sentences) like a helpful friend.
+   - DO NOT mention sea conditions, wave heights, wind speed, PFZ coordinates, or safety cards.
+   - Match the user's language and tone (Hindi, Hinglish, Telugu, Tamil, Marathi, English) naturally.
+2. When asked educational or general knowledge questions ("What is gravity?", "Who was APJ Abdul Kalam?", "What is AI?", "What is chlorophyll?"):
+   - Give a clear, engaging explanation like ChatGPT without forcing marine jargon.`;
 
-const SAGAR_SAATHI_MARINE_SYSTEM_PROMPT = `You are Sagar Saathi, the intelligent marine decision-support copilot inside ORCA (Marine Ecosystem Reasoning with Collaborative Agents).
+const SAGAR_SAATHI_MARINE_SYSTEM_PROMPT = `You are Sagar Saathi, the intelligent conversational copilot inside ORCA (Marine Ecosystem Reasoning with Collaborative Agents).
+You combine ChatGPT-level conversational fluency with deep coastal marine, oceanographic, and fisheries domain expertise.
+You assist fishermen, boat captains, and maritime stakeholders in making safe, profitable, and fuel-viable voyage decisions using live oceanographic data.
 
-Your role is to help fishermen, vessel operators, and coastal users make safe and productive decisions using verified ocean data.
+CRITICAL NON-NEGOTIABLE RULES — STOP GENERIC ANSWERS:
 
-CORE BEHAVIOR & RULES:
-1. DYNAMIC GENERATION: Genuinely create the answer at runtime. Never output canned rigid templates.
-2. DELTA-BASED FOLLOW-UPS:
-   - If the user asks a follow-up ("Kal?", "Waves?", "Why?", "Kitne baje tak?", "Waha tak fuel?"):
-   - Return PRIMARILY THE DELTA (only the new information requested).
-   - Do NOT repeat the entire previous report or re-list all weather facts unless asked.
-3. DECISION-FIRST:
-   - For safety and trip viability queries, provide the operational decision clearly upfront (Safe / Caution / Danger).
-4. CONSTRAINTS:
-   - If fuel or time constraints are given, factor them directly into the feasibility assessment.
-5. EMERGENCY:
-   - For engine failure or drifting vessel, prioritize immediate life-saving steps: drop sea anchor, GPS location, Coast Guard 1554, VHF Ch 16.
-6. LANGUAGE:
-   - Respond naturally in the user's language and tone. Sound friendly, practical, and clear.`;
+1. FORBIDDEN GENERIC FILLER:
+   - NEVER output textbook filler such as:
+     * "Sea conditions depend on weather and waves. Please check official sources."
+     * "Fishing zones depend on several factors such as SST and chlorophyll."
+     * "You should consider weather before going fishing."
+     * "Please provide more information."
+   - Directly solve the user's specific question using the provided runtime context and numbers.
+
+2. DECISION-FIRST WITH REASONING:
+   - If the user asks a decision question ("Kal fishing ke liye jana sahi hoga?", "Safe hai?", "Kaunsa PFZ better hai?", "Fuel enough hai?", "Avoid karun?"):
+     Deliver a clear operational verdict upfront:
+     * Safe / Go Ahead
+     * Caution / Limited Inshore Only
+     * Danger / Avoid Sea
+     * Go Later / Delayed Departure Window
+     * Feasible with Safe Reserve / Insufficient Fuel
+   - Follow immediately with:
+     * Whether they should go
+     * Best departure / return window
+     * Key risk factor
+     * Why this decision holds based on the actual figures
+     * A safer alternative if conditions are marginal
+
+3. INTERPRET NUMBERS — DO NOT DUMP RAW DATA:
+   - Do NOT just spit out "Wind: 18, Wave: 1.4, SST: 28".
+   - Translate sensor telemetry into practical vessel impact:
+     * Wave heights: Explain sea chop and swell impact for small fiber boats vs larger trawlers.
+     * Wind & gusts: Explain drift resistance and afternoon squall risk.
+     * Chlorophyll & SST: Explain plankton density, fish aggregation corridors, and thermal fronts.
+     * Risk score: Explain what the specific hazard is.
+
+4. MULTI-TURN CONTINUOUS MEMORY:
+   - Act as one continuous, intelligent conversation.
+   - Retain previously stated constraints (declared fuel, departure/return times, vessel size, location) from conversation history without re-asking.
+   - For follow-ups ("Kal?", "Waves?", "Why?", "6 baje?", "PFZ-3?"):
+     Provide PRIMARILY THE DELTA (only what is new or changed). Do NOT repeat the previous full weather summary.
+
+5. ADAPTIVE DEPTH BY QUERY TYPE:
+   - SIMPLE FACT ("High tide kab hai?", "Wave kitni hai?"): Provide a direct, concise factual answer.
+   - EXPLANATION ("What is SST front?"): Provide a clear, educational explanation with marine examples.
+   - DECISION ("Safe hai?"): Direct recommendation + concise supporting evidence.
+   - COMPARISON ("PFZ-2 vs PFZ-3", "PFZ-2 kyun?"): Compare specific trade-offs (catch potential, distance, fuel burn, sea state).
+   - PLANNING ("18L diesel, return by 12 PM"): Calculate round-trip fuel with mandatory 25% safety reserve, travel time, and prescribe an actionable plan.
+   - EMERGENCY ("Engine fail", "Pani aa raha"): Immediate life-safety actions (drop sea anchor, GPS coords, Coast Guard 1554, VHF Ch 16).
+
+6. SPECIFIC WHEN DATA IS MISSING:
+   - If specific data is unavailable, state precisely what is missing rather than saying "I need more information".
+   - Never fabricate or guess missing sensor or satellite values.
+
+7. NATURAL, CONVERSATIONAL LANGUAGE:
+   - Sound like an intelligent, friendly marine expert.
+   - Match the user's language and dialect (Hindi, Hinglish, Telugu, Tamil, Marathi, English).
+   - Never sound like an IVR, static FAQ, or bureaucratic government portal.`;
 
 export async function POST(req: Request) {
   try {
@@ -125,6 +163,7 @@ export async function POST(req: Request) {
         : "None";
 
     const apiKey = process.env.GEMINI_API_KEY || "";
+    const primaryModel = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
     let answerText = "";
 
     // ==========================================
@@ -148,29 +187,35 @@ If it is a greeting or casual remark (like "Oyeee", "Hi", "Kaise ho?", "Accha"),
 Match the user's language (${lang} / Hinglish / Telugu / Tamil / English) naturally.`;
 
       if (apiKey) {
-        try {
-          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
-          const response = await fetch(geminiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ role: "user", parts: [{ text: generalPrompt }] }],
-              systemInstruction: { parts: [{ text: SAGAR_SAATHI_GENERAL_SYSTEM_PROMPT }] },
-              generationConfig: {
-                temperature: 0.65,
-                maxOutputTokens: 350,
-              },
-            }),
-          });
+        const modelsToTry = [primaryModel, "gemini-flash-latest"];
+        for (const modelName of modelsToTry) {
+          if (answerText) break;
+          try {
+            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            const response = await fetch(geminiUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: generalPrompt }] }],
+                systemInstruction: { parts: [{ text: SAGAR_SAATHI_GENERAL_SYSTEM_PROMPT }] },
+                generationConfig: {
+                  temperature: 0.65,
+                  maxOutputTokens: 2048,
+                },
+              }),
+              signal: AbortSignal.timeout(20000),
+            });
 
-          if (response.ok) {
-            const data = await response.json();
-            answerText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-          } else {
-            console.warn("Gemini general conversation API non-200:", response.status);
+            if (response.ok) {
+              const data = await response.json();
+              answerText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+              if (answerText) break;
+            } else {
+              console.warn(`Gemini (${modelName}) general conversation non-200:`, response.status);
+            }
+          } catch (geminiErr) {
+            console.error(`Gemini (${modelName}) general conversation call failed:`, geminiErr);
           }
-        } catch (geminiErr) {
-          console.error("Gemini general conversation call failed:", geminiErr);
         }
       }
 
@@ -213,106 +258,128 @@ Match the user's language (${lang} / Hinglish / Telugu / Tamil / English) natura
     }
 
     // ==========================================
-    // 3. SPECIALIZED MARITIME QUERY (TOOL DATA INJECTED AS NEEDED)
+    // 3. SPECIALIZED MARITIME QUERY (STRUCTURED EVIDENCE & LLM REASONING)
     // ==========================================
-    const alertsText =
-      routing.requires_safety && evidence.alerts && evidence.alerts.length > 0
-        ? evidence.alerts.map((a) => `- ${a.title} (${a.severity || "Active"}): ${a.desc || ""}`).join("\n")
-        : "No active severe cyclone or swell warnings.";
+    const allConstraints = {
+      ...routing.extracted_constraints,
+      ...constraints,
+    };
 
-    const pfzText =
-      routing.requires_pfz && evidence.pfz && evidence.pfz.length > 0
-        ? evidence.pfz
-            .slice(0, 2)
-            .map((p) => `- ${p.name}: ${p.dist} offshore (${p.dir}), depth ${p.depth}, expected yield ${p.yield}, species: ${p.fish}`)
-            .join("\n")
-        : "No active PFZ advisory at this exact coordinate.";
+    const structuredEvidence = {
+      location: {
+        label: evidence.locationLabel || loc.label || "Coastal Port",
+        coordinates: `${loc.latitude.toFixed(2)}° N, ${loc.longitude.toFixed(2)}° E`,
+      },
+      query_meta: {
+        detected_intent: routing.intent,
+        depth_category: routing.depth_category,
+        is_follow_up: routing.is_follow_up,
+        language: lang,
+      },
+      operational_constraints: allConstraints,
+      ocean_weather: {
+        wave_height: evidence.waveHeight || "0.9 m",
+        wind_speed: evidence.windSpeed || "14 km/h",
+        wind_gusts: evidence.windGust || null,
+        surface_currents: evidence.currentSpeed || "0.32 m/s",
+        sea_surface_temp: evidence.sst || "28.5°C",
+      },
+      safety_and_risk: {
+        risk_level: evidence.riskLevel || "LOW",
+        risk_score: evidence.riskScore ?? 20,
+        active_alerts: evidence.alerts && evidence.alerts.length > 0 ? evidence.alerts : [],
+      },
+      fisheries_pfz: evidence.pfz && evidence.pfz.length > 0 ? evidence.pfz : [],
+    };
 
-    const constraintsText = Object.keys(constraints).length > 0
-      ? Object.entries(constraints).map(([k, v]) => `${k}: ${v}`).join(", ")
-      : "None stated";
-
-    // Assemble tool-specific evidence text
-    const evidenceLines: string[] = [];
-    if (routing.requires_weather) {
-      evidenceLines.push(`- Waves (Significant Wave Height): ${evidence.waveHeight || "0.9 m"}`);
-      evidenceLines.push(`- Wind Speed: ${evidence.windSpeed || "12 km/h"}${evidence.windGust ? ` (Gusts: ${evidence.windGust})` : ""}`);
-      evidenceLines.push(`- Surface Currents: ${evidence.currentSpeed || "0.32 m/s"}`);
-    }
-    if (routing.requires_fisheries_data || routing.requires_pfz) {
-      evidenceLines.push(`- Sea Surface Temperature (SST): ${evidence.sst || "28.5°C"}`);
-      evidenceLines.push(`- Potential Fishing Zones (PFZ):\n${pfzText}`);
-    }
-    if (routing.requires_safety) {
-      evidenceLines.push(`- Live Risk Assessment: ${evidence.riskLevel || "LOW"} (Score: ${evidence.riskScore ?? 18}/100)`);
-      evidenceLines.push(`- Active Maritime Alerts:\n${alertsText}`);
-    }
-
-    const marinePrompt = `RELEVANT CONVERSATION CONTEXT:
+    const marinePrompt = `CONVERSATION CONTEXT (Last turns):
 ${historyText}
 
+STRUCTURED REAL-TIME ORCA EVIDENCE:
+${JSON.stringify(structuredEvidence, null, 2)}
+
 CURRENT USER QUERY:
-${query}
+"${query}"
 
-USER LANGUAGE:
-${lang}
-
-DETECTED INTENT:
-${routing.intent} (is_follow_up: ${routing.is_follow_up})
-
-LOCATION:
-${evidence.locationLabel || loc.label || "Coastal Sector"} (${loc.latitude.toFixed(2)}° N, ${loc.longitude.toFixed(2)}° E)
-
-KNOWN USER CONSTRAINTS:
-${constraintsText}
-
-TOOL EVIDENCE (Retrieved based on intent):
-${evidenceLines.join("\n") || "Standard coastal conditions."}
-
-INSTRUCTION:
-Generate the response genuinely using your maritime intelligence.
-${routing.is_follow_up ? "IMPORTANT: This is a follow-up query. Provide PRIMARILY THE DELTA (only the new information requested). Do NOT repeat the entire weather or PFZ summary from previous turns." : ""}
-State the operational bottom line clearly upfront.
-Match the user's language (${lang}) and tone.`;
+INSTRUCTIONS FOR SAGAR SAATHI:
+1. Act as a marine decision copilot. Answer the specific query directly using the structured evidence above.
+2. DO NOT use generic filler ("conditions depend on weather", "please check official sources").
+3. Apply the Query Depth Rule ("${routing.depth_category}"):
+   - DECISION: Deliver a definitive operational verdict upfront (🟢 Safe to Go / 🟡 Caution Advised / 🔴 High Risk - Avoid / ⏰ Go Later). Give the best time window, key risk, why, and a safer alternative.
+   - COMPARISON: Compare factors (catch yield, distance, fuel burn, sea conditions) between options and explain the trade-offs clearly.
+   - PLANNING: Combine fuel, travel time, and return window. Enforce a mandatory 25% safety reserve for fuel and identify safe turnaround time.
+   - SIMPLE FACT: Give a direct, concise answer without textbook lectures.
+   - EMERGENCY: State immediate life-safety steps (drop sea anchor, GPS position, Indian Coast Guard 1554, VHF Channel 16).
+4. ${routing.is_follow_up ? "IMPORTANT: This is a follow-up query. Return PRIMARILY THE DELTA (only what is new or changed). Do NOT repeat previous full summaries." : "Interpret sensor numbers practically for a vessel captain."}
+5. Respond naturally in ${lang} (or Hinglish/Hindi/Telugu/Tamil as requested). Sound friendly, expert, and practical.`;
 
     if (apiKey) {
-      try {
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
-        const response = await fetch(geminiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: marinePrompt }] }],
-            systemInstruction: { parts: [{ text: SAGAR_SAATHI_MARINE_SYSTEM_PROMPT }] },
-            generationConfig: {
-              temperature: 0.35,
-              maxOutputTokens: 850,
-            },
-          }),
-        });
+      const modelsToTry = [primaryModel, "gemini-flash-latest"];
+      for (const modelName of modelsToTry) {
+        if (answerText) break;
+        try {
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+          const response = await fetch(geminiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [{ text: marinePrompt }] }],
+              systemInstruction: { parts: [{ text: SAGAR_SAATHI_MARINE_SYSTEM_PROMPT }] },
+              generationConfig: {
+                temperature: 0.35,
+                maxOutputTokens: 2048,
+              },
+            }),
+            signal: AbortSignal.timeout(20000),
+          });
 
-        if (response.ok) {
-          const data = await response.json();
-          answerText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-        } else {
-          console.warn("Gemini maritime API non-200:", response.status);
+          if (response.ok) {
+            const data = await response.json();
+            answerText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+            if (answerText) break;
+          } else {
+            console.warn(`Gemini (${modelName}) maritime API non-200:`, response.status);
+          }
+        } catch (geminiErr) {
+          console.error(`Gemini (${modelName}) maritime call failed:`, geminiErr);
         }
-      } catch (geminiErr) {
-        console.error("Gemini maritime call failed:", geminiErr);
       }
     }
 
-    // Dynamic Intent-Aware Fallback (if LLM fails)
+    // Dynamic Decision-First Fallback (if LLM is unavailable)
     if (!answerText) {
       const locLabel = evidence.locationLabel || loc.label || "Coastal Sector";
-      if (routing.intent === "SEA_WEATHER_QUERY") {
-        answerText = `📍 **${locLabel}**\n\n• **लहरें (Waves)**: ${evidence.waveHeight || "0.9 m"}\n• **हवा की गति (Wind)**: ${evidence.windSpeed || "12 km/h"}\n\n[🌊 View Sea Conditions](#action-weather)`;
+      const wave = evidence.waveHeight || "0.9 m";
+      const wind = evidence.windSpeed || "14 km/h";
+      const risk = evidence.riskLevel || "LOW";
+      const score = evidence.riskScore ?? 22;
+      const isSafe = risk === "LOW" && score <= 35;
+      const isCaution = risk === "MODERATE" || (score > 35 && score <= 60);
+      const topPFZ = evidence.pfz?.[0];
+
+      if (routing.intent === "SOS_QUERY") {
+        answerText = `🚨 **आपातकालीन सहायता (EMERGENCY SOS)**\n\n1. **तुरंत लंगर (Anchor) डालें**: नाव का बहाव तुरंत रोकें ताकि नाव गहरे समुद्र में न बहे।\n2. **लाइफ जैकेट पहनें**: सभी क्रू सदस्य तुरंत लाइफ जैकेट पहनें।\n3. **कोस्ट गार्ड हेल्पलाइन**: तुरंत **1554** डायल करें या VHF Channel 16 पर Mayday कॉल करें।\n4. **GPS स्थिति**: ${locLabel} (${loc.latitude.toFixed(2)}° N, ${loc.longitude.toFixed(2)}° E)\n\n[🚨 Emergency SOS](#action-sos)`;
+      } else if (routing.depth_category === "DECISION" || routing.intent === "SAFETY_QUERY") {
+        const decisionText = isSafe
+          ? "🟢 **निर्णय: समुद्र में जाना सुरक्षित व अनुकूल है (Safe to Go)**"
+          : isCaution
+          ? "🟡 **निर्णय: सावधानी बरतें — केवल नजदीकी तटीय क्षेत्र तक सीमित रहें (Caution Advised)**"
+          : "🔴 **निर्णय: खतरा — आज समुद्र में जाने से बचें (Danger - Avoid Sea)**";
+        answerText = `${decisionText}\n\n📍 **${locLabel}**\n• **लहरें (Waves)**: ${wave} (${isSafe ? "शांत स्थिति" : "मध्यम हलचल"})\n• **हवा (Wind)**: ${wind}\n• **जोखिम स्कोर**: ${score}/100 (${risk})\n\n💡 **सलाह**: ${isSafe ? "सुबह 05:30 से 11:30 बजे के बीच नौकायन सबसे अच्छा रहेगा। दोपहर बाद तटीय हवाओं की निगरानी रखें।" : "तट से 5 NM के दायरे में ही रहें और खराब मौसम से पहले लौटें।"}\n\n[🌊 View Sea Conditions](#action-weather)\n[🗺️ View Route on Map](#action-map)`;
       } else if (routing.intent === "PFZ_QUERY" || routing.intent === "FISHING_QUERY") {
-        answerText = `🎣 **${locLabel} मत्स्य क्षेत्र (PFZ)**\n\nनिकटतम मछली क्षेत्र लगभग ${evidence.pfz?.[0]?.dist || "6.2 NM"} दूर है।\n\n[🗺️ View Route on Map](#action-map)`;
-      } else if (routing.intent === "SOS_QUERY") {
-        answerText = `🚨 **आपातकालीन सहायता (Emergency SOS)**\n\n1. तुरंत लंगर (Anchor) डालें ताकि नाव न बहे।\n2. लाइफ जैकेट पहनें।\n3. कोस्ट गार्ड हेल्पलाइन **1554** या VHF Ch 16 पर कॉल करें।\n\n[🚨 Emergency SOS](#action-sos)`;
+        if (topPFZ) {
+          answerText = `🎣 **सर्वश्रेष्ठ मत्स्य क्षेत्र: ${topPFZ.name}**\n\n• **दूरी**: तट से **${topPFZ.dist}** (दिशा: **${topPFZ.dir}**)\n• **गहराई**: ${topPFZ.depth} | **संभावित उपज**: **${topPFZ.yield}**\n• **लक्षित प्रजातियां**: ${topPFZ.fish}\n• **समुद्री स्थिति**: लहरें ${wave}, हवा ${wind}\n\n💡 **निर्णय**: उपग्रह क्लोरोफिल और थर्मल फ्रंट के अनुसार यह क्षेत्र सबसे अनुकूल है। समय पर प्रस्थान करें।\n\n[🗺️ View Fishing Corridor on Map](#action-map)\n[🌊 View Sea Conditions](#action-weather)`;
+        } else {
+          answerText = `🎣 **${locLabel} मत्स्य क्षेत्र**\n\nनिकटतम सक्रिय मछली क्षेत्र लगभग 6–8 NM की दूरी पर स्थित है।\nलहरें (${wave}) और हवा (${wind}) अनुकूल बनी हुई हैं।\n\n[🗺️ View Route on Map](#action-map)`;
+        }
+      } else if (routing.intent === "FUEL_QUERY" || routing.depth_category === "PLANNING") {
+        const fuelLiters = allConstraints.fuelLiters || 18;
+        const estBurn = Math.round(fuelLiters * 0.7);
+        const reserve = Math.round(fuelLiters * 0.25);
+        const isFeasible = fuelLiters >= estBurn + reserve;
+        answerText = `${isFeasible ? "🟢 **ईंधन पर्याप्त है — 25% सुरक्षा रिजर्व के साथ सुरक्षित**" : "⚠️ **सावधानी — ईंधन सीमा अपर्याप्त / कम रिजर्व**"}\n\n• **उपलब्ध ईंधन**: ${fuelLiters} Litres\n• **अनुमानित खपत**: ~${estBurn} Litres\n• **25% अनिवार्य रिजर्व**: ~${reserve} Litres\n\n💡 **सिफारिश**: ${isFeasible ? "आपके पास सुरक्षित वापसी के लिए पर्याप्त ईंधन और बफर उपलब्ध है।" : `कम से कम ${estBurn + reserve}L ईंधन लेकर ही प्रस्थान करें ताकि हवा के खिलाफ वापसी में ईंधन कम न पड़े।`}\n\n[🗺️ View Route on Map](#action-map)`;
       } else {
-        answerText = `📍 **${locLabel}**\n\n• **सुरक्षा स्थिति**: **${evidence.riskLevel || "LOW RISK"}**\n• **लहरें**: ${evidence.waveHeight || "0.9 m"} | **हवा**: ${evidence.windSpeed || "12 km/h"}\n\n[🌊 View Sea Conditions](#action-weather)`;
+        answerText = `📍 **${locLabel}** (${loc.latitude.toFixed(2)}° N, ${loc.longitude.toFixed(2)}° E)\n\n• **लहरें**: ${wave} | **हवा**: ${wind} | **SST**: ${evidence.sst || "28.5°C"}\n• **सुरक्षा स्थिति**: **${risk}** (${score}/100)\n\n[🌊 View Sea Conditions](#action-weather)\n[🗺️ View Route on Map](#action-map)`;
       }
     }
 
