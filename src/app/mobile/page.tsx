@@ -906,6 +906,7 @@ export default function MobileAppPage() {
   const mapLayers = useMapLayers();
   const [activeMapParam, setActiveMapParam] = useState<string>("route");
   const [showSplash, setShowSplash] = useState(true);
+  const [isNavAudioActive, setIsNavAudioActive] = useState(true);
 
   const handleSelectMapParam = (paramId: string) => {
     setActiveMapParam(paramId);
@@ -1889,154 +1890,227 @@ export default function MobileAppPage() {
               </span>
             </div>
 
-            {/* Quick Live Navigation Route Indicator & Target PFZ Info */}
-            {(() => {
-              const { distanceKm, bearingDeg } = extractDistanceAndBearing(activeTargetPFZ, location.longitude);
-              return (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    background: "linear-gradient(90deg, rgba(8, 37, 54, 0.95), rgba(15, 60, 85, 0.95))",
-                    border: "1px solid rgba(56, 189, 248, 0.35)",
-                    padding: "8px 12px",
-                    borderRadius: "10px",
-                    fontSize: "12px",
-                    color: "#f8fafc",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
-                    <span style={{ fontSize: "16px", flexShrink: 0 }}>🧭</span>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, color: "#38bdf8", fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {activeTargetPFZ?.name || "Target PFZ Front"}
-                      </div>
-                      <div style={{ fontSize: "11px", color: "#cbd5e1" }}>
-                        {selectedLang === "en" ? "Distance:" : "दूरी:"} <strong style={{ color: "#ffffff" }}>{distanceKm.toFixed(1)} km</strong> · {selectedLang === "en" ? "Bearing:" : "दिशा:"} <strong style={{ color: "#ffffff" }}>{activeTargetPFZ?.dir || `${bearingDeg}°`}</strong>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectMapParam("route")}
-                    style={{
-                      background: activeMapParam === "route" ? "#0284c7" : "rgba(56, 189, 248, 0.15)",
-                      border: "1px solid #38bdf8",
-                      color: "#ffffff",
-                      borderRadius: "6px",
-                      padding: "4px 8px",
-                      fontSize: "10.5px",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {activeMapParam === "route" ? (selectedLang === "en" ? "✓ Route Active" : "✓ रूट सक्रिय") : (selectedLang === "en" ? "View Route →" : "रूट देखें →")}
-                  </button>
-                </div>
-              );
-            })()}
-
-            {/* Seamless, Non-overlapping Mobile Map Container */}
-            <div className="compact-map-wrapper">
-              <MarineMap
-                compact={true}
-                selectedLocation={location}
-                onSelectLocation={handleSelectMapLocation}
-                layers={mapLayers.layers}
-                showDemoFeatures={true}
-                alerts={alertData.data?.alerts ?? []}
-                pfzs={pfzGeojson}
-                savedLocations={mobileSavedLocations}
-                riskLevel={riskLevel}
-                routeGeometry={calculatedRouteGeometry}
-              />
-            </div>
-
-            {/* Dedicated Safe Route Navigation Card when Route parameter is active */}
-            {activeMapParam === "route" && (() => {
+            {/* Turn-by-Turn Navigation Interface when Route parameter is active */}
+            {activeMapParam === "route" ? (() => {
               const { distanceKm, bearingDeg } = extractDistanceAndBearing(activeTargetPFZ, location.longitude);
               const estMin = Math.max(15, Math.round((distanceKm / 22) * 60));
               const fuelL = (distanceKm * 0.55).toFixed(1);
+              const now = new Date();
+              const arrivalTime = new Date(now.getTime() + estMin * 60 * 1000);
+              const etaTimeString = arrivalTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+              const getHeadingInstruction = () => {
+                const dir = activeTargetPFZ?.dir || `${bearingDeg}°`;
+                switch (selectedLang) {
+                  case "hi": return `हेड ${dir} की ओर बढ़ें`;
+                  case "ta": return `${dir} நோக்கி செல்லவும்`;
+                  case "te": return `${dir} వైపు వెళ్ళండి`;
+                  case "ml": return `${dir} ദിശയിൽ നീങ്ങുക`;
+                  case "gu": return `${dir} તરફ આગળ વધો`;
+                  case "mr": return `${dir} दिशेने मार्गक्रमण करा`;
+                  case "bn": return `${dir} দিকে অগ্রসর হন`;
+                  case "or": return `${dir} ଦିଗକୁ ଅଗ୍ରସର ହୁଅନ୍ତୁ`;
+                  case "kn": return `${dir} ದಿಕ್ಕಿನಲ್ಲಿ ಮುನ್ನಡೆಯಿರಿ`;
+                  default: return `Head ${dir} towards PFZ`;
+                }
+              };
+
               return (
-                <div
-                  style={{
-                    background: "linear-gradient(135deg, rgba(8, 37, 54, 0.95), rgba(15, 60, 85, 0.95))",
-                    border: "1.5px solid rgba(52, 189, 209, 0.4)",
-                    borderRadius: "12px",
-                    padding: "14px",
-                    color: "#ffffff",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "10px",
-                    boxShadow: "0 4px 14px rgba(8, 37, 54, 0.2)",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span style={{ fontSize: "16px" }}>🧭</span>
-                      <strong style={{ fontSize: "13.5px", color: "#38bdf8" }}>
-                        {selectedLang === "en" ? "Safe Navigation Corridor (A*)" : "सुरक्षित नेविगेशन मार्ग (A* Engine)"}
-                      </strong>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {/* Google Maps Green Top Direction Banner */}
+                  <div className="m-turn-banner">
+                    <div className="m-turn-arrow-circle">⬆</div>
+                    <div className="m-turn-text-content">
+                      <div className="m-turn-main-instruction">{getHeadingInstruction()}</div>
+                      <div className="m-turn-sub-instruction">
+                        <span className="m-turn-sub-badge">⚓ Safe Fairway</span>
+                        <span>{distanceKm.toFixed(1)} km to {activeTargetPFZ?.name || "PFZ Zone"}</span>
+                      </div>
                     </div>
-                    <span
-                      style={{
-                        fontSize: "10.5px",
-                        fontWeight: 800,
-                        background: "rgba(16, 185, 129, 0.2)",
-                        color: "#34d399",
-                        padding: "3px 8px",
-                        borderRadius: "6px",
-                        border: "1px solid rgba(16, 185, 129, 0.35)",
+                  </div>
+
+                  {/* Interactive Map Canvas with Floating Controls */}
+                  <div className="m-nav-map-container">
+                    <MarineMap
+                      compact={true}
+                      selectedLocation={location}
+                      onSelectLocation={handleSelectMapLocation}
+                      layers={mapLayers.layers}
+                      showDemoFeatures={true}
+                      alerts={alertData.data?.alerts ?? []}
+                      pfzs={pfzGeojson}
+                      savedLocations={mobileSavedLocations}
+                      riskLevel={riskLevel}
+                      routeGeometry={calculatedRouteGeometry}
+                    />
+
+                    {/* Floating Right FAB Column */}
+                    <div className="m-nav-fabs-right">
+                      <button
+                        type="button"
+                        className="m-nav-fab-btn"
+                        title="Compass Orientation"
+                        onClick={() => handleSelectMapLocation(location)}
+                      >
+                        🧭
+                      </button>
+                      <button
+                        type="button"
+                        className="m-nav-fab-btn"
+                        title="Zoom / Re-center Route"
+                        onClick={() => handleSelectMapLocation(location)}
+                      >
+                        🔍
+                      </button>
+                      <button
+                        type="button"
+                        className="m-nav-fab-btn"
+                        title="Voice Audio Alerts"
+                        onClick={() => setIsNavAudioActive(!isNavAudioActive)}
+                        style={{ color: isNavAudioActive ? "#38bdf8" : "#94a3b8" }}
+                      >
+                        {isNavAudioActive ? "🔊" : "🔇"}
+                      </button>
+                      <button
+                        type="button"
+                        className="m-nav-fab-btn"
+                        title="Alternate Fairway"
+                        onClick={() => handleSelectMapParam("route")}
+                      >
+                        🔀
+                      </button>
+                    </div>
+
+                    {/* Floating Bottom Re-centre and SOS Buttons */}
+                    <div className="m-nav-floating-bottom">
+                      <button
+                        type="button"
+                        className="m-nav-recenter-btn"
+                        onClick={() => handleSelectMapLocation(location)}
+                      >
+                        ▲ {selectedLang === "en" ? "Re-centre" : "पुनः केंद्र"}
+                      </button>
+                      <button
+                        type="button"
+                        className="m-nav-sos-btn"
+                        onClick={() => setActiveTab("alerts")}
+                      >
+                        ⚠️ {selectedLang === "en" ? "Report SOS" : "आपातकालीन SOS"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Google Maps Bottom Trip Dashboard Bar */}
+                  <div className="m-nav-bottom-sheet">
+                    <button
+                      type="button"
+                      className="m-nav-close-btn"
+                      onClick={() => handleSelectMapParam("wave")}
+                      title="Close Navigation View"
+                    >
+                      ✕
+                    </button>
+                    <div className="m-nav-trip-center">
+                      <div className="m-nav-trip-eta-row">
+                        <span className="m-nav-trip-time">~{estMin} min 🍃</span>
+                      </div>
+                      <div className="m-nav-trip-subtext">
+                        {distanceKm.toFixed(1)} km · ETA {etaTimeString}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="m-nav-ai-btn"
+                      title="Ask AI Saathi about this route"
+                      onClick={() => {
+                        setActiveTab("assistant");
+                        const routePrompt = selectedLang === "en"
+                          ? `Give me a safe navigation briefing for route from ${location.label || "Harbor"} to ${activeTargetPFZ?.name || "PFZ Zone"} (${distanceKm.toFixed(1)} km, bearing ${activeTargetPFZ?.dir || `${bearingDeg}°`}).`
+                          : `${location.label || "बंदरगाह"} से ${activeTargetPFZ?.name || "PFZ क्षेत्र"} (${distanceKm.toFixed(1)} किमी, दिशा ${activeTargetPFZ?.dir || `${bearingDeg}°`}) के सुरक्षित नेविगेशन मार्ग की विस्तृत जानकारी दें।`;
+                        setQueryInput(routePrompt);
                       }}
                     >
-                      ✓ ZERO HAZARD
-                    </span>
+                      ✨
+                    </button>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "12px", color: "#e2e8f0" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "#94a3b8" }}>🚩 {selectedLang === "en" ? "Departure Harbor" : "प्रस्थान बंदरगाह"}:</span>
-                      <strong>{location.label || "Coastal Harbor"}</strong>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "#94a3b8" }}>🎯 {selectedLang === "en" ? "Target PFZ Front" : "लक्षित मछली क्षेत्र"}:</span>
-                      <strong style={{ color: "#38bdf8" }}>
-                        {activeTargetPFZ?.name || "Prime PFZ Front"} ({distanceKm.toFixed(1)} km, {activeTargetPFZ?.dir || `${bearingDeg}°`})
-                      </strong>
-                    </div>
-                  </div>
-
-                  {/* 3 Metric Badges */}
+                  {/* Step-by-Step Waypoint Guidance Card */}
                   <div
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(3, 1fr)",
-                      gap: "6px",
-                      background: "rgba(2, 6, 23, 0.5)",
-                      padding: "8px",
-                      borderRadius: "8px",
-                      textAlign: "center",
-                      fontSize: "11px",
+                      background: "linear-gradient(135deg, rgba(8, 37, 54, 0.95), rgba(15, 60, 85, 0.95))",
+                      border: "1.5px solid rgba(52, 189, 209, 0.35)",
+                      borderRadius: "12px",
+                      padding: "14px",
+                      color: "#ffffff",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
                     }}
                   >
-                    <div>
-                      <span style={{ display: "block", color: "#94a3b8", fontSize: "9.5px" }}>{selectedLang === "en" ? "Distance" : "दूरी"}</span>
-                      <strong style={{ fontSize: "13px", color: "#f8fafc" }}>{distanceKm.toFixed(1)} km</strong>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <strong style={{ fontSize: "13px", color: "#38bdf8" }}>
+                        ⚓ {selectedLang === "en" ? "Turn-by-Turn Safe Waypoints" : "कदम-दर-कदम सुरक्षित मार्ग बिंदु"}
+                      </strong>
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 800,
+                          background: "rgba(16, 185, 129, 0.2)",
+                          color: "#34d399",
+                          padding: "2px 7px",
+                          borderRadius: "6px",
+                          border: "1px solid rgba(16, 185, 129, 0.35)",
+                        }}
+                      >
+                        ✓ ZERO HAZARD
+                      </span>
                     </div>
-                    <div>
-                      <span style={{ display: "block", color: "#94a3b8", fontSize: "9.5px" }}>{selectedLang === "en" ? "Est. Duration" : "अनुमानित समय"}</span>
-                      <strong style={{ fontSize: "13px", color: "#f8fafc" }}>~{estMin} min</strong>
-                    </div>
-                    <div>
-                      <span style={{ display: "block", color: "#94a3b8", fontSize: "9.5px" }}>{selectedLang === "en" ? "Fuel Burn" : "ईंधन खपत"}</span>
-                      <strong style={{ fontSize: "13px", color: "#34d399" }}>~{fuelL}L (Safe)</strong>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "11.5px" }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                        <span style={{ fontSize: "14px", lineHeight: "1.2" }}>🛥️</span>
+                        <div>
+                          <strong style={{ color: "#f8fafc" }}>{location.label || "Departure Port"}</strong>
+                          <div style={{ color: "#94a3b8", fontSize: "10.5px" }}>0.0 km · Departure Harbor</div>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                        <span style={{ fontSize: "14px", lineHeight: "1.2" }}>⚓</span>
+                        <div>
+                          <strong style={{ color: "#38bdf8" }}>Mid-Channel Safe Fairway</strong>
+                          <div style={{ color: "#94a3b8", fontSize: "10.5px" }}>{(distanceKm * 0.5).toFixed(1)} km · Safe Navigation Corridor</div>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                        <span style={{ fontSize: "14px", lineHeight: "1.2" }}>📍</span>
+                        <div>
+                          <strong style={{ color: "#ef4444" }}>{activeTargetPFZ?.name || "Target Fish Zone"}</strong>
+                          <div style={{ color: "#94a3b8", fontSize: "10.5px" }}>{distanceKm.toFixed(1)} km · Bearing {activeTargetPFZ?.dir || `${bearingDeg}°`} · Yield: {activeTargetPFZ?.yield || "85%"}</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               );
-            })()}
+            })() : (
+              <>
+                {/* Standard Map Container for Wave, Wind, SST, Currents, Alerts */}
+                <div className="compact-map-wrapper">
+                  <MarineMap
+                    compact={true}
+                    selectedLocation={location}
+                    onSelectLocation={handleSelectMapLocation}
+                    layers={mapLayers.layers}
+                    showDemoFeatures={true}
+                    alerts={alertData.data?.alerts ?? []}
+                    pfzs={pfzGeojson}
+                    savedLocations={mobileSavedLocations}
+                    riskLevel={riskLevel}
+                    routeGeometry={calculatedRouteGeometry}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Real-time Dynamic Coordinate Intelligence Card */}
             <div className="m-coordinate-live-card">

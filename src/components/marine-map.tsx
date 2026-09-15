@@ -457,28 +457,43 @@ export function MarineMap({
         type: "line",
         source: "orca-calculated-route",
         filter: ["==", ["geometry-type"], "LineString"],
-        paint: { "line-color": "#38bdf8", "line-width": 22, "line-opacity": 0.22 },
+        paint: { "line-color": "#00f0ff", "line-width": 24, "line-opacity": 0.28 },
       });
       map.addLayer({
         id: "orca-calculated-route-casing",
         type: "line",
         source: "orca-calculated-route",
         filter: ["==", ["geometry-type"], "LineString"],
-        paint: { "line-color": "#0369a1", "line-width": 7 },
+        paint: { "line-color": "#0284c7", "line-width": 8 },
       });
       map.addLayer({
         id: "orca-calculated-route-line",
         type: "line",
         source: "orca-calculated-route",
         filter: ["==", ["geometry-type"], "LineString"],
-        paint: { "line-color": "#38bdf8", "line-width": 4, "line-dasharray": [2, 1] },
+        paint: { "line-color": "#38bdf8", "line-width": 4.5 },
       });
       map.addLayer({
         id: "orca-route-waypoint-points",
         type: "circle",
         source: "orca-calculated-route",
         filter: ["==", ["geometry-type"], "Point"],
-        paint: { "circle-radius": 8, "circle-color": "#0284c7", "circle-stroke-width": 3, "circle-stroke-color": "#ffffff" },
+        paint: {
+          "circle-radius": [
+            "case",
+            ["==", ["get", "kind"], "boat_origin"], 9,
+            ["==", ["get", "kind"], "target_pin"], 10,
+            6.5
+          ],
+          "circle-color": [
+            "case",
+            ["==", ["get", "kind"], "boat_origin"], "#0284c7",
+            ["==", ["get", "kind"], "target_pin"], "#ef4444",
+            "#06b6d4"
+          ],
+          "circle-stroke-width": 3,
+          "circle-stroke-color": "#ffffff",
+        },
       });
       map.addLayer({
         id: "orca-route-waypoint-labels",
@@ -486,9 +501,14 @@ export function MarineMap({
         source: "orca-calculated-route",
         filter: ["==", ["geometry-type"], "Point"],
         layout: {
-          "text-field": ["concat", "🧭 ", ["get", "name"]],
-          "text-size": 11,
-          "text-offset": [0, 1.4],
+          "text-field": [
+            "case",
+            ["==", ["get", "kind"], "boat_origin"], ["concat", "🛥️ ", ["get", "name"]],
+            ["==", ["get", "kind"], "target_pin"], ["concat", "📍 ", ["get", "name"]],
+            ["concat", "⚓ ", ["get", "name"]]
+          ],
+          "text-size": 11.5,
+          "text-offset": [0, 1.5],
         },
         paint: {
           "text-color": "#ffffff",
@@ -839,6 +859,7 @@ export function MarineMap({
           geometry: routeGeometry,
           properties: {
             id: "route-primary-safe-channel",
+            kind: "route_line",
             title: "Optimized Safe Navigation Channel (A*)",
             type: "Safe Marine Route",
             status: "SAFE · ZERO HAZARD ENCOUNTER",
@@ -849,7 +870,7 @@ export function MarineMap({
         {
           type: "Feature",
           geometry: { type: "Point", coordinates: startPt },
-          properties: { name: "Departure Harbor", title: "Departure Harbor", status: "Departure Waypoint" },
+          properties: { kind: "boat_origin", name: "Departure Harbor", title: "Departure Harbor", status: "Departure Waypoint" },
         },
       ];
 
@@ -857,14 +878,14 @@ export function MarineMap({
         navFeatures.push({
           type: "Feature",
           geometry: { type: "Point", coordinates: coords[i] },
-          properties: { name: `Mid-Channel WP-${i}`, title: `Mid-Channel Waypoint ${i}`, status: "Transit Waypoint" },
+          properties: { kind: "mid_waypoint", name: `Mid-Channel WP-${i}`, title: `Mid-Channel Waypoint ${i}`, status: "Transit Waypoint" },
         });
       }
 
       navFeatures.push({
         type: "Feature",
         geometry: { type: "Point", coordinates: endPt },
-        properties: { name: "PFZ Target Destination", title: "PFZ Target Destination", status: "Target Waypoint" },
+        properties: { kind: "target_pin", name: "PFZ Target Destination", title: "PFZ Target Destination", status: "Target Waypoint" },
       });
 
       source.setData({
