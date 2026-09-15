@@ -772,41 +772,95 @@ export function FormattedChatMessage({
   const lines = text.split("\n");
 
   return (
-    <div className="m-formatted-chat-msg" style={{ whiteSpace: "normal", wordBreak: "break-word" }}>
+    <div
+      className="m-formatted-chat-msg"
+      style={{
+        whiteSpace: "normal",
+        wordBreak: "break-word",
+        overflowWrap: "break-word",
+        flex: 1,
+        minWidth: 0,
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: "4px",
+      }}
+    >
       {lines.map((line, idx) => {
         const trimmed = line.trim();
         if (!trimmed) {
           return <div key={idx} style={{ height: "6px" }} />;
         }
 
-        // Check for Action link pattern [Label](#action-type)
-        const actionMatch = trimmed.match(/^\[([^\]]+)\]\(#(action-[a-z0-9-]+)\)$/i);
-        if (actionMatch) {
-          const btnText = actionMatch[1];
-          const actionTarget = actionMatch[2].replace("action-", "");
+        // Check for lines that only contain Action link(s) pattern [Label](#action-type)
+        const allActionMatches = Array.from(trimmed.matchAll(/\[([^\]]+)\]\(#(action-[a-z0-9-]+)\)/gi));
+        if (allActionMatches.length > 0 && trimmed.replace(/\[([^\]]+)\]\(#(action-[a-z0-9-]+)\)/gi, "").trim() === "") {
           return (
-            <div key={idx} style={{ marginTop: "6px", marginBottom: "4px" }}>
-              <button
-                type="button"
-                className="m-chat-action-btn"
-                onClick={() => onAction?.(actionTarget)}
-              >
-                {btnText}
-              </button>
+            <div
+              key={idx}
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "6px",
+                marginTop: "6px",
+                marginBottom: "4px",
+              }}
+            >
+              {allActionMatches.map((m, mIdx) => {
+                const btnText = m[1];
+                const actionTarget = m[2].replace("action-", "");
+                return (
+                  <button
+                    key={mIdx}
+                    type="button"
+                    className="m-chat-action-btn"
+                    onClick={() => onAction?.(actionTarget)}
+                  >
+                    {btnText}
+                  </button>
+                );
+              })}
             </div>
           );
         }
 
-        const isBullet = trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("*");
-        const parts = line.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+        // Heading lines
+        if (trimmed.startsWith("### ")) {
+          return (
+            <div key={idx} style={{ fontWeight: 700, fontSize: "1.05em", color: "#38bdf8", marginTop: "4px", marginBottom: "2px" }}>
+              {trimmed.slice(4)}
+            </div>
+          );
+        }
+        if (trimmed.startsWith("## ")) {
+          return (
+            <div key={idx} style={{ fontWeight: 800, fontSize: "1.1em", color: "#38bdf8", marginTop: "6px", marginBottom: "3px" }}>
+              {trimmed.slice(3)}
+            </div>
+          );
+        }
+        if (trimmed.startsWith("# ")) {
+          return (
+            <div key={idx} style={{ fontWeight: 800, fontSize: "1.15em", color: "#38bdf8", marginTop: "8px", marginBottom: "4px" }}>
+              {trimmed.slice(2)}
+            </div>
+          );
+        }
+
+        const isBullet = trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("* ");
+        const isNumbered = /^\d+\.\s/.test(trimmed);
+
+        // Split by formatting tokens: bold, backtick code, action links, or regular links
+        const parts = line.split(/(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\(#(?:action-[a-z0-9-]+)\)|\[[^\]]+\]\([^)]+\))/g);
 
         return (
           <div
             key={idx}
             style={{
-              paddingLeft: isBullet ? "6px" : undefined,
-              marginBottom: "3px",
-              lineHeight: 1.48,
+              paddingLeft: isBullet || isNumbered ? "8px" : undefined,
+              marginBottom: "2px",
+              lineHeight: 1.55,
+              fontSize: "13.5px",
             }}
           >
             {parts.map((part, pIdx) => {
@@ -822,7 +876,7 @@ export function FormattedChatMessage({
                   <code
                     key={pIdx}
                     style={{
-                      background: "rgba(15, 23, 42, 0.08)",
+                      background: "rgba(15, 23, 42, 0.1)",
                       padding: "1px 5px",
                       borderRadius: "4px",
                       fontSize: "0.9em",
@@ -831,6 +885,22 @@ export function FormattedChatMessage({
                   >
                     {part.slice(1, -1)}
                   </code>
+                );
+              }
+              const inlineActionMatch = part.match(/^\[([^\]]+)\]\(#(action-[a-z0-9-]+)\)$/i);
+              if (inlineActionMatch) {
+                const btnText = inlineActionMatch[1];
+                const actionTarget = inlineActionMatch[2].replace("action-", "");
+                return (
+                  <button
+                    key={pIdx}
+                    type="button"
+                    className="m-chat-action-btn"
+                    style={{ marginLeft: "4px", marginRight: "4px" }}
+                    onClick={() => onAction?.(actionTarget)}
+                  >
+                    {btnText}
+                  </button>
                 );
               }
               return <span key={pIdx}>{part}</span>;
