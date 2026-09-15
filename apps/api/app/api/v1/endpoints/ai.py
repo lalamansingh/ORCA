@@ -327,6 +327,68 @@ async def conversational_message(
 
     settings = request.app.state.settings
     provider = get_llm_provider(settings, request.app.state.http_client) if settings.llm_enabled else None
+
+    import re
+    lower_q = data.query.strip().lower()
+    is_general_conv = bool(
+        re.match(r"^(oye+|oyee+|hi+|hii+|hello+|hola|namaste|kem cho|kasa kay|vanakkam|good\s*(morning|afternoon|evening|night)|kaise ho|kya haal|kya kar rahe ho|thank you|thanks|accha|theek hai|haan bhai|ok|okay)\b", lower_q)
+        or re.search(r"\b(who discovered gravity|what is photosynthesis|tell me a joke|who was|who is)\b", lower_q)
+        or lower_q in {"oye", "oyeee", "hi", "hello", "kaise ho", "kya haal", "accha", "thanks", "thanks bhai"}
+    )
+
+    if is_general_conv:
+        conv_system = (
+            "You are Sagar Saathi, a friendly and intelligent AI companion for fishermen and coastal communities. "
+            "When the user greets you or chats casually, reply naturally, warmly, and concisely (1-2 sentences) in their language and tone. "
+            "Do NOT mention sea conditions, wave heights, wind, PFZ, coordinates, or safety cards."
+        )
+        answer = None
+        if provider:
+            try:
+                answer = await provider.generate_text(conv_system, data.query)
+            except Exception:
+                pass
+        if not answer:
+            if re.match(r"^(oye+|oyee+|hey+|heyy+)\b", lower_q):
+                answer = "Haan bhai 😄 bolo, kya scene hai? Main aapki kya madad kar sakta hoon?"
+            elif re.match(r"^(hi+|hello+|namaste)\b", lower_q):
+                answer = "नमस्ते! कैसे हैं आप? मैं आपकी किस प्रकार सहायता कर सकता हूँ?"
+            elif "kaise ho" in lower_q or "kya haal" in lower_q:
+                answer = "Main badhiya hoon bhai! Aap batao, sab kaisa chal raha hai?"
+            elif "thank" in lower_q or "shukriya" in lower_q:
+                answer = "Arey koi baat nahi bhai! Kabhi bhi zaroorat ho to batana. 😊"
+            else:
+                answer = "Ji boliye, main aapki kaise madad kar sakta hoon?"
+
+        conv_id = str(conversation.id) if conversation else str(uuid.uuid4())
+        msg_id = str(uuid.uuid4())
+        if user and conversation:
+            assistant = Message(
+                conversation_id=conversation.id,
+                role=MessageRole.ASSISTANT,
+                content=answer,
+                intent="GENERAL_CONVERSATION",
+                metadata_={"language": "hi", "detected_language": "hi", "trace_id": str(uuid.uuid4())},
+            )
+            session.add(assistant)
+            await session.commit()
+            msg_id = str(assistant.id)
+
+        from app.orchestrator.models import OrchestrationResult
+        from app.planner.models import PlannerIntent
+        dummy_orch = OrchestrationResult(
+            query_id=uuid.uuid4(),
+            trace_id=str(uuid.uuid4()),
+            status="SUCCESS",
+            intent=PlannerIntent.GENERAL_INFORMATION,
+            data={},
+            evidence=[],
+            step_results=[],
+            warnings=[],
+            errors=[],
+        )
+        return {"conversation_id": conv_id, "message_id": msg_id, "answer": answer, "orchestration": dummy_orch}
+
     service = ORCAQueryExecutionService(
         ORCAOrchestrator(build_default_registry(request), getattr(settings, "orchestration_max_parallel_steps", 3), getattr(settings, "orchestration_timeout_seconds", 45)),
         provider,

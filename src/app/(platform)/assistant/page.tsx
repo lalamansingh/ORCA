@@ -6,6 +6,7 @@ import { MarineMap } from "@/components/marine-map";
 import { PageHeader } from "@/components/ui";
 import { EvidenceFacts, ServiceFacts } from "@/components/evidence-facts";
 import { sendMessage, type ConversationReply } from "@/lib/api/ai";
+import { classifyIntent } from "@/features/ai/intent-router";
 import { publishSelectedLocation, useSharedSelectedLocation } from "@/features/map/location-store";
 import { VoiceMic, VoiceSpeaker } from "@/components/voice-mic";
 import "../demo-polish.css";
@@ -154,13 +155,15 @@ export default function AssistantPage() {
     setError("");
     try {
       const text = textToSend.trim();
-      const locToSend = location
-        ? { latitude: location.latitude, longitude: location.longitude }
-        : undefined;
       const history = messages.slice(-6).flatMap((m) => [
         { role: "user" as const, content: m.query },
         { role: "assistant" as const, content: m.reply.answer },
       ]);
+      const routing = classifyIntent(text, history);
+      const isGeneral = routing.intent === "GENERAL_CONVERSATION";
+      const locToSend = !isGeneral && location
+        ? { latitude: location.latitude, longitude: location.longitude }
+        : undefined;
       const reply = await sendMessage(
         text,
         locToSend,
