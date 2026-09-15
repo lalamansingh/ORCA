@@ -183,6 +183,17 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     chipPFZ: "नजदीकी मछली क्षेत्र (PFZ)?",
     chipWind: "हवा की गति व दिशा क्या है?",
     chipSafety: "क्या आज समुद्र में जाना सुरक्षित है?",
+    recenter: "पुनः केंद्र",
+    reportSos: "आपातकालीन SOS",
+    turnByTurn: "कदम-दर-कदम सुरक्षित मार्ग बिंदु",
+    askSaathiCoord: "इस निर्देशांक के बारे में AI साथी से पूछें →",
+    currentSeaStatus: "वर्तमान समुद्री स्थिति",
+    safeFairway: "सुरक्षित समुद्री मार्ग",
+    departurePort: "प्रस्थान बंदरगाह",
+    midChannel: "मध्य-मार्ग सुरक्षित गलियारा",
+    targetPfz: "मत्स्य क्षेत्र गंतव्य",
+    customCoord: "कस्टम निर्देशांक",
+    coastalHarbor: "तटीय बंदरगाह",
   },
   en: {
     safeSea: "Safe Sea · Safe for Voyage",
@@ -247,6 +258,17 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     chipPFZ: "Where is nearest fish zone (PFZ)?",
     chipWind: "Wind speed and direction?",
     chipSafety: "Is it safe to sail today?",
+    recenter: "Re-centre",
+    reportSos: "Report SOS",
+    turnByTurn: "Turn-by-Turn Safe Waypoints",
+    askSaathiCoord: "Ask AI Saathi about this coordinate →",
+    currentSeaStatus: "Current Sea Status",
+    safeFairway: "Safe Fairway Corridor",
+    departurePort: "Departure Harbor",
+    midChannel: "Mid-Channel Safe Fairway",
+    targetPfz: "Target Fish Zone",
+    customCoord: "CUSTOM COORDINATE",
+    coastalHarbor: "COASTAL HARBOR",
   },
   ta: {
     safeSea: "கடல் பாதுகாப்பானது · Safe Sea",
@@ -311,6 +333,17 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     chipPFZ: "அருகிலுள்ள மீன்பிடி மண்டலம் எங்கே?",
     chipWind: "காற்றின் வேகம் மற்றும் திசை என்ன?",
     chipSafety: "இன்று கடலுக்கு செல்வது பாதுகாப்பானதா?",
+    recenter: "மறுமையப்படுத்து",
+    reportSos: "அவசர SOS",
+    turnByTurn: "படி-படியான பாதுகாப்பான வழிப்பாதைகள்",
+    askSaathiCoord: "இந்த ஆயத்தொலைவு பற்றி AI தோழனிடம் கேட்கவும் →",
+    currentSeaStatus: "தற்போதைய கடல் நிலைமை",
+    safeFairway: "பாதுகாப்பான கடல் வழித்தடம்",
+    departurePort: "புறப்படும் துறைமுகம்",
+    midChannel: "நடுப்பாதை பாதுகாப்பான வழித்தடம்",
+    targetPfz: "இலக்கு மீன்பிடி மண்டலம்",
+    customCoord: "தனிப்பயன் ஆயத்தொலைவு",
+    coastalHarbor: "கடலோர துறைமுகம்",
   },
   te: {
     safeSea: "సముద్రం సురక్షితం · Safe Sea",
@@ -375,6 +408,17 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     chipPFZ: "సమీపంలోని చేపల వేట ప్రాంతం ఎక్కడ?",
     chipWind: "గాలి వేగం మరియు దిశ ఏమిటి?",
     chipSafety: "ఈ రోజు వేటకు వెళ్లడం సురక్షితమేనా?",
+    recenter: "రీ-సెంటర్",
+    reportSos: "అత్యవసర SOS",
+    turnByTurn: "అంచెలంచెలుగా సురక్షిత మార్గ బిందువులు",
+    askSaathiCoord: "ఈ కోఆర్డినేట్ గురించి AI సాథిని అడగండి →",
+    currentSeaStatus: "ప్రస్తుత సముద్ర స్థితి",
+    safeFairway: "సురక్షిత సముద్ర మార్గం",
+    departurePort: "బయలుదేరే నౌకాశ్రయం",
+    midChannel: "మధ్య-ఛానల్ సురక్షిత మార్గం",
+    targetPfz: "చేపల వేట లక్ష్యం",
+    customCoord: "అనుకూల కోఆర్డినేట్",
+    coastalHarbor: "తీరప్రాంత నౌకాశ్రయం",
   },
   ml: {
     safeSea: "കടൽ സുരക്ഷിതം · Safe Sea",
@@ -439,6 +483,17 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     chipPFZ: "ഏറ്റവും അടുത്തുള്ള മത്സ്യ മേഖല എവിടെയാണ്?",
     chipWind: "കാറ്റിന്റെ വേഗതയും ദിശയും എന്താണ്?",
     chipSafety: "ഇന്ന് കടലിൽ പോകുന്നത് സുരക്ഷിതമാണോ?",
+    recenter: "റീ-സെന്റർ",
+    reportSos: "അടിയന്തര SOS",
+    turnByTurn: "ഘട്ടം ഘട്ടമായുള്ള സുരക്ഷിത പാത",
+    askSaathiCoord: "ഈ കോർഡിനേറ്റിനെക്കുറിച്ച് AI സഹായിയോട് ചോദിക്കുക →",
+    currentSeaStatus: "നിലവിലെ കടൽാവസ്ഥ",
+    safeFairway: "സുരക്ഷിത നാവിഗേഷൻ പാത",
+    departurePort: "പുറപ്പെടുന്ന തുറമുഖം",
+    midChannel: "മിഡ്-ചാനൽ സുരക്ഷിത പാത",
+    targetPfz: "മത്സ്യബന്ധന കേന്ദ്രം",
+    customCoord: "കസ്റ്റം കോർഡിനേറ്റ്",
+    coastalHarbor: "തീരദേശ തുറമുഖം",
   },
   gu: {
     safeSea: "દરિયો સુરક્ષિત છે · Safe Sea",
@@ -503,6 +558,17 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     chipPFZ: "નજીકનું માછલી ક્ષેત્ર (PFZ) ક્યાં છે?",
     chipWind: "પવનની ઝડપ અને દિશા શું છે?",
     chipSafety: "શું આજે દરિયામાં જવું સુરક્ષિત છે?",
+    recenter: "ફરીથી કેન્દ્રિત કરો",
+    reportSos: "કટોકટી SOS",
+    turnByTurn: "પગલાંવાર સુરક્ષિત માર્ગબિંદુઓ",
+    askSaathiCoord: "આ કોઓર્ડિનેટ વિશે AI સાથીને પૂછો →",
+    currentSeaStatus: "હાલની દરિયાઈ સ્થિતિ",
+    safeFairway: "સુરક્ષિત દરિયાઈ માર્ગ",
+    departurePort: "પ્રસ્થાન બંદર",
+    midChannel: "મધ્ય-ચેનલ સુરક્ષિત માર્ગ",
+    targetPfz: "લક્ષિત માછીમારી ક્ષેત્ર",
+    customCoord: "કસ્ટમ કોઓર્ડિનેટ",
+    coastalHarbor: "દરિયાકાંઠાનું બંદર",
   },
   mr: {
     safeSea: "समुद्र सुरक्षित आहे · Safe Sea",
@@ -567,6 +633,17 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     chipPFZ: "जवळचे मत्स्य क्षेत्र (PFZ) कुठे आहे?",
     chipWind: "वाऱ्याचा वेग आणि दिशा काय आहे?",
     chipSafety: "आज समुद्रात जाणे सुरक्षित आहे का?",
+    recenter: "पुन्हा केंद्रस्थ करा",
+    reportSos: "आपत्कालीन SOS",
+    turnByTurn: "टप्प्याटप्प्याने सुरक्षित मार्ग बिंदू",
+    askSaathiCoord: "या निर्देशांकाबद्दल AI साथीला विचारा →",
+    currentSeaStatus: "सध्याची सागरी स्थिती",
+    safeFairway: "सुरक्षित सागरी मार्ग",
+    departurePort: "प्रस्थान बंदर",
+    midChannel: "मध्य-वाहिनी सुरक्षित मार्ग",
+    targetPfz: "लक्षित मासेमारी क्षेत्र",
+    customCoord: "सानुकूल निर्देशांक",
+    coastalHarbor: "किनारपट्टी बंदर",
   },
   bn: {
     safeSea: "সমুদ্র শান্ত ও নিরাপদ · Safe Sea",
@@ -631,6 +708,17 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     chipPFZ: "নিকটবর্তী মাছ ধরার অঞ্চল কোথায়?",
     chipWind: "বাতাসের গতি ও দিক কী?",
     chipSafety: "আজ কি সমুদ্রে যাওয়া নিরাপদ?",
+    recenter: "পুনরায় কেন্দ্র করুন",
+    reportSos: "জরুরী SOS",
+    turnByTurn: "ধাপে ধাপে নিরাপদ ওয়েপয়েন্ট",
+    askSaathiCoord: "এই স্থানাঙ্ক সম্পর্কে AI সঙ্গীকে জিজ্ঞাসা করুন →",
+    currentSeaStatus: "বর্তমান সমুদ্রের অবস্থা",
+    safeFairway: "নিরাপদ সামুদ্রিক চ্যানেল",
+    departurePort: "প্রস্থান বন্দর",
+    midChannel: "মধ্য-চ্যানেল নিরাপদ পথ",
+    targetPfz: "মৎস্য অঞ্চল গন্তব্য",
+    customCoord: "কাস্টম স্থানাঙ্ক",
+    coastalHarbor: "উপকূলীয় বন্দর",
   },
   kn: {
     safeSea: "ಸಮುದ್ರ ಸುರಕ್ಷಿತವಾಗಿದೆ · Safe Sea",
@@ -695,6 +783,17 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     chipPFZ: "ಹತ್ತಿರದ ಮೀನು ವಲಯ ಎಲ್ಲಿದೆ?",
     chipWind: "ಗಾಳಿಯ ವೇಗ ಮತ್ತು ದಿಕ್ಕು ಯಾವುದು?",
     chipSafety: "ಇಂದು ಸಮುದ್ರಕ್ಕೆ ಹೋಗುವುದು ಸುರಕ್ಷಿತವೇ?",
+    recenter: "ಮರುಕೇಂದ್ರೀಕರಿಸಿ",
+    reportSos: "ತುರ್ತು SOS",
+    turnByTurn: "ಹಂತ-ಹಂತದ ಸುರಕ್ಷಿತ ಮಾರ್ಗ ಬಿಂದುಗಳು",
+    askSaathiCoord: "ಈ ನಿರ್ದೇಶಾಂಕದ ಬಗ್ಗೆ AI ಒಡನಾಡಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ →",
+    currentSeaStatus: "ಪ್ರಸ್ತುತ ಸಮುದ್ರ ಸ್ಥಿತಿ",
+    safeFairway: "ಸುರಕ್ಷಿತ ಸಾಗರ ಮಾರ್ಗ",
+    departurePort: "ಹೊರಡುವ ಬಂದರು",
+    midChannel: "ಮಧ್ಯ-ಚಾನಲ್ ಸುರಕ್ಷಿತ ಕಾರಿಡಾರ್",
+    targetPfz: "ಮೀನುಗಾರಿಕಾ ಗುರಿ",
+    customCoord: "ಕಸ್ಟಮ್ ನಿರ್ದೇಶಾಂಕ",
+    coastalHarbor: "ಕರಾವಳಿ ಬಂದರು",
   },
   or: {
     safeSea: "ସମୁଦ୍ର ସୁରକ୍ଷିତ · Safe Sea",
@@ -759,6 +858,17 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     chipPFZ: "ନିକଟତମ ମାଛ ଧରିବା ଜୋନ୍ କେଉଁଠି?",
     chipWind: "ପବନର ବେଗ ଏବଂ ଦିଗ କ’ଣ?",
     chipSafety: "ଆଜି ସମୁଦ୍ରକୁ ଯିବା ସୁରକ୍ଷିତ କି?",
+    recenter: "ପୁନଃ କେନ୍ଦ୍ରିତ କରନ୍ତୁ",
+    reportSos: "ଜରୁରୀକାଳୀନ SOS",
+    turnByTurn: "ପର୍ଯ୍ୟାୟକ୍ରମିକ ସୁରକ୍ଷିତ ମାର୍ଗ ବିନ୍ଦୁ",
+    askSaathiCoord: "ଏହି ନିର୍ଦ୍ଦେଶାଙ୍କ ବିଷୟରେ AI ସାଥୀଙ୍କୁ ପଚାରନ୍ତୁ →",
+    currentSeaStatus: "ବର୍ତ୍ତମାନର ସମୁଦ୍ର ସ୍ଥିତି",
+    safeFairway: "ସୁରକ୍ଷିତ ସାମୁଦ୍ରିକ ମାର୍ଗ",
+    departurePort: "ପ୍ରସ୍ଥାନ ବନ୍ଦର",
+    midChannel: "ମଧ୍ୟ-ଚ୍ୟାନେଲ୍ ସୁରକ୍ଷିତ ମାର୍ଗ",
+    targetPfz: "ମତ୍ସ୍ୟ କ୍ଷେତ୍ର ଲକ୍ଷ୍ୟ",
+    customCoord: "କଷ୍ଟମ୍ ନିର୍ଦ୍ଦେଶାଙ୍କ",
+    coastalHarbor: "ଉପକୂଳ ବନ୍ଦର",
   },
 };
 
@@ -2010,14 +2120,14 @@ export default function MobileAppPage() {
                         className="m-nav-recenter-btn"
                         onClick={() => handleSelectMapLocation(location)}
                       >
-                        ▲ {selectedLang === "en" ? "Re-centre" : "पुनः केंद्र"}
+                        ▲ {t("recenter")}
                       </button>
                       <button
                         type="button"
                         className="m-nav-sos-btn"
                         onClick={() => setActiveTab("alerts")}
                       >
-                        ⚠️ {selectedLang === "en" ? "Report SOS" : "आपातकालीन SOS"}
+                        ⚠️ {t("reportSos")}
                       </button>
                     </div>
                   </div>
@@ -2046,9 +2156,19 @@ export default function MobileAppPage() {
                       title="Ask AI Saathi about this route"
                       onClick={() => {
                         setActiveTab("assistant");
-                        const routePrompt = selectedLang === "en"
-                          ? `Give me a safe navigation briefing for route from ${location.label || "Harbor"} to ${activeTargetPFZ?.name || "PFZ Zone"} (${distanceKm.toFixed(1)} km, bearing ${activeTargetPFZ?.dir || `${bearingDeg}°`}).`
-                          : `${location.label || "बंदरगाह"} से ${activeTargetPFZ?.name || "PFZ क्षेत्र"} (${distanceKm.toFixed(1)} किमी, दिशा ${activeTargetPFZ?.dir || `${bearingDeg}°`}) के सुरक्षित नेविगेशन मार्ग की विस्तृत जानकारी दें।`;
+                        let routePrompt = "";
+                        switch (selectedLang) {
+                          case "en": routePrompt = `Give me a safe navigation briefing for route from ${location.label || "Harbor"} to ${activeTargetPFZ?.name || "PFZ Zone"} (${distanceKm.toFixed(1)} km, bearing ${activeTargetPFZ?.dir || `${bearingDeg}°`}).`; break;
+                          case "ta": routePrompt = `${location.label || "துறைமுகம்"} முதல் ${activeTargetPFZ?.name || "மீன்பிடி பகுதி"} வரையிலான (${distanceKm.toFixed(1)} கி.மீ, திசை ${activeTargetPFZ?.dir || `${bearingDeg}°`}) பாதுகாப்பான கடல் வழித்தட விவரங்களை வழங்கவும்.`; break;
+                          case "te": routePrompt = `${location.label || "హార్బర్"} నుండి ${activeTargetPFZ?.name || "చేపల వేట ప్రాంతం"} కు (${distanceKm.toFixed(1)} కి.మీ, దిశ ${activeTargetPFZ?.dir || `${bearingDeg}°`}) సురక్షిత నావిగేషన్ సూచనలను అందించండి.`; break;
+                          case "ml": routePrompt = `${location.label || "തുറമുഖം"} മുതൽ ${activeTargetPFZ?.name || "മത്സ്യബന്ധന കേന്ദ്രം"} വരെയുള്ള (${distanceKm.toFixed(1)} കി.മീ, ദിശ ${activeTargetPFZ?.dir || `${bearingDeg}°`}) സുരക്ഷിത പാത വിവരങ്ങൾ നൽകുക.`; break;
+                          case "gu": routePrompt = `${location.label || "બંદર"} થી ${activeTargetPFZ?.name || "માછીમારી ક્ષેત્ર"} સુધીના (${distanceKm.toFixed(1)} કિમી, દિશા ${activeTargetPFZ?.dir || `${bearingDeg}°`}) સુરક્ષિત માર્ગ વિશે માહિતી આપો.`; break;
+                          case "mr": routePrompt = `${location.label || "बंदर"} ते ${activeTargetPFZ?.name || "मत्स्य क्षेत्र"} पर्यंतच्या (${distanceKm.toFixed(1)} किमी, दिशा ${activeTargetPFZ?.dir || `${bearingDeg}°`}) सुरक्षित मार्गाची माहिती द्या.`; break;
+                          case "bn": routePrompt = `${location.label || "বন্দর"} থেকে ${activeTargetPFZ?.name || "মাছ ধরার অঞ্চল"} পর্যন্ত (${distanceKm.toFixed(1)} কিমি, দিক ${activeTargetPFZ?.dir || `${bearingDeg}°`}) নিরাপদ রুটের বিবরণ দিন।`; break;
+                          case "kn": routePrompt = `${location.label || "ಬಂದರು"} ಇಂದ ${activeTargetPFZ?.name || "ಮೀನುಗಾರಿಕಾ ವಲಯ"} ವರೆಗಿನ (${distanceKm.toFixed(1)} ಕಿ.ಮೀ, ದಿಕ್ಕು ${activeTargetPFZ?.dir || `${bearingDeg}°`}) ಸುರಕ್ಷಿತ ಮಾರ್ಗದ ಮಾಹಿತಿ ನೀಡಿ.`; break;
+                          case "or": routePrompt = `${location.label || "ବନ୍ଦର"} ରୁ ${activeTargetPFZ?.name || "ମାଛ ଧରିବା ଜୋନ୍"} (${distanceKm.toFixed(1)} କିମି, ଦିଗ ${activeTargetPFZ?.dir || `${bearingDeg}°`}) ସୁରକ୍ଷିତ ନାଭିଗେସନ୍ ରୁଟ୍ ବିବରଣୀ ପ୍ରଦାନ କରନ୍ତୁ।`; break;
+                          default: routePrompt = `${location.label || "बंदरगाह"} से ${activeTargetPFZ?.name || "PFZ क्षेत्र"} (${distanceKm.toFixed(1)} किमी, दिशा ${activeTargetPFZ?.dir || `${bearingDeg}°`}) के सुरक्षित नेविगेशन मार्ग की विस्तृत जानकारी दें।`; break;
+                        }
                         setQueryInput(routePrompt);
                       }}
                     >
@@ -2071,7 +2191,7 @@ export default function MobileAppPage() {
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <strong style={{ fontSize: "13px", color: "#38bdf8" }}>
-                        ⚓ {selectedLang === "en" ? "Turn-by-Turn Safe Waypoints" : "कदम-दर-कदम सुरक्षित मार्ग बिंदु"}
+                        ⚓ {t("turnByTurn")}
                       </strong>
                       <span
                         style={{
@@ -2092,21 +2212,21 @@ export default function MobileAppPage() {
                       <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
                         <span style={{ fontSize: "14px", lineHeight: "1.2" }}>🛥️</span>
                         <div>
-                          <strong style={{ color: "#f8fafc" }}>{location.label || "Departure Port"}</strong>
-                          <div style={{ color: "#94a3b8", fontSize: "10.5px" }}>0.0 km · Departure Harbor</div>
+                          <strong style={{ color: "#f8fafc" }}>{location.label || t("departurePort")}</strong>
+                          <div style={{ color: "#94a3b8", fontSize: "10.5px" }}>0.0 km · {t("departurePort")}</div>
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
                         <span style={{ fontSize: "14px", lineHeight: "1.2" }}>⚓</span>
                         <div>
-                          <strong style={{ color: "#38bdf8" }}>Mid-Channel Safe Fairway</strong>
-                          <div style={{ color: "#94a3b8", fontSize: "10.5px" }}>{(distanceKm * 0.5).toFixed(1)} km · Safe Navigation Corridor</div>
+                          <strong style={{ color: "#38bdf8" }}>{t("midChannel")}</strong>
+                          <div style={{ color: "#94a3b8", fontSize: "10.5px" }}>{(distanceKm * 0.5).toFixed(1)} km · {t("safeFairway")}</div>
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
                         <span style={{ fontSize: "14px", lineHeight: "1.2" }}>📍</span>
                         <div>
-                          <strong style={{ color: "#ef4444" }}>{activeTargetPFZ?.name || "Target Fish Zone"}</strong>
+                          <strong style={{ color: "#ef4444" }}>{activeTargetPFZ?.name || t("targetPfz")}</strong>
                           <div style={{ color: "#94a3b8", fontSize: "10.5px" }}>{distanceKm.toFixed(1)} km · Bearing {activeTargetPFZ?.dir || `${bearingDeg}°`} · Yield: {activeTargetPFZ?.yield || "85%"}</div>
                         </div>
                       </div>
@@ -2140,7 +2260,7 @@ export default function MobileAppPage() {
                 <div className="m-coord-title">
                   <div className="m-coord-badge">
                     <MapPin size={12} />
-                    <span>{location.source === "map" ? "CUSTOM COORDINATE" : "COASTAL HARBOR"}</span>
+                    <span>{location.source === "map" ? t("customCoord") : t("coastalHarbor")}</span>
                   </div>
                   <h4>{location.label || "Marine Sector"}</h4>
                   <p>
@@ -2181,17 +2301,25 @@ export default function MobileAppPage() {
                 className="m-coord-ask-ai-btn"
                 onClick={() => {
                   setActiveTab("assistant");
-                  const prompt = selectedLang === "en"
-                    ? `What are the sea conditions at coordinate ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E?`
-                    : `निर्देशांक ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E पर समुद्र और मौसम की स्थिति क्या है?`;
-                  setQueryInput(prompt);
+                  let coordPrompt = "";
+                  switch (selectedLang) {
+                    case "en": coordPrompt = `What are the sea conditions at coordinate ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E?`; break;
+                    case "ta": coordPrompt = `ஆயத்தொலைவு ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E இல் கடல் மற்றும் வானிலை நிலைமை என்ன?`; break;
+                    case "te": coordPrompt = `కోఆర్డినేట్ ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E వద్ద సముద్ర మరియు వాతావరణ పరిస్థితులు ఏమిటి?`; break;
+                    case "ml": coordPrompt = `കോർഡിനേറ്റ് ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E-ലെ കടൽാവസ്ഥയും കാലാവസ്ഥയും എന്താണ്?`; break;
+                    case "gu": coordPrompt = `કોઓર્ડિનેટ ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E પર દરિયાઈ અને હવામાનની સ્થિતિ શું છે?`; break;
+                    case "mr": coordPrompt = `निर्देशांक ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E वर समुद्र आणि हवामानाची स्थिती काय आहे?`; break;
+                    case "bn": coordPrompt = `স্থানাঙ্ক ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E-এ সমুদ্র ও আবহাওয়ার অবস্থা কী?`; break;
+                    case "kn": coordPrompt = `ನಿರ್ದೇಶಾಂಕ ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E ನಲ್ಲಿ ಸಮುದ್ರ ಮತ್ತು ಹವಾಮಾನ ಪರಿಸ್ಥಿತಿ ಹೇಗಿದೆ?`; break;
+                    case "or": coordPrompt = `ନିର୍ଦ୍ଦେଶାଙ୍କ ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E ରେ ସମୁଦ୍ର ଏବଂ ପାଣିପାଗ ସ୍ଥିତି କ’ଣ?`; break;
+                    default: coordPrompt = `निर्देशांक ${location.latitude.toFixed(3)}°N, ${location.longitude.toFixed(3)}°E पर समुद्र और मौसम की स्थिति क्या है?`; break;
+                  }
+                  setQueryInput(coordPrompt);
                 }}
               >
                 <Bot size={15} />
                 <span>
-                  {selectedLang === "en"
-                    ? "Ask AI Saathi about this coordinate →"
-                    : "इस निर्देशांक के बारे में AI साथी से पूछें →"}
+                  {t("askSaathiCoord")}
                 </span>
               </button>
             </div>
@@ -2283,7 +2411,18 @@ export default function MobileAppPage() {
                     cursor: "pointer",
                   }}
                 >
-                  ⚙️ Setup
+                  {({
+                    hi: "⚙️ सुरक्षा सेटअप",
+                    en: "⚙️ Safety Setup",
+                    ta: "⚙️ பாதுகாப்பு அமைப்பு",
+                    te: "⚙️ భద్రతా సెటప్",
+                    ml: "⚙️ സുരക്ഷാ ക്രമീകരണം",
+                    gu: "⚙️ સુરક્ષા સેટઅપ",
+                    mr: "⚙️ सुरक्षा सेटअप",
+                    bn: "⚙️ সুরক্ষা সেটআপ",
+                    kn: "⚙️ ಸುರಕ್ಷತಾ ಸೆಟಪ್",
+                    or: "⚙️ ସୁରକ୍ଷା ସେଟଅପ୍",
+                  } as Record<string, string>)[selectedLang] || "⚙️ Setup"}
                 </button>
               </div>
               <p className="m-sos-desc">
@@ -2309,7 +2448,20 @@ export default function MobileAppPage() {
                   }}
                 >
                   <ShieldAlert size={16} />
-                  <span>{selectedLang === "en" ? "TRANSMIT DISTRESS SOS (3x Vol-Down / Mic)" : "आपातकालीन SOS भेजें (3x वॉल्यूम बटन)"}</span>
+                  <span>
+                    {({
+                      hi: "आपातकालीन SOS भेजें (3x वॉल्यूम बटन / माइक)",
+                      en: "TRANSMIT DISTRESS SOS (3x Vol-Down / Mic)",
+                      ta: "அவசர SOS அனுப்பவும் (3x வால்யூம் / மைக்)",
+                      te: "అత్యవసర SOS పంపండి (3x వాల్యూమ్ / మైక్)",
+                      ml: "അടിയന്തര SOS അയക്കുക (3x വോളിയം / മൈക്ക്)",
+                      gu: "કટોકટી SOS મોકલો (3x વોલ્યુમ / માઈક)",
+                      mr: "आपत्कालीन SOS पाठवा (3x व्हॉल्यूम / माइक)",
+                      bn: "জরুরী SOS পাঠান (৩x ভলিউম / মাইক)",
+                      kn: "ತುರ್ತು SOS ಕಳುಹಿಸಿ (3x ವಾಲ್ಯೂಮ್ / ಮೈಕ್)",
+                      or: "ଜରୁରୀକାଳୀନ SOS ପଠାନ୍ତୁ (୩x ଭଲ୍ୟୁମ୍ / ମାଇକ୍)",
+                    } as Record<string, string>)[selectedLang] || "TRANSMIT DISTRESS SOS"}
+                  </span>
                 </button>
 
                 <a href="tel:1554" className="m-sos-dial-btn" title="Call Indian Coast Guard National Hotline 1554">
@@ -2380,7 +2532,7 @@ export default function MobileAppPage() {
                   {alertUi.noLocalAlertsDesc}
                 </p>
                 <span style={{ fontSize: "10.5px", color: "#047857", fontWeight: 700 }}>
-                  ✓ {selectedLang === "en" ? "Current Sea Status" : "वर्तमान समुद्री स्थिति"}: {t("wave")} ({marine?.wave_height ? `${marine.wave_height.value} m` : "1.1 m"}) · {t("wind")} ({weather?.wind_speed ? `${weather.wind_speed.value} km/h` : "15 km/h"})
+                  ✓ {t("currentSeaStatus")}: {t("wave")} ({marine?.wave_height ? `${marine.wave_height.value} m` : "1.1 m"}) · {t("wind")} ({weather?.wind_speed ? `${weather.wind_speed.value} km/h` : "15 km/h"})
                 </span>
               </div>
             ) : (
@@ -2467,7 +2619,10 @@ export default function MobileAppPage() {
             )}
 
             {/* In-tab Testing Simulator Tool (ISRO PS 26176) */}
-            <DemoSimulatorBar onShowOnboarding={() => setShowSafetyOnboardingModal(true)} />
+            <DemoSimulatorBar
+              selectedLang={selectedLang}
+              onShowOnboarding={() => setShowSafetyOnboardingModal(true)}
+            />
           </div>
         )}
       </main>
@@ -2600,10 +2755,11 @@ export default function MobileAppPage() {
       )}
 
       {/* SOS Distres Modals & Alarms (ISRO PS 26176) */}
-      <SOSCountdownModal />
-      <VoiceDistressModal />
+      <SOSCountdownModal selectedLang={selectedLang} />
+      <VoiceDistressModal selectedLang={selectedLang} />
       <SafetyOnboardingModal
         isOpen={showSafetyOnboardingModal}
+        selectedLang={selectedLang}
         onClose={() => setShowSafetyOnboardingModal(false)}
       />
     </div>

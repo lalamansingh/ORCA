@@ -11,6 +11,99 @@ interface VoiceDistressModalProps {
   onSubmitTranscript?: (transcript: string) => void;
 }
 
+const VOICE_I18N: Record<
+  string,
+  {
+    title: string;
+    subtitle: string;
+    listening: string;
+    defaultMsg: string;
+    sendBtn: string;
+    cancelBtn: string;
+  }
+> = {
+  hi: {
+    title: "अपनी आपातकालीन स्थिति बोलें",
+    subtitle: "अपनी भाषा में स्पष्ट बोलें (उदा. इंजन खराब, नाव में पानी भरना, तूफान)।",
+    listening: "आपकी आवाज सुनी जा रही है...",
+    defaultMsg: "समुद्र में तत्काल आपातकालीन सहायता की आवश्यकता है।",
+    sendBtn: "तुरंत SOS रिपोर्ट भेजें",
+    cancelBtn: "रद्द करें",
+  },
+  en: {
+    title: "SPEAK YOUR DISTRESS MESSAGE",
+    subtitle: "Speak clearly in your language (e.g. engine failure, rough sea, flooding).",
+    listening: "Listening to your voice...",
+    defaultMsg: "Immediate emergency assistance required at sea.",
+    sendBtn: "TRANSMIT SOS REPORT NOW",
+    cancelBtn: "Cancel Distress",
+  },
+  ta: {
+    title: "உங்கள் அவசர நிலையை பேசுங்கள்",
+    subtitle: "உங்கள் தாய்மொழியில் தெளிவாக பேசுங்கள் (எ.கா. இயந்திரக் கோளாறு, படகில் நீர்).",
+    listening: "உங்கள் குரல் கேட்கப்படுகிறது...",
+    defaultMsg: "கடலில் உடனடி அவசர உதவி தேவைப்படுகிறது.",
+    sendBtn: "உடனடியாக SOS அனுப்பவும்",
+    cancelBtn: "ரத்து செய்",
+  },
+  te: {
+    title: "మీ అత్యవసర పరిస్థితిని మాట్లాడండి",
+    subtitle: "స్పష్టంగా మాట్లాడండి (ఉదా. ఇంజిన్ వైఫల్యం, పడవలో నీరు చేరడం, తుఫాను).",
+    listening: "మీ వాయిస్ వినబడుతోంది...",
+    defaultMsg: "సముద్రంలో తక్షణ అత్యవసర సహాయం అవసరం.",
+    sendBtn: "వెంటనే SOS నివేదికను పంపండి",
+    cancelBtn: "రద్దు చేయండి",
+  },
+  ml: {
+    title: "നിങ്ങളുടെ അടിയന്തര സാഹചര്യം സംസാരിക്കുക",
+    subtitle: "വ്യക്തമായി സംസാരിക്കുക (ഉദാ. എഞ്ചിൻ തകരാർ, ബോട്ടിൽ വെള്ളം കയറൽ).",
+    listening: "നിങ്ങളുടെ ശബ്ദം കേൾക്കുന്നു...",
+    defaultMsg: "കടലിൽ അടിയന്തര സഹായം ആവശ്യമാണ്.",
+    sendBtn: "ഉടൻ SOS അയക്കുക",
+    cancelBtn: "റദ്ദാക്കുക",
+  },
+  gu: {
+    title: "તમારી કટોકટીની સ્થિતિ બોલો",
+    subtitle: "સ્પષ્ટ રીતે બોલો (દા.ત. એન્જિન નિષ્ફળતા, બોટમાં પાણી ભરાવું, તોફાન).",
+    listening: "તમારો અવાજ સંભળાઈ રહ્યો છે...",
+    defaultMsg: "દરિયામાં તાત્કાલિક કટોકટી સહાયની જરૂર છે.",
+    sendBtn: "તરત જ SOS રિપોર્ટ મોકલો",
+    cancelBtn: "રદ કરો",
+  },
+  mr: {
+    title: "आपली आपत्कालीन परिस्थिती बोला",
+    subtitle: "स्पष्ट बोला (उदा. इंजिन बिघाड, बोटीमध्ये पाणी भरणे, वादळ).",
+    listening: "आपला आवाज ऐकला जात आहे...",
+    defaultMsg: "समुद्रात त्वरित आपत्कालीन मदतीची आवश्यकता आहे.",
+    sendBtn: "त्वरित SOS अहवाल पाठवा",
+    cancelBtn: "रद्द करा",
+  },
+  bn: {
+    title: "আপনার জরুরী পরিস্থিতি বলুন",
+    subtitle: "পরিষ্কারভাবে বলুন (যেমন ইঞ্জিন বিকল, নৌকায় জল ঢোকা, তীব্র ঝড়)।",
+    listening: "আপনার কণ্ঠস্বর শোনা হচ্ছে...",
+    defaultMsg: "সমুদ্রে অবিলম্বে জরুরী সহায়তা প্রয়োজন।",
+    sendBtn: "এখনই SOS রিপোর্ট পাঠান",
+    cancelBtn: "বাতিল করুন",
+  },
+  kn: {
+    title: "ನಿಮ್ಮ ತುರ್ತು ಪರಿಸ್ಥಿತಿಯನ್ನು ಮಾತನಾಡಿ",
+    subtitle: "ಸ್ಪಷ್ಟವಾಗಿ ಮಾತನಾಡಿ (ಉದಾ. ಎಂಜಿನ್ ವೈಫಲ್ಯ, ದೋಣಿಯಲ್ಲಿ ನೀರು, ಚಂಡಮಾರುತ).",
+    listening: "ನಿಮ್ಮ ಧ್ವನಿಯನ್ನು ಆಲಿಸಲಾಗುತ್ತಿದೆ...",
+    defaultMsg: "ಸಮುದ್ರದಲ್ಲಿ ತಕ್ಷಣದ ತುರ್ತು ನೆರವು ಅಗತ್ಯವಿದೆ.",
+    sendBtn: "ತಕ್ಷಣ SOS ವರದಿ ಕಳುಹಿಸಿ",
+    cancelBtn: "ರದ್ದುಮಾಡಿ",
+  },
+  or: {
+    title: "ଆପଣଙ୍କ ଜରୁରୀ ସ୍ଥିତି ବିଷୟରେ କୁହନ୍ତୁ",
+    subtitle: "ସ୍ପଷ୍ଟ ଭାବରେ କୁହନ୍ତୁ (ଇଞ୍ଜିନ୍ ଖରାପ, ଡଙ୍ଗାରେ ପାଣି ପଶିବା, ବାତ୍ୟା)।",
+    listening: "ଆପଣଙ୍କ ସ୍ୱର ଶୁଣାଯାଉଛି...",
+    defaultMsg: "ସମୁଦ୍ରରେ ତୁରନ୍ତ ଜରୁରୀ ସହାୟତା ଆବଶ୍ୟକ।",
+    sendBtn: "ତୁରନ୍ତ SOS ରିପୋର୍ଟ ପଠାନ୍ତୁ",
+    cancelBtn: "ବାତିଲ୍ କରନ୍ତୁ",
+  },
+};
+
 export function VoiceDistressModal({
   selectedLang = "hi",
   onCancel,
@@ -22,6 +115,8 @@ export function VoiceDistressModal({
   const [transcript, setTranscript] = useState("");
   const [isListening, setIsListening] = useState(true);
   const [manualMode, setManualMode] = useState(false);
+
+  const i18n = VOICE_I18N[selectedLang] || VOICE_I18N["hi"] || VOICE_I18N["en"];
 
   useEffect(() => {
     if (!isCapturing && !onSubmitTranscript) return;
@@ -42,15 +137,11 @@ export function VoiceDistressModal({
   if (!isCapturing && !onSubmitTranscript) return null;
 
   const handleSubmit = () => {
-    const finalMsg =
-      transcript.trim() ||
-      (selectedLang === "en"
-        ? "Immediate emergency assistance required at sea."
-        : "समुद्र में तत्काल आपातकालीन सहायता की आवश्यकता है।");
+    const finalMsg = transcript.trim() || i18n.defaultMsg;
     if (onSubmitTranscript) {
       onSubmitTranscript(finalMsg);
     } else {
-      store.submitReport({ transcript: finalMsg });
+      store.submitReport({ transcript: finalMsg, language: selectedLang });
     }
   };
 
@@ -102,13 +193,11 @@ export function VoiceDistressModal({
         </div>
 
         <h3 style={{ fontSize: "18px", fontWeight: 800, margin: "0 0 4px 0", color: "#fee2e2" }}>
-          {selectedLang === "en" ? "SPEAK YOUR DISTRESS MESSAGE" : "अपनी आपातकालीन स्थिति बोलें"}
+          {i18n.title}
         </h3>
 
         <p style={{ fontSize: "11.5px", color: "#94a3b8", margin: "0 0 14px 0", lineHeight: 1.4 }}>
-          {selectedLang === "en"
-            ? "Speak clearly in your language (e.g., engine failure, flooding, capsizing)."
-            : "अपनी भाषा में स्पष्ट बोलें (उदा. इंजन खराब, नाव में पानी भरना, तूफान)।"}
+          {i18n.subtitle}
         </p>
 
         {/* Live Speech Recognition Transcript Box */}
@@ -143,7 +232,7 @@ export function VoiceDistressModal({
               }}
             />
           ) : (
-            <div>{transcript || (selectedLang === "en" ? "Listening to your voice..." : "आपकी आवाज सुनी जा रही है...")}</div>
+            <div>{transcript || i18n.listening}</div>
           )}
 
           <button
@@ -193,7 +282,7 @@ export function VoiceDistressModal({
             }}
           >
             <Send size={15} />
-            <span>{selectedLang === "en" ? "TRANSMIT SOS REPORT NOW" : "तुरंत SOS रिपोर्ट भेजें"}</span>
+            <span>{i18n.sendBtn}</span>
           </button>
 
           <button
@@ -216,7 +305,7 @@ export function VoiceDistressModal({
             }}
           >
             <X size={14} />
-            <span>{selectedLang === "en" ? "Cancel Distress" : "रद्द करें"}</span>
+            <span>{i18n.cancelBtn}</span>
           </button>
         </div>
       </div>

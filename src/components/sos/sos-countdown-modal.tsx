@@ -10,6 +10,77 @@ interface SOSCountdownModalProps {
   onSendNow?: () => void;
 }
 
+const COUNTDOWN_I18N: Record<
+  string,
+  {
+    title: string;
+    desc: string;
+    cancelBtn: string;
+    sendNowBtn: string;
+  }
+> = {
+  hi: {
+    title: "आपातकालीन SOS भेजा जा रहा है",
+    desc: "कुछ सेकंड में आवाज रिकॉर्डर खुलेगा। गलत अलार्म रोकने के लिए रद्द करें।",
+    cancelBtn: "रद्द करें (गलत अलार्म)",
+    sendNowBtn: "तुरंत आवाज रिकॉर्ड करें",
+  },
+  en: {
+    title: "TRANSMITTING DISTRESS SOS",
+    desc: "Voice recorder opening in seconds. Tap cancel if this is a false alarm.",
+    cancelBtn: "Cancel SOS (False Alarm)",
+    sendNowBtn: "Skip Countdown & Record Voice",
+  },
+  ta: {
+    title: "அவசர SOS அனுப்பப்படுகிறது",
+    desc: "குரல் பதிவு சில வினாடிகளில் தொடங்கும். தவறான எச்சரிக்கையை ரத்து செய்யவும்.",
+    cancelBtn: "ரத்து செய் (தவறான எச்சரிக்கை)",
+    sendNowBtn: "உடனடியாக குரல் பதிவு செய்",
+  },
+  te: {
+    title: "అత్యవసర SOS పంపబడుతోంది",
+    desc: "వాయిస్ రికార్డర్ కొన్ని సెకన్లలో ప్రారంభమవుతుంది. తప్పుడు అలారం అయితే రద్దు చేయండి.",
+    cancelBtn: "రద్దు చేయండి (తప్పుడు అలారం)",
+    sendNowBtn: "తక్షణమే వాయిస్ రికార్డ్ చేయండి",
+  },
+  ml: {
+    title: "അടിയന്തര SOS അയക്കുന്നു",
+    desc: "ശബ്ദ റെക്കോർഡർ ഉടൻ തുറക്കും. തെറ്റായ അലാറം ആണെങ്കിൽ റദ്ദാക്കുക.",
+    cancelBtn: "റദ്ദാക്കുക (തെറ്റായ അലാറം)",
+    sendNowBtn: "ഉടൻ ശബ്ദം റെക്കോർഡ് ചെയ്യുക",
+  },
+  gu: {
+    title: "કટોકટી SOS મોકલાઈ રહ્યું છે",
+    desc: "થોડીવારમાં વોઇસ રેકોર્ડર ખુલશે. ખોટા એલાર્મ માટે રદ કરો.",
+    cancelBtn: "રદ કરો (ખોટો એલાર્મ)",
+    sendNowBtn: "તરત જ અવાજ રેકોર્ડ કરો",
+  },
+  mr: {
+    title: "आपत्कालीन SOS पाठवले जात आहे",
+    desc: "काही सेकंदात व्हॉइस रेकॉर्डर उघडेल. खोटा अलार्म असल्यास रद्द करा.",
+    cancelBtn: "रद्द करा (खोटा अलार्म)",
+    sendNowBtn: "त्वरित आवाज रेकॉर्ड करा",
+  },
+  bn: {
+    title: "জরুরী SOS পাঠানো হচ্ছে",
+    desc: "কিছু সেকেন্ডের মধ্যে ভয়েস রেকর্ডার খুলবে। ভুল অ্যালার্ম বাতিল করুন।",
+    cancelBtn: "বাতিল করুন (ভুল অ্যালার্ম)",
+    sendNowBtn: "এখনই ভয়েস রেকর্ড করুন",
+  },
+  kn: {
+    title: "ತುರ್ತು SOS ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ",
+    desc: "ಕೆಲವೇ ಕ್ಷಣಗಳಲ್ಲಿ ಧ್ವನಿ ರೆಕಾರ್ಡರ್ ತೆರೆಯುತ್ತದೆ. ತಪ್ಪು ಅಲಾರಾಂ ರದ್ದುಗೊಳಿಸಿ.",
+    cancelBtn: "ರದ್ದುಮಾಡಿ (ತಪ್ಪು ಅಲಾರಾಂ)",
+    sendNowBtn: "ತಕ್ಷಣ ಧ್ವನಿ ರೆಕಾರ್ಡ್ ಮಾಡಿ",
+  },
+  or: {
+    title: "ଜରୁରୀକାଳୀନ SOS ପଠାଯାଉଛି",
+    desc: "କିଛି ସେକେଣ୍ଡରେ ଭଏସ୍ ରେକର୍ଡର ଖୋଲିବ। ଭୁଲ୍ ଆଲାର୍ମ ବାତିଲ୍ କରନ୍ତୁ।",
+    cancelBtn: "ବାତିଲ୍ କରନ୍ତୁ",
+    sendNowBtn: "ତୁରନ୍ତ ଭଏସ୍ ରେକର୍ଡ କରନ୍ତୁ",
+  },
+};
+
 export function SOSCountdownModal({
   countdownSeconds: propCountdown,
   selectedLang = "hi",
@@ -21,6 +92,8 @@ export function SOSCountdownModal({
   const countdownSeconds = propCountdown !== undefined ? propCountdown : store.countdownSeconds;
   const handleCancel = onCancel || store.cancelSOS;
   const handleSendNow = onSendNow || store.startVoiceCapture;
+
+  const i18n = COUNTDOWN_I18N[selectedLang] || COUNTDOWN_I18N["hi"] || COUNTDOWN_I18N["en"];
 
   if (!isArmed && propCountdown === undefined) return null;
 
@@ -69,13 +142,11 @@ export function SOSCountdownModal({
         </div>
 
         <h3 style={{ fontSize: "18px", fontWeight: 800, margin: "0 0 4px 0", color: "#fee2e2" }}>
-          {selectedLang === "en" ? "TRANSMITTING DISTRESS SOS" : "आपातकालीन SOS भेजा जा रहा है"}
+          {i18n.title}
         </h3>
 
         <p style={{ fontSize: "12px", color: "#fca5a5", margin: "0 0 16px 0", lineHeight: 1.4 }}>
-          {selectedLang === "en"
-            ? "Voice recorder will open in seconds. Tap CANCEL to abort false alarm."
-            : "कुछ सेकंड में आवाज रिकॉर्डर खुलेगा। गलत अलार्म रोकने के लिए रद्द करें।"}
+          {i18n.desc}
         </p>
 
         {/* Big Countdown Number Circle */}
@@ -121,7 +192,7 @@ export function SOSCountdownModal({
             }}
           >
             <X size={16} />
-            <span>{selectedLang === "en" ? "Cancel SOS (False Alarm)" : "रद्द करें (गलत अलार्म)"}</span>
+            <span>{i18n.cancelBtn}</span>
           </button>
 
           <button
@@ -144,7 +215,7 @@ export function SOSCountdownModal({
             }}
           >
             <Send size={15} />
-            <span>{selectedLang === "en" ? "Skip Countdown & Record Voice" : "तुरंत आवाज रिकॉर्ड करें"}</span>
+            <span>{i18n.sendNowBtn}</span>
           </button>
         </div>
       </div>

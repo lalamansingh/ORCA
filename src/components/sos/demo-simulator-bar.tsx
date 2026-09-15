@@ -8,9 +8,13 @@ import { Volume2, Radio, Wind, AlertTriangle, RefreshCw, Send, CheckCircle2, Wif
 
 interface DemoSimulatorBarProps {
   onShowOnboarding?: () => void;
+  selectedLang?: string;
 }
 
-export const DemoSimulatorBar: React.FC<DemoSimulatorBarProps> = ({ onShowOnboarding }) => {
+export const DemoSimulatorBar: React.FC<DemoSimulatorBarProps> = ({
+  onShowOnboarding,
+  selectedLang = "hi",
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSimulatingOffline, setIsSimulatingOffline] = useState(false);
   const [simulatedActionMessage, setSimulatedActionMessage] = useState<string | null>(null);
