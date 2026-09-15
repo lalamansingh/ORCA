@@ -1028,7 +1028,7 @@ export default function MobileAppPage() {
   const [isNavAudioActive, setIsNavAudioActive] = useState(true);
   const [showSafetyOnboardingModal, setShowSafetyOnboardingModal] = useState(false);
 
-  const { triggerDistress } = useSOSStore();
+  const sosStore = useSOSStore();
 
   // Initialize hardware volume-key listener & offline sync
   useSOSService();
@@ -1495,8 +1495,34 @@ export default function MobileAppPage() {
           <ChevronDown size={12} style={{ opacity: 0.7 }} />
         </button>
 
-        {/* Language & Refresh Tools */}
+        {/* SOS, Language & Refresh Tools */}
         <div className="mobile-top-actions">
+          <button
+            type="button"
+            className="mobile-icon-btn"
+            onClick={() => {
+              VolumeKeyListener.playConfirmationHaptics();
+              sosStore.armSOS();
+            }}
+            style={{
+              background: sosStore.workflowState !== "IDLE" ? "#ef4444" : "rgba(239, 68, 68, 0.14)",
+              color: sosStore.workflowState !== "IDLE" ? "#ffffff" : "#b91c1c",
+              border: "1.5px solid rgba(239, 68, 68, 0.45)",
+              fontWeight: 800,
+              fontSize: "11px",
+              display: "flex",
+              alignItems: "center",
+              gap: "3px",
+              padding: "0 6px",
+              borderRadius: "8px",
+              cursor: "pointer",
+            }}
+            title="🚨 Emergency SOS"
+          >
+            <ShieldAlert size={14} />
+            <span>SOS</span>
+          </button>
+
           <button
             type="button"
             className="mobile-lang-btn"
@@ -1522,6 +1548,83 @@ export default function MobileAppPage() {
 
       {/* 2. Main Scrollable View */}
       <main className="mobile-scroll-view">
+        {/* Global Active SOS Status Notification Banner */}
+        {sosStore.workflowState !== "IDLE" && (
+          <div
+            style={{
+              background:
+                sosStore.workflowState === "SENT" || sosStore.workflowState === "ACKNOWLEDGED"
+                  ? "linear-gradient(135deg, #065f46 0%, #047857 100%)"
+                  : sosStore.workflowState === "QUEUED_OFFLINE"
+                  ? "linear-gradient(135deg, #854d0e 0%, #a16207 100%)"
+                  : "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)",
+              color: "#ffffff",
+              padding: "10px 14px",
+              borderRadius: "12px",
+              marginBottom: "12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "10px",
+              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.25)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+              <ShieldAlert size={20} style={{ flexShrink: 0, color: "#ffffff" }} />
+              <div style={{ fontSize: "11.5px", lineHeight: 1.3 }}>
+                <strong>
+                  {sosStore.workflowState === "SENT"
+                    ? (selectedLang === "hi" ? "✓ संकट SOS प्रसारित (Coast Guard सूचित)" : "✓ SOS DISTRESS DELIVERED")
+                    : sosStore.workflowState === "ACKNOWLEDGED"
+                    ? (selectedLang === "hi" ? "✓ तटरक्षक बल द्वारा पुष्टि प्राप्त" : "✓ ACKNOWLEDGED BY AUTHORITIES")
+                    : sosStore.workflowState === "QUEUED_OFFLINE"
+                    ? (selectedLang === "hi" ? "📡 SOS ऑफ़लाइन कतारबद्ध (मेश रिले सक्रिय)" : "📡 SOS QUEUED OFFLINE (MESH)")
+                    : (selectedLang === "hi" ? "🚨 SOS संकट सक्रिय है..." : "🚨 SOS IN PROGRESS...")}
+                </strong>
+                {sosStore.activeReport && (
+                  <div style={{ fontSize: "10px", opacity: 0.9 }}>
+                    ID: {sosStore.activeReport.sos_id.slice(0, 18)} · 📍 {sosStore.activeReport.latitude.toFixed(2)}°N, {sosStore.activeReport.longitude.toFixed(2)}°E
+                  </div>
+                )}
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+              <button
+                type="button"
+                onClick={() => setActiveTab("alerts")}
+                style={{
+                  background: "rgba(255, 255, 255, 0.25)",
+                  border: "none",
+                  color: "#ffffff",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  padding: "4px 8px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                }}
+              >
+                {selectedLang === "hi" ? "देखें" : "View"}
+              </button>
+              <button
+                type="button"
+                onClick={() => sosStore.reset()}
+                style={{
+                  background: "rgba(0, 0, 0, 0.25)",
+                  border: "none",
+                  color: "#ffffff",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  padding: "4px 8px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                }}
+                title="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
         {/* TAB 1: OVERVIEW (सागर स्थिति) */}
         {activeTab === "overview" && (
           <>
@@ -2394,128 +2497,74 @@ export default function MobileAppPage() {
         {/* TAB 5: ALERTS & SOS (अलर्ट व सुरक्षा) */}
         {activeTab === "alerts" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {/* Dynamic Location-Aware SOS Emergency Card */}
-            <div className="m-sos-card">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                <h3 className="m-sos-title" style={{ margin: 0 }}>
-                  <PhoneCall size={20} /> {t("sosCardTitle")} · {sectorSOS.city}
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setShowSafetyOnboardingModal(true)}
-                  style={{
-                    background: "rgba(255, 255, 255, 0.15)",
-                    border: "1px solid rgba(255, 255, 255, 0.3)",
-                    color: "#ffffff",
-                    fontSize: "10.5px",
-                    padding: "3px 8px",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                  }}
-                >
-                  {({
-                    hi: "⚙️ सुरक्षा सेटअप",
-                    en: "⚙️ Safety Setup",
-                    ta: "⚙️ பாதுகாப்பு அமைப்பு",
-                    te: "⚙️ భద్రతా సెటప్",
-                    ml: "⚙️ സുരക്ഷാ ക്രമീകരണം",
-                    gu: "⚙️ સુરક્ષા સેટઅપ",
-                    mr: "⚙️ सुरक्षा सेटअप",
-                    bn: "⚙️ সুরক্ষা সেটআপ",
-                    kn: "⚙️ ಸುರಕ್ಷತಾ ಸೆಟಪ್",
-                    or: "⚙️ ସୁରକ୍ଷା ସେଟଅପ୍",
-                  } as Record<string, string>)[selectedLang] || "⚙️ Setup"}
-                </button>
-              </div>
-              <p className="m-sos-desc">
-                {alertUi.localSosDesc} <strong>{sectorSOS.harborName} ({sectorSOS.state})</strong>
-              </p>
+            {/* Dynamic Interactive Distress SOS Emergency Card */}
+            <EmergencySOSCard
+              workflowState={sosStore.workflowState}
+              activeReport={sosStore.activeReport}
+              isOnline={typeof navigator !== "undefined" ? navigator.onLine : true}
+              gpsAvailable={true}
+              locationLabel={location.label}
+              selectedLang={selectedLang}
+              onArmSOS={() => {
+                VolumeKeyListener.playConfirmationHaptics();
+                sosStore.armSOS();
+              }}
+              onOpenOnboarding={() => setShowSafetyOnboardingModal(true)}
+              onResetSOS={() => sosStore.reset()}
+            />
 
-              {/* Primary Instant Distress SOS Action & National Helplines */}
-              <div className="m-sos-buttons">
-                <button
-                  type="button"
-                  onClick={() => triggerDistress("manual_button")}
-                  className="m-sos-dial-btn"
-                  style={{
-                    background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
-                    border: "1.5px solid #ef4444",
-                    color: "#ffffff",
-                    fontWeight: 800,
-                    width: "100%",
-                    justifyContent: "center",
-                    padding: "10px",
-                    cursor: "pointer",
-                    boxShadow: "0 4px 12px rgba(220, 38, 38, 0.4)",
-                  }}
-                >
-                  <ShieldAlert size={16} />
-                  <span>
-                    {({
-                      hi: "आपातकालीन SOS भेजें (3x वॉल्यूम बटन / माइक)",
-                      en: "TRANSMIT DISTRESS SOS (3x Vol-Down / Mic)",
-                      ta: "அவசர SOS அனுப்பவும் (3x வால்யூம் / மைக்)",
-                      te: "అత్యవసర SOS పంపండి (3x వాల్యూమ్ / మైక్)",
-                      ml: "അടിയന്തര SOS അയക്കുക (3x വോളിയം / മൈക്ക്)",
-                      gu: "કટોકટી SOS મોકલો (3x વોલ્યુમ / માઈક)",
-                      mr: "आपत्कालीन SOS पाठवा (3x व्हॉल्यूम / माइक)",
-                      bn: "জরুরী SOS পাঠান (৩x ভলিউম / মাইক)",
-                      kn: "ತುರ್ತು SOS ಕಳುಹಿಸಿ (3x ವಾಲ್ಯೂಮ್ / ಮೈಕ್)",
-                      or: "ଜରୁରୀକାଳୀନ SOS ପଠାନ୍ତୁ (୩x ଭଲ୍ୟୁମ୍ / ମାଇକ୍)",
-                    } as Record<string, string>)[selectedLang] || "TRANSMIT DISTRESS SOS"}
+            {/* Local Coastal Police & Port Emergency Direct Lines */}
+            <div
+              style={{
+                background: "rgba(8, 37, 54, 0.9)",
+                borderRadius: "12px",
+                padding: "12px",
+                border: "1px solid rgba(56, 189, 248, 0.2)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#fca5a5", fontSize: "11.5px", fontWeight: 700 }}>
+                <ShieldAlert size={14} />
+                <span>{alertUi.localSosTitle} · {sectorSOS.harborName}</span>
+              </div>
+
+              <div className="m-sos-local-grid">
+                <a href={`tel:${sectorSOS.coastGuardPhone}`} className="m-sos-local-btn">
+                  <div className="m-sos-local-label">
+                    <span className="m-sos-local-name">{sectorSOS.coastGuardStation}</span>
+                    <span className="m-sos-local-desc">{sectorSOS.state} Regional Marine Rescue</span>
+                  </div>
+                  <span className="m-sos-local-call">
+                    <PhoneCall size={11} /> {sectorSOS.coastGuardPhone}
                   </span>
-                </button>
-
-                <a href="tel:1554" className="m-sos-dial-btn" title="Call Indian Coast Guard National Hotline 1554">
-                  <PhoneCall size={14} /> {alertUi.coastGuardNational}
                 </a>
-                <a href="tel:1093" className="m-sos-dial-btn" title="Call Coastal Security Police Toll-Free 1093">
-                  <PhoneCall size={14} /> {alertUi.coastalPoliceNational}
+
+                <a href={`tel:${sectorSOS.coastalPolicePhone}`} className="m-sos-local-btn">
+                  <div className="m-sos-local-label">
+                    <span className="m-sos-local-name">{sectorSOS.coastalPoliceStation}</span>
+                    <span className="m-sos-local-desc">Coastal Security Police Station</span>
+                  </div>
+                  <span className="m-sos-local-call">
+                    <PhoneCall size={11} /> {sectorSOS.coastalPolicePhone}
+                  </span>
+                </a>
+
+                <a href={`tel:${sectorSOS.portControlPhone}`} className="m-sos-local-btn">
+                  <div className="m-sos-local-label">
+                    <span className="m-sos-local-name">{sectorSOS.portControl}</span>
+                    <span className="m-sos-local-desc">Harbor Master / VTS Signal Station</span>
+                  </div>
+                  <span className="m-sos-local-call">
+                    <PhoneCall size={11} /> {sectorSOS.portControlPhone}
+                  </span>
                 </a>
               </div>
 
-              {/* Local Coastal Police & Port Emergency Direct Lines */}
-              <div className="m-sos-local-container">
-                <div className="m-sos-local-title">
-                  <ShieldAlert size={13} style={{ color: "#fca5a5" }} />
-                  <span>{alertUi.localSosTitle}</span>
-                </div>
-                <div className="m-sos-local-grid">
-                  <a href={`tel:${sectorSOS.coastGuardPhone}`} className="m-sos-local-btn">
-                    <div className="m-sos-local-label">
-                      <span className="m-sos-local-name">{sectorSOS.coastGuardStation}</span>
-                      <span className="m-sos-local-desc">{sectorSOS.state} Regional Marine Rescue</span>
-                    </div>
-                    <span className="m-sos-local-call">
-                      <PhoneCall size={11} /> {sectorSOS.coastGuardPhone}
-                    </span>
-                  </a>
-
-                  <a href={`tel:${sectorSOS.coastalPolicePhone}`} className="m-sos-local-btn">
-                    <div className="m-sos-local-label">
-                      <span className="m-sos-local-name">{sectorSOS.coastalPoliceStation}</span>
-                      <span className="m-sos-local-desc">Coastal Security Police Station</span>
-                    </div>
-                    <span className="m-sos-local-call">
-                      <PhoneCall size={11} /> {sectorSOS.coastalPolicePhone}
-                    </span>
-                  </a>
-
-                  <a href={`tel:${sectorSOS.portControlPhone}`} className="m-sos-local-btn">
-                    <div className="m-sos-local-label">
-                      <span className="m-sos-local-name">{sectorSOS.portControl}</span>
-                      <span className="m-sos-local-desc">Harbor Master / VTS Signal Station</span>
-                    </div>
-                    <span className="m-sos-local-call">
-                      <PhoneCall size={11} /> {sectorSOS.portControlPhone}
-                    </span>
-                  </a>
-                </div>
-
-                <div className="m-sos-vhf-badge">
-                  <Radio size={13} style={{ color: "#facc15" }} />
-                  <span>{alertUi.vhfDistressLabel} ({sectorSOS.vhfChannel})</span>
-                </div>
+              <div className="m-sos-vhf-badge">
+                <Radio size={13} style={{ color: "#facc15" }} />
+                <span>{alertUi.vhfDistressLabel} ({sectorSOS.vhfChannel})</span>
               </div>
             </div>
 
@@ -2760,7 +2809,8 @@ export default function MobileAppPage() {
         onClose={() => setShowSafetyOnboardingModal(false)}
         onRunTestSOS={() => {
           setShowSafetyOnboardingModal(false);
-          triggerDistress("manual_button");
+          VolumeKeyListener.playConfirmationHaptics();
+          sosStore.armSOS();
         }}
       />
     </div>

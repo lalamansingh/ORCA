@@ -31,6 +31,7 @@ const ONBOARDING_I18N: Record<
     testBtn: string;
     saveBtn: string;
     savedToast: string;
+    browserNote: string;
   }
 > = {
   hi: {
@@ -52,6 +53,7 @@ const ONBOARDING_I18N: Record<
     testBtn: "🚨 लाइव SOS संकट का परीक्षण करें (Test SOS Now)",
     saveBtn: "✓ सेटिंग्स सुरक्षित करें (Save Settings)",
     savedToast: "सेटिंग्स सफलतापूर्वक सहेज ली गईं!",
+    browserNote: "💡 मोबाइल ब्राउज़र में सुरक्षा कारणों से भौतिक वॉल्यूम बटन Android OS द्वारा ब्लॉक रहता है। तुरंत SOS भेजने के लिए स्क्रीन पर लाल SOS बटन दबाएं, ऊपर ORCA लोगो पर 3 बार टैप करें, या नीचे 'टेस्ट SOS' बटन दबाएं।",
   },
   en: {
     title: "Emergency Safety Setup",
@@ -72,6 +74,7 @@ const ONBOARDING_I18N: Record<
     testBtn: "🚨 Run Live SOS Test (Test SOS Now)",
     saveBtn: "✓ Save & Close Settings",
     savedToast: "Settings saved successfully!",
+    browserNote: "💡 In mobile web browsers, physical volume buttons are captured by Android OS. To trigger distress SOS immediately, tap the Red SOS Button, tap the top ORCA logo 3 times, or use the Test SOS button below.",
   },
   ta: {
     title: "அவசர பாதுகாப்பு அமைப்பு",
@@ -92,6 +95,7 @@ const ONBOARDING_I18N: Record<
     testBtn: "🚨 சோதனை SOS இயக்கவும்",
     saveBtn: "✓ அமைப்புகளை சேமிக்கவும்",
     savedToast: "அமைப்புகள் சேமிக்கப்பட்டன!",
+    browserNote: "💡 மொபைல் பிரவுசர்களில் வால்யூம் பட்டன் தடுக்கப்படுகிறது. SOS அனுப்ப திரையில் உள்ள சிவப்பு SOS பட்டனை அழுத்தவும் அல்லது ORCA லோகோவை 3 முறை தட்டவும்.",
   },
   te: {
     title: "అత్యవసర భద్రతా సెటప్",
@@ -112,6 +116,7 @@ const ONBOARDING_I18N: Record<
     testBtn: "🚨 టెస్ట్ SOS రన్ చేయండి",
     saveBtn: "✓ సెట్టింగ్‌లను సేవ్ చేయండి",
     savedToast: "సెట్టింగ్‌లు సేవ్ చేయబడ్డాయి!",
+    browserNote: "💡 మొబైల్ బ్రౌజర్లలో వాల్యూమ్ బటన్ బ్లాక్ చేయబడుతుంది. వెంటనే SOS పంపడానికి ఎరుపు SOS బటన్ నొక్కండి లేదా ORCA లోగోపై 3 సార్లు నొక్కండి.",
   },
   ml: {
     title: "അടിയന്തര സുരക്ഷാ ക്രമീകരണം",
@@ -132,6 +137,7 @@ const ONBOARDING_I18N: Record<
     testBtn: "🚨 ടെസ്റ്റ് SOS പ്രവർത്തിപ്പിക്കുക",
     saveBtn: "✓ സേവ് ചെയ്യുക",
     savedToast: "വിവരങ്ങൾ വിജയകരമായി സംരക്ഷിച്ചു!",
+    browserNote: "💡 മൊബൈൽ ബ്രൗസറിൽ വോളിയം ബട്ടൺ ബ്ലോക്ക് ചെയ്യപ്പെടുന്നു. ഉടൻ SOS അയക്കാൻ ചുവന്ന SOS ബട്ടൺ അമർത്തുക അല്ലെങ്കിൽ ORCA ലോഗോയിൽ 3 തവണ ടാപ്പ് ചെയ്യുക.",
   },
   gu: {
     title: "ઇમરજન્સી સુરક્ષા સેટઅપ",
@@ -152,6 +158,7 @@ const ONBOARDING_I18N: Record<
     testBtn: "🚨 ટેસ્ટ SOS ચલાવો",
     saveBtn: "✓ સેટિંગ્સ સાચવો",
     savedToast: "સેટિંગ્સ સાચવવામાં આવી!",
+    browserNote: "💡 મોબાઇલ બ્રાઉઝરમાં વોલ્યુમ બટન બ્લોક રહે છે. તાત્કાલિક SOS મોકલવા માટે લાલ SOS બટન દબાવો અથવા ORCA લોગો પર 3 વાર ટેપ કરો.",
   },
   mr: {
     title: "आपत्कालीन सुरक्षा सेटअप",
@@ -172,6 +179,7 @@ const ONBOARDING_I18N: Record<
     testBtn: "🚨 चाचणी SOS चालवा",
     saveBtn: "✓ सेटिंग्ज जतन करा",
     savedToast: "सेटिंग्ज यशस्वीरित्या जतन केल्या!",
+    browserNote: "💡 मोबाईल ब्राउझरमध्ये व्हॉल्यूम बटण ब्लॉक असते. त्वरित SOS पाठवण्यासाठी लाल SOS बटण दाबा किंवा ORCA लोगोवर ३ वेळा टॅप करा.",
   },
   bn: {
     title: "জরুরী সুরক্ষা সেটআপ",
@@ -192,6 +200,7 @@ const ONBOARDING_I18N: Record<
     testBtn: "🚨 টেস্ট SOS চালান",
     saveBtn: "✓ সংরক্ষণ করুন",
     savedToast: "সেটিংস সংরক্ষিত হয়েছে!",
+    browserNote: "💡 মোবাইল ব্রাউজারে ভলিউম বোতাম ব্লক থাকে। সাথে সাথে SOS পাঠাতে লাল SOS বোতাম টিপুন অথবা ORCA লোগোতে ৩ বার ট্যাপ করুন।",
   },
   kn: {
     title: "ತುರ್ತು ಸುರಕ್ಷತಾ ಸೆಟಪ್",
@@ -212,6 +221,7 @@ const ONBOARDING_I18N: Record<
     testBtn: "🚨 ಟೆಸ್ಟ್ SOS ರನ್ ಮಾಡಿ",
     saveBtn: "✓ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಉಳಿಸಿ",
     savedToast: "ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಉಳಿಸಲಾಗಿದೆ!",
+    browserNote: "💡 ಮೊಬೈಲ್ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ವಾಲ್ಯೂಮ್ ಬಟನ್ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ. ತಕ್ಷಣ SOS ಕಳುಹಿಸಲು ಕೆಂಪು SOS ಬಟನ್ ಒತ್ತಿ ಅಥವಾ ORCA ಲೋಗೋ ಮೇಲೆ 3 ಬಾರಿ ಟ್ಯಾಪ್ ಮಾಡಿ.",
   },
   or: {
     title: "ଜରୁରୀକାଳୀନ ସୁରକ୍ଷା ସେଟଅପ୍",
@@ -232,6 +242,7 @@ const ONBOARDING_I18N: Record<
     testBtn: "🚨 ଟେଷ୍ଟ SOS ଚଲାନ୍ତୁ",
     saveBtn: "✓ ସେଟିଙ୍ଗସ୍ ସେଭ୍ କରନ୍ତୁ",
     savedToast: "ସେଟିଙ୍ଗସ୍ ସେଭ୍ ହୋଇଗଲା!",
+    browserNote: "💡 ମୋବାଇଲ୍ ବ୍ରାଉଜରରେ ଭଲ୍ୟୁମ୍ ବଟନ୍ କାମ କରେ ନାହିଁ। ତୁରନ୍ତ SOS ପଠାଇବା ପାଇଁ ଲାଲ୍ SOS ବଟନ୍ ଦବାନ୍ତୁ କିମ୍ବା ORCA ଲୋଗୋ ୩ ଥର ଟ୍ୟାପ୍ କରନ୍ତୁ।",
   },
 };
 
@@ -452,6 +463,22 @@ export function SafetyOnboardingModal({
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Browser Volume Key Note */}
+        <div
+          style={{
+            background: "rgba(245, 158, 11, 0.12)",
+            border: "1px solid rgba(245, 158, 11, 0.35)",
+            borderRadius: "10px",
+            padding: "10px 12px",
+            fontSize: "11px",
+            lineHeight: 1.4,
+            color: "#fef3c7",
+            marginBottom: "16px",
+          }}
+        >
+          {i18n.browserNote}
         </div>
 
         {/* Action Buttons */}
