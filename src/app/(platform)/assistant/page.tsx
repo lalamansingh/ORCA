@@ -156,11 +156,19 @@ export default function AssistantPage() {
       const text = textToSend.trim();
       const locToSend = location
         ? { latitude: location.latitude, longitude: location.longitude }
-        : { latitude: 18.92, longitude: 72.83 };
+        : undefined;
+      const history = messages.slice(-6).flatMap((m) => [
+        { role: "user" as const, content: m.query },
+        { role: "assistant" as const, content: m.reply.answer },
+      ]);
       const reply = await sendMessage(
         text,
         locToSend,
-        messages.at(-1)?.reply.conversation_id
+        messages.at(-1)?.reply.conversation_id,
+        {
+          history,
+          language: selectedLangCode,
+        }
       );
       setMessages((items) => [...items, { query: text, reply }]);
       setQuery("");

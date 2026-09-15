@@ -115,7 +115,7 @@ async def synthesize_answer(result, raw_query: str, language: str, provider) -> 
                 f"Query: {raw_query}\nLocation: {lat}, {lon}\nData: {data}\n"
                 f"Summarize Safety Risk, Waves, Wind, Alerts, and PFZ fishing zones clearly with markdown formatting."
             )
-            llm_text, _ = await provider.generate_structured(ORCA_SYSTEM_PROMPT, prompt, None)
+            llm_text = await provider.generate_text(ORCA_SYSTEM_PROMPT, prompt)
             if llm_text and len(llm_text.strip()) > 20:
                 return llm_text.strip()
         except Exception:

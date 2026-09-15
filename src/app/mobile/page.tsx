@@ -1049,124 +1049,77 @@ export default function MobileAppPage() {
     setQueryInput("");
     setChatLoading(true);
 
-    // 1. Natural Greeting
-    if (isGreetingQuery(q)) {
-      const greetingAnswer = getConversationalGreeting(saathiLang);
-      const botGreetMsg: ChatMessage = {
-        id: `b-greet-${Date.now()}`,
-        sender: "bot",
-        text: greetingAnswer,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setChatMessages((prev) => [...prev, botGreetMsg]);
-      setChatLoading(false);
-      return;
-    }
-
-    // 2. Dual Mode: General Knowledge & Non-Marine Questions (Section 4)
-    if (isGeneralKnowledgeQuery(q)) {
-      const gkAnswer = generateGeneralKnowledgeReply(q, saathiLang);
-      const botMsg: ChatMessage = {
-        id: `b-gk-${Date.now()}`,
-        sender: "bot",
-        text: gkAnswer,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setChatMessages((prev) => [...prev, botMsg]);
-      setChatLoading(false);
-      return;
-    }
-
-    // 3. Engine failure & drift emergency mode (Section 15)
-    const isEngineFailure = detectEngineFailureQuery(q);
-
-    // 4. Sagar Saathi Decision-Support Intents:
-    // (Fuel-aware, time-aware, boundary, inland, user name, capabilities, advisories, fishing suitability, live weather)
-    const isInland = detectInlandCity(q);
-    const isPersonal = detectUserName(q);
-    const isCap = isCapabilitiesQuery(q);
-    const isAdv = isAdvisoryQuery(q);
-    const isFish = isFishingQuery(q);
-    const isWeath = isWeatherQuery(q);
-    const isFuel = detectFuelConstraint(q).hasFuel;
-    const isTime = detectTimeConstraint(q).hasTime;
-    const isBoundary = detectBoundaryQuery(q);
-
-    if (isEngineFailure || isInland || isPersonal || isCap || isAdv || isFish || isWeath || isFuel || isTime || isBoundary) {
-      const intelligentAnswer = generateIntelligentSaathiReply(
-        q,
-        saathiLang,
-        liveRiskContext,
-        partitionedAlerts.localAlerts,
-        displayPFZList
-      );
-      const botMsg: ChatMessage = {
-        id: `b-intel-${Date.now()}`,
-        sender: "bot",
-        text: intelligentAnswer,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setChatMessages((prev) => [...prev, botMsg]);
-      setChatLoading(false);
-      return;
-    }
-
-    // 5. For other queries, query backend but protect against rigid template fallbacks
+    // Master LLM Architecture:
+    // Pass user query, conversation history (multi-turn context), constraints, and live port evidence
+    // to the LLM to genuinely generate the response at runtime.
     try {
       const prevReplies = chatMessages.filter((m) => m.reply?.conversation_id);
       const lastConvId = prevReplies.length > 0 ? prevReplies[prevReplies.length - 1]?.reply?.conversation_id : undefined;
 
-      const langNames: Record<string, string> = {
-        en: "English",
-        hi: "Hindi",
-        ta: "Tamil",
-        te: "Telugu",
-        ml: "Malayalam",
-        gu: "Gujarati",
-        mr: "Marathi",
-        bn: "Bengali",
-        kn: "Kannada",
-        or: "Odia",
+      // Extract conversation history for delta-based follow-up reasoning
+      const history = chatMessages.slice(-8).map((m) => ({
+        role: (m.sender === "user" ? "user" : "assistant") as "user" | "assistant",
+        content: m.text,
+      }));
+
+      // Assemble live port evidence from the currently monitored coastal sector
+      const liveEvidence = {
+        locationLabel: liveRiskContext.locationLabel,
+        waveHeight: liveRiskContext.waveHeight,
+        windSpeed: liveRiskContext.windSpeed,
+        windGust: liveRiskContext.windGust,
+        sst: liveRiskContext.sst,
+        currentSpeed: liveRiskContext.currentSpeed,
+        riskLevel: liveRiskContext.riskLevel,
+        riskScore: liveRiskContext.riskScore,
+        alerts: partitionedAlerts.localAlerts.map((a) => ({
+          title: a.title,
+          severity: a.severityLabel,
+          desc: a.desc || a.advice,
+        })),
+        pfz: displayPFZList.map((p) => ({
+          name: p.name,
+          dist: p.dist,
+          dir: p.dir,
+          depth: p.depth,
+          yield: p.yield,
+          fish: p.fish,
+        })),
       };
 
-      const langDirective = saathiLang === "en"
-        ? "(Please reply in English)"
-        : `(Please reply in ${langNames[saathiLang] || "Hindi"})`;
-
-      const promptWithLang = `${q} ${langDirective}`;
+      // Detect any user-declared operational constraints (fuel, timing)
+      const fuelData = detectFuelConstraint(q);
+      const timeData = detectTimeConstraint(q);
+      const constraints: Record<string, unknown> = {};
+      if (fuelData.hasFuel && fuelData.liters) constraints.fuelLiters = fuelData.liters;
+      if (timeData.hasTime && timeData.returnHour) constraints.returnTime = timeData.returnHour;
 
       const reply = await sendMessage(
-        promptWithLang,
+        q,
         {
           latitude: location.latitude,
           longitude: location.longitude,
+          label: liveRiskContext.locationLabel,
         },
-        lastConvId
+        lastConvId,
+        {
+          history,
+          constraints,
+          live_evidence: liveEvidence,
+          language: saathiLang,
+        }
       );
-
-      const ans = reply.answer || "";
-      const isRigidTemplate =
-        ans.includes("Marine Sector") ||
-        ans.includes("स्थान:") ||
-        ans.includes("सुरक्षा मूल्यांकन:") ||
-        ans.includes("Safety Assessment:");
-
-      const finalText = isRigidTemplate
-        ? (isGeneralKnowledgeQuery(q)
-            ? generateGeneralKnowledgeReply(q, saathiLang)
-            : generateIntelligentSaathiReply(q, saathiLang, liveRiskContext, partitionedAlerts.localAlerts, displayPFZList))
-        : ans;
 
       const botMsg: ChatMessage = {
         id: `b-${Date.now()}`,
         sender: "bot",
-        text: finalText,
+        text: reply.answer,
         reply,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setChatMessages((prev) => [...prev, botMsg]);
     } catch (err) {
-      console.warn("AI Saathi backend notice, using local intelligent reasoning:", err);
+      console.warn("AI Saathi runtime note, utilizing resilient grounded copilot synthesis:", err);
       const fallbackAnswer = isGeneralKnowledgeQuery(q)
         ? generateGeneralKnowledgeReply(q, saathiLang)
         : generateIntelligentSaathiReply(
