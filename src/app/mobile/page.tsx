@@ -2264,20 +2264,54 @@ export default function MobileAppPage() {
         {/* TAB 5: ALERTS & SOS (अलर्ट व सुरक्षा) */}
         {activeTab === "alerts" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {/* Production SOS Distress & Hardware Key Card */}
-            <EmergencySOSCard onOpenOnboarding={() => setShowSafetyOnboardingModal(true)} />
-
             {/* Dynamic Location-Aware SOS Emergency Card */}
             <div className="m-sos-card">
-              <h3 className="m-sos-title">
-                <PhoneCall size={20} /> {t("sosCardTitle")} · {sectorSOS.city}
-              </h3>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                <h3 className="m-sos-title" style={{ margin: 0 }}>
+                  <PhoneCall size={20} /> {t("sosCardTitle")} · {sectorSOS.city}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowSafetyOnboardingModal(true)}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.15)",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                    color: "#ffffff",
+                    fontSize: "10.5px",
+                    padding: "3px 8px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                  }}
+                >
+                  ⚙️ Setup
+                </button>
+              </div>
               <p className="m-sos-desc">
                 {alertUi.localSosDesc} <strong>{sectorSOS.harborName} ({sectorSOS.state})</strong>
               </p>
 
-              {/* National Primary Helplines */}
+              {/* Primary Instant Distress SOS Action & National Helplines */}
               <div className="m-sos-buttons">
+                <button
+                  type="button"
+                  onClick={() => triggerDistress("manual_button")}
+                  className="m-sos-dial-btn"
+                  style={{
+                    background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+                    border: "1.5px solid #ef4444",
+                    color: "#ffffff",
+                    fontWeight: 800,
+                    width: "100%",
+                    justifyContent: "center",
+                    padding: "10px",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(220, 38, 38, 0.4)",
+                  }}
+                >
+                  <ShieldAlert size={16} />
+                  <span>{selectedLang === "en" ? "TRANSMIT DISTRESS SOS (3x Vol-Down / Mic)" : "आपातकालीन SOS भेजें (3x वॉल्यूम बटन)"}</span>
+                </button>
+
                 <a href="tel:1554" className="m-sos-dial-btn" title="Call Indian Coast Guard National Hotline 1554">
                   <PhoneCall size={14} /> {alertUi.coastGuardNational}
                 </a>
@@ -2581,7 +2615,6 @@ export default function MobileAppPage() {
           setActiveTab("map");
         }}
       />
-      <DemoSimulatorBar onShowOnboarding={() => setShowSafetyOnboardingModal(true)} />
     </div>
   );
 }
