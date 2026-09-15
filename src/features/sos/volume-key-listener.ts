@@ -1,15 +1,15 @@
 /**
  * Hardware Key & Volume Trigger Listener
- * Listens for triple-press of Volume-Down within <= 2.0 seconds.
+ * Listens for triple-press of Volume-Down (or Volume-Up) within <= 2.5 seconds.
+ * Supports Android WebViews, PWA KeyEvents, Media Keys, F1/F2 keys, and Alt+V testing shortcuts.
  * Includes false trigger guard (resets if slow or < 3 presses) and haptic/audio confirmation.
  */
 
-const ROLLING_WINDOW_MS = 2000; // 2 seconds
+const ROLLING_WINDOW_MS = 2500; // 2.5 seconds
 const TARGET_PRESS_COUNT = 3;
 
 export class VolumeKeyListener {
   private static pressTimestamps: number[] = [];
-  private static isArmed: boolean = false;
   private static onTriggerCallback: (() => void) | null = null;
   private static listenerAttached = false;
 
@@ -21,27 +21,36 @@ export class VolumeKeyListener {
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for VolumeDown key, keycode 174 (MediaVolumeDown), or physical keys mapped by Android WebViews
-      const isVolDown = 
+      // Check for VolumeDown/VolumeUp key, keycode 174/175, or physical keys mapped by Android
+      const isVolKey = 
         event.key === "AudioVolumeDown" || 
         event.key === "VolumeDown" || 
+        event.key === "AudioVolumeUp" ||
+        event.key === "VolumeUp" ||
         event.code === "AudioVolumeDown" ||
         event.code === "VolumeDown" ||
+        event.code === "AudioVolumeUp" ||
+        event.code === "VolumeUp" ||
         event.keyCode === 174 ||
-        event.key === "F1" || // Web simulation hotkey for VolumeDown
-        event.key === "v" && event.altKey; // Alt+V as testing hotkey
+        event.keyCode === 175 ||
+        event.keyCode === 25 || // Android KEYCODE_VOLUME_DOWN
+        event.keyCode === 24 || // Android KEYCODE_VOLUME_UP
+        event.key === "F1" ||   // Web simulation hotkey
+        event.key === "F2" ||
+        (event.key.toLowerCase() === "v" && event.altKey) ||
+        (event.key.toLowerCase() === "s" && event.altKey);
 
-      if (!isVolDown) return;
+      if (!isVolKey) return;
 
       const now = Date.now();
-      // Remove timestamps older than the rolling window
+      // Remove timestamps older than rolling window
       this.pressTimestamps = this.pressTimestamps.filter((t) => now - t <= ROLLING_WINDOW_MS);
       this.pressTimestamps.push(now);
 
-      console.log(`[SOS] trigger=volume_press count=${this.pressTimestamps.length} window=${ROLLING_WINDOW_MS}ms`);
+      console.log(`[SOS] trigger=hardware_key_press count=${this.pressTimestamps.length}/${TARGET_PRESS_COUNT} window=${ROLLING_WINDOW_MS}ms`);
 
       if (this.pressTimestamps.length >= TARGET_PRESS_COUNT) {
-        console.log(`[SOS] trigger=volume_triple_press status=ARMED`);
+        console.log(`[SOS] trigger=hardware_triple_press status=ARMED`);
         this.pressTimestamps = []; // Reset window
         this.playConfirmationHaptics();
         if (this.onTriggerCallback) {
@@ -50,13 +59,29 @@ export class VolumeKeyListener {
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, { passive: true });
     this.listenerAttached = true;
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       this.listenerAttached = false;
     };
+  }
+
+  public static recordManualPress(): void {
+    const now = Date.now();
+    this.pressTimestamps = this.pressTimestamps.filter((t) => now - t <= ROLLING_WINDOW_MS);
+    this.pressTimestamps.push(now);
+
+    console.log(`[SOS] manual_press count=${this.pressTimestamps.length}/${TARGET_PRESS_COUNT}`);
+
+    if (this.pressTimestamps.length >= TARGET_PRESS_COUNT) {
+      this.pressTimestamps = [];
+      this.playConfirmationHaptics();
+      if (this.onTriggerCallback) {
+        this.onTriggerCallback();
+      }
+    }
   }
 
   public static destroy(): void {

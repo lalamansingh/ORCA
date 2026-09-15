@@ -58,6 +58,7 @@ import type { PFZGeoJSON } from "@/features/pfz/types";
 import { SplashScreen } from "@/components/splash-screen";
 import { useSOSService } from "@/features/sos/hooks/use-sos-service";
 import { useEmergencyAlerts } from "@/features/hazards/hooks/use-emergency-alerts";
+import { VolumeKeyListener } from "@/features/sos/volume-key-listener";
 import { useSOSStore } from "@/features/sos/sos-store";
 import { EmergencySOSCard } from "@/components/sos/emergency-sos-card";
 import { SOSCountdownModal } from "@/components/sos/sos-countdown-modal";
@@ -1459,10 +1460,12 @@ export default function MobileAppPage() {
       <header className="mobile-top-bar">
         <button
           type="button"
-          onClick={() => setShowSplash(true)}
+          onClick={() => {
+            VolumeKeyListener.recordManualPress();
+          }}
           className="mobile-bar-brand"
           style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
-          title="ORCA Logo & Launch Pop-up"
+          title="ORCA (Tap 3x to trigger SOS test)"
         >
           <div className="mobile-brand-icon">
             <img
@@ -2755,6 +2758,10 @@ export default function MobileAppPage() {
         isOpen={showSafetyOnboardingModal}
         selectedLang={selectedLang}
         onClose={() => setShowSafetyOnboardingModal(false)}
+        onRunTestSOS={() => {
+          setShowSafetyOnboardingModal(false);
+          triggerDistress("manual_button");
+        }}
       />
     </div>
   );

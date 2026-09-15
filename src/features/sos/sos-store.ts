@@ -175,10 +175,19 @@ class SOSStoreManager {
     const nowIso = new Date().toISOString();
     const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
 
+    let storedName = "Vessel Master / Fisherman";
+    let storedVessel = "IND-VESSEL-8821";
+    if (typeof window !== "undefined") {
+      const n = localStorage.getItem("orca_sos_fisherman_name");
+      const v = localStorage.getItem("orca_sos_vessel_id");
+      if (n) storedName = n;
+      if (v) storedVessel = v;
+    }
+
     const report: SOSReport = {
       sos_id: sosId,
       reporter_id: deviceId,
-      reporter_name: payload.reporter_name || "Vessel Master / Fisherman",
+      reporter_name: payload.reporter_name || `${storedName} (${storedVessel})`,
       device_id: deviceId,
       transcript: payload.transcript || this.state.transcript || "Immediate distress assistance requested at sea.",
       language: payload.language || "hi",
