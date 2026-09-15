@@ -135,37 +135,7 @@ export function MarineMap({
       });
     }
 
-    // 2. Navigation Channel & Safe Marine Route
-    if (!map.getSource("orca-calculated-route")) {
-      map.addSource("orca-calculated-route", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      map.addLayer({
-        id: "orca-route-corridor-fill",
-        type: "line",
-        source: "orca-calculated-route",
-        paint: { "line-color": "#f59e0b", "line-width": 16, "line-opacity": 0.15 },
-      });
-      map.addLayer({
-        id: "orca-calculated-route-line",
-        type: "line",
-        source: "orca-calculated-route",
-        paint: { "line-color": "#eab308", "line-width": 4, "line-dasharray": [2, 0.5] },
-      });
-      map.addLayer({
-        id: "orca-route-waypoint-points",
-        type: "circle",
-        source: "orca-calculated-route",
-        filter: ["==", ["geometry-type"], "Point"],
-        paint: { "circle-radius": 6, "circle-color": "#ffffff", "circle-stroke-width": 3, "circle-stroke-color": "#f59e0b" },
-      });
-      map.addLayer({
-        id: "orca-route-waypoint-labels",
-        type: "symbol",
-        source: "orca-calculated-route",
-        filter: ["==", ["geometry-type"], "Point"],
-        layout: { "text-field": ["concat", "⚓ ", ["get", "name"]], "text-size": 10, "text-offset": [0, 1.4] },
-        paint: { "text-color": "#f59e0b", "text-halo-color": "#000000", "text-halo-width": 2 },
-      });
-    }
+
 
     // 3. Live Potential Fishing Zones (PFZ)
     if (!map.getSource("orca-pfz-live")) {
@@ -478,6 +448,55 @@ export function MarineMap({
         paint: { "text-color": "#38bdf8", "text-halo-color": "#000000", "text-halo-width": 2 },
       });
     }
+
+    // 13. High-Priority Calculated Route & Navigation Channel (On Top of Grids)
+    if (!map.getSource("orca-calculated-route")) {
+      map.addSource("orca-calculated-route", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: "orca-route-corridor-fill",
+        type: "line",
+        source: "orca-calculated-route",
+        filter: ["==", ["geometry-type"], "LineString"],
+        paint: { "line-color": "#38bdf8", "line-width": 22, "line-opacity": 0.22 },
+      });
+      map.addLayer({
+        id: "orca-calculated-route-casing",
+        type: "line",
+        source: "orca-calculated-route",
+        filter: ["==", ["geometry-type"], "LineString"],
+        paint: { "line-color": "#0369a1", "line-width": 7 },
+      });
+      map.addLayer({
+        id: "orca-calculated-route-line",
+        type: "line",
+        source: "orca-calculated-route",
+        filter: ["==", ["geometry-type"], "LineString"],
+        paint: { "line-color": "#38bdf8", "line-width": 4, "line-dasharray": [2, 1] },
+      });
+      map.addLayer({
+        id: "orca-route-waypoint-points",
+        type: "circle",
+        source: "orca-calculated-route",
+        filter: ["==", ["geometry-type"], "Point"],
+        paint: { "circle-radius": 8, "circle-color": "#0284c7", "circle-stroke-width": 3, "circle-stroke-color": "#ffffff" },
+      });
+      map.addLayer({
+        id: "orca-route-waypoint-labels",
+        type: "symbol",
+        source: "orca-calculated-route",
+        filter: ["==", ["geometry-type"], "Point"],
+        layout: {
+          "text-field": ["concat", "🧭 ", ["get", "name"]],
+          "text-size": 11,
+          "text-offset": [0, 1.4],
+        },
+        paint: {
+          "text-color": "#ffffff",
+          "text-halo-color": "#082536",
+          "text-halo-width": 3,
+        },
+      });
+    }
   }, [showDemoFeatures]);
 
   // Map Initialization
@@ -646,7 +665,7 @@ export function MarineMap({
       ais: ["orca-ais-vessels-point", "orca-ais-vessels-label"],
       alerts: ["orca-alert-fill", "orca-alert-line", "orca-alert-point", "orca-alert-label", "orca-cyclone-track", "orca-cyclone-points", "orca-cyclone-label"],
       restricted: ["orca-restricted", "orca-restricted-fill", "orca-restricted-line", "orca-restricted-label"],
-      route: ["orca-route", "orca-calculated-route-line", "orca-route-corridor-fill", "orca-route-waypoint-points", "orca-route-waypoint-labels"],
+      route: ["orca-route", "orca-calculated-route-casing", "orca-calculated-route-line", "orca-route-corridor-fill", "orca-route-waypoint-points", "orca-route-waypoint-labels"],
       saved: ["orca-saved", "orca-saved-label"],
     };
 
@@ -807,13 +826,85 @@ export function MarineMap({
   useEffect(() => {
     const map = mapRef.current;
     const source = map?.getSource("orca-calculated-route") as import("maplibre-gl").GeoJSONSource | undefined;
-    if (!source || state !== "ready") return;
+    if (!source || !map || state !== "ready") return;
 
-    if (routeGeometry) {
+    if (routeGeometry && routeGeometry.coordinates && routeGeometry.coordinates.length >= 2) {
+      const coords = routeGeometry.coordinates as [number, number][];
+      const startPt = coords[0];
+      const endPt = coords[coords.length - 1];
+
+      const navFeatures: import("geojson").Feature[] = [
+        {
+          type: "Feature",
+          geometry: routeGeometry,
+          properties: {
+            id: "route-primary-safe-channel",
+            title: "Optimized Safe Navigation Channel (A*)",
+            type: "Safe Marine Route",
+            status: "SAFE · ZERO HAZARD ENCOUNTER",
+            source: "ORCA Marine Routing Engine",
+            updated: "Real-time Computed",
+          },
+        },
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: startPt },
+          properties: { name: "Departure Harbor", title: "Departure Harbor", status: "Departure Waypoint" },
+        },
+      ];
+
+      for (let i = 1; i < coords.length - 1; i++) {
+        navFeatures.push({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: coords[i] },
+          properties: { name: `Mid-Channel WP-${i}`, title: `Mid-Channel Waypoint ${i}`, status: "Transit Waypoint" },
+        });
+      }
+
+      navFeatures.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: endPt },
+        properties: { name: "PFZ Target Destination", title: "PFZ Target Destination", status: "Target Waypoint" },
+      });
+
       source.setData({
         type: "FeatureCollection",
-        features: [{ type: "Feature", properties: { title: "Calculated Safe Navigation Channel", status: "Optimal" }, geometry: routeGeometry }],
+        features: navFeatures,
       });
+
+      // Fit map camera bounds to the route
+      const longitudes = coords.map((c) => c[0]);
+      const latitudes = coords.map((c) => c[1]);
+      const minLon = Math.min(...longitudes);
+      const maxLon = Math.max(...longitudes);
+      const minLat = Math.min(...latitudes);
+      const maxLat = Math.max(...latitudes);
+
+      try {
+        map.resize();
+        map.fitBounds(
+          [
+            [minLon, minLat],
+            [maxLon, maxLat],
+          ],
+          { padding: 60, maxZoom: 11, essential: true }
+        );
+      } catch {}
+
+      const fitTimer = setTimeout(() => {
+        try {
+          map.resize();
+          map.fitBounds(
+            [
+              [minLon, minLat],
+              [maxLon, maxLat],
+            ],
+            { padding: 60, maxZoom: 11, essential: true }
+          );
+        } catch {}
+      }, 100);
+
+      return () => clearTimeout(fitTimer);
     } else {
       // Default Recommended Safe Navigation Channel connecting coastal harbor to prime fishing front
       const lat = selectedLocation?.latitude ?? 18.92;
