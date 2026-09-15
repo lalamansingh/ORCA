@@ -27,8 +27,25 @@ export type SagarSaathiIntent =
   | "SOS_QUERY"
   | "APP_HELP_QUERY";
 
+export type QueryDepthCategory =
+  | "SIMPLE_FACT"
+  | "EXPLANATION"
+  | "DECISION"
+  | "COMPARISON"
+  | "PLANNING"
+  | "EMERGENCY";
+
+export interface ExtractedConstraints {
+  [key: string]: unknown;
+  fuelLiters?: number;
+  returnTime?: string;
+  departureTime?: string;
+  vesselType?: string;
+}
+
 export interface IntentClassificationResult {
   intent: SagarSaathiIntent;
+  depth_category: QueryDepthCategory;
   confidence: number;
   requires_weather: boolean;
   requires_pfz: boolean;
@@ -37,6 +54,7 @@ export interface IntentClassificationResult {
   requires_fisheries_data: boolean;
   is_follow_up: boolean;
   language: string;
+  extracted_constraints: ExtractedConstraints;
 }
 
 export interface ChatHistoryTurn {
@@ -44,7 +62,7 @@ export interface ChatHistoryTurn {
   content: string;
 }
 
-// Casual greetings & chit-chat patterns (Hindi, Hinglish, English, Telugu, Tamil, Marathi)
+// Casual greetings & chit-chat patterns (ONLY true casual conversation without marine terms)
 const CASUAL_GREETINGS = [
   /^(oye+|oyee+|oye bhai|oye saathi|hey+|heyy+|hi+|hii+|hello+|hola|namaste|namaskar|pranam|vanakkam|kem cho|kasa kay|adaab|radhe radhe|ram ram|jai shri ram|salaam)\b/i,
   /^(good\s*(morning|afternoon|evening|night)|subh\s*(prabhat|ratri))\b/i,
@@ -58,46 +76,52 @@ const CASUAL_GREETINGS = [
   /^(tell me a joke|koi joke sunao|chutkula sunao|kuch mazedaar batao)\b/i,
 ];
 
-// General knowledge query patterns (science, history, facts, non-marine)
+// General knowledge non-marine query patterns
 const GENERAL_KNOWLEDGE_PATTERNS = [
   /\b(who discovered gravity|what is photosynthesis|apj abdul kalam|who was|who is|what is gravity|capital of|distance between earth and sun|speed of light)\b/i,
   /\b(weather of delhi|delhi ka mausam|delhi weather|patna|jaipur|lucknow|bhopal|punjab|haryana|up|bihar|rajasthan)\b/i,
 ];
 
-// Emergency / SOS distress patterns
+// Emergency / SOS distress patterns (Latin and Indic scripts without \b boundary issues)
 const SOS_PATTERNS = [
-  /\b(pani aa raha|boat me pani|engine band|engine fail|engine kharab|doob|doob rahe|help boat sinking|mayday|sos|bachao|boat drift|drift ho rahe|emergency|rescue)\b/i,
-  /\b(नाव बुडत आहे|इंजिन बंद|पाणी भरत आहे|మునిగిపోతుంది|రక్షించండి|காப்பாற்றுங்கள்)\b/i,
+  /\b(pani aa raha|boat me pani|engine band|engine fail|engine kharab|doob|doob rahe|boat sinking|mayday|sos|bachao|boat drift|drift ho rahe|emergency|rescue)\b/i,
+  /(नाव बुडत आहे|इंजिन बंद|पाणी भरत आहे|మునిగిపోతుంది|రక్షించండి|కాపాడండి|కాపాడండి|కాப்பாற்றுங்கள்|ஆபத்து|डूब रही है|इंजन खराब)/i,
 ];
 
 // Fuel query patterns
 const FUEL_PATTERNS = [
-  /\b(diesel|fuel|kitna diesel|kitna tel|fuel lagega|fuel kitna|kitne litre|kitna petrol|mileage|burn rate|tank)\b/i,
-  /\b(డీజిల్|ఇంధనం|डिझेल|எரிபொருள்|डीजल)\b/i,
+  /\b(diesel|fuel|kitna diesel|kitna tel|fuel lagega|fuel kitna|kitne litre|kitna petrol|mileage|burn rate|tank|usable fuel)\b/i,
+  /(డీజిల్|ఇంధనం|డిझेल|எரிபொருள்|डीजल|ईंधन)/i,
 ];
 
 // Navigation / Route patterns
 const NAVIGATION_PATTERNS = [
-  /\b(ghar wapas|harbor wapas|wapas jana|port rasta|route to|harbor ka rasta|direction to|bearing to|navigation|kis disha|heading|kaise laute)\b/i,
-  /\b(తిరిగి వెళ్ళాలి|रस्ता|దారి|வழி)\b/i,
+  /\b(ghar wapas|harbor wapas|wapas jana|port rasta|route to|harbor ka rasta|direction to|bearing to|navigation|kis disha|heading|kaise laute|route|compass)\b/i,
+  /(తిరిగి వెళ్ళాలి|రస్తా|దారి|வழி|रस्ता|दिशा|वापसी)/i,
 ];
 
 // PFZ (Potential Fishing Zone) patterns
 const PFZ_PATTERNS = [
-  /\b(pfz|potential fishing zone|fishing zone|machhli kaha|machli kahan|kaha milegi machhli|fish zone|best zone|nearest pfz|fish spots|pomfret kaha|surmai kaha)\b/i,
-  /\b(మత్స్య క్షేత్రం|మాసేమారీ క్షేత్ర|మీன்பிடி மண்டலம்|मछली क्षेत्र)\b/i,
+  /\b(pfz|potential fishing zone|fishing zone|machhli|machli|macchi|fish|fishes|catch|pomfret|surmai|tuna|mackerel|ribbonfish|hilsa|sardine|prawns|jhinga|chlorophyll|sst front|fish productivity)\b/i,
+  /(మత్స్య క్షేత్రం|చేపలు ఎక్కడ|చేపల వేట|మీன்பிடி மண்டலம்|மச்சலி|मछली क्षेत्र|मछली कहाँ|मछली किधर|मछली)/i,
 ];
 
 // Sea & Weather patterns
 const SEA_WEATHER_PATTERNS = [
-  /\b(wave|waves|swell|wind|wind speed|lahrein|lehar|hawa ki gati|hawa|currents|tide|tides|water temp|samundar ka mausam|samundar kaisa|sea state|sea condition)\b/i,
-  /\b(అలలు|గాలి|लाटा|वारे|அலைகள்|காற்று|लहरें|हवा)\b/i,
+  /\b(wave|waves|swell|wind|wind speed|lahrein|lehar|hawa ki gati|hawa|currents|tide|tides|high tide|low tide|water temp|samundar ka mausam|samundar kaisa|sea state|sea condition|sea kaisa hai)\b/i,
+  /(అలలు|గాలి|తరంగాలు|ఉష్ణోగ్రత|లాటా|वारे|அலைகள்|காற்று|लहरें|हवा|ज्वार|भाटा|समुद्र)/i,
 ];
 
 // Safety / Departure patterns
 const SAFETY_PATTERNS = [
-  /\b(safe hai|ja sakte hain|samundar jana sahi|cyclone|warning|alert|danger|khatra|kya main ja sakta|kya hum ja sakte|risk kitna|surakshit hai)\b/i,
-  /\b(సురక్షితమా|सुरक्षित आहे का|பாதுகாப்பானதா|सुरक्षित है)\b/i,
+  /\b(safe hai|ja sakte hain|samundar jana sahi|cyclone|warning|alert|danger|khatra|kya main ja sakta|kya hum ja sakte|risk kitna|surakshit hai|kal safe|safe to go|should i go|jana chahiye|jana sahi hoga)\b/i,
+  /(సురక్షితమా|భద్రతా|सुरक्षित आहे का|பாதுகாப்பானதா|सुरक्षित है|जाना सही है|जाना सुरक्षित)/i,
+];
+
+// Comprehensive ORCA Domain Keyword Matcher (Rule 14)
+const ORCA_DOMAIN_PATTERNS = [
+  /\b(fishing|fishermen|fisherman|pfz|machli|machhli|macchi|jhinga|shikaar|sea\s*state|sst|chlorophyll|marine|ocean|coastal|tide|tides|high\s*tide|low\s*tide|wave|waves|swell|wind|winds|current|currents|harbour|harbor|jetty|port|cyclone|lightning|vessel|trawler|boat|boats|catamaran|dinghy|navigation|corridor|boundary|boundaries|geofencing|route|fish|productivity|satellite|diesel|fuel)\b/i,
+  /(मछली|मत्स्य|समुद्र|समंदर|लहर|लहरें|हवा|चक्रवात|नाव|बंदरगाह|डीजल|ईंधन|చేపలు|మత్స్య|సముద్రం|అలలు|గాలి|బోటు|తుఫాను|డీజిల్|ఇంధనం|మీன்|மீன்பிடி|கடல்|அலைகள்|காற்று|படகு|புயல்|எரிபொருள்|मासे|लाटा|वारे|बोट|वादळ)/i,
 ];
 
 // Follow-up delta triggers
@@ -106,10 +130,48 @@ const FOLLOW_UP_DELTA_PATTERNS = [
   /^(waves\??|aur waves\??|lahrein\??|hawa\??|wind\??)$/i,
   /^(kitna door hai\??|kitni door hai\??|how far\??|distance\??)$/i,
   /^(waha tak kitna fuel lagega\??|fuel kitna lagega\??|kitna diesel lagega\??)$/i,
-  /^(why\??|kyun\??|kyu\??|kyu nahi ja sakte\??|reason\??)$/i,
-  /^(kitne baje tak\??|kitne baje wapas\??|what time\??|kab tak\??)$/i,
+  /^(why\??|kyun\??|kyu\??|kyu nahi ja sakte\??|reason\??|pfz-\d+\s*(kyun|kyu|why)\??)$/i,
+  /^(kitne baje tak\??|kitne baje wapas\??|what time\??|kab tak\??|6 baje\??|7 baje\??)$/i,
+  /^(pfz-\d+\??|zone-\d+\??)$/i,
   /^(accha\??|acha\??|theek hai\??|ok\??|thanks\??|thanks bhai\??)$/i,
 ];
+
+/**
+ * Extracts operational user constraints from query text and conversation history
+ */
+export function extractConstraintsFromText(
+  query: string,
+  history: ChatHistoryTurn[] = []
+): ExtractedConstraints {
+  const allTexts = [...history.map((h) => h.content), query].join(" ");
+  const constraints: ExtractedConstraints = {};
+
+  // Fuel liters: e.g. "18L", "18 litre", "15 liters", "20 ltr", "18 लीटर"
+  const fuelMatch = allTexts.match(/(\d+(\.\d+)?)\s*(l|litre|litres|liter|liters|ltr|लीटर|లీటర్|லிட்டர்)\b/i);
+  if (fuelMatch) {
+    constraints.fuelLiters = parseFloat(fuelMatch[1]);
+  }
+
+  // Return time: e.g. "12 baje tak wapas", "by 12:00 PM", "11:30 tak"
+  const returnMatch = allTexts.match(/(?:wapas|return|lautna|వరకు|முன்|तक)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm|baje)?)|(\d{1,2}(?::\d{2})?\s*(?:am|pm|baje)?)\s*(?:tak|wapas|return|వరకు)/i);
+  if (returnMatch) {
+    constraints.returnTime = (returnMatch[1] || returnMatch[2] || "").trim();
+  }
+
+  // Departure time: e.g. "5 baje nikle", "depart at 5:30 AM", "subah 6 baje"
+  const depMatch = allTexts.match(/(?:nikalna|depart|subah|morning)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm|baje)?)|(\d{1,2}(?::\d{2})?\s*(?:am|pm|baje)?)\s*(?:ko nikle|par nikle)/i);
+  if (depMatch) {
+    constraints.departureTime = (depMatch[1] || depMatch[2] || "").trim();
+  }
+
+  // Vessel type: small boat, fiber boat, trawler, catamaran, etc.
+  const vesselMatch = allTexts.match(/\b(small boat|chhoti boat|fiber boat|fibre boat|country craft|motor boat|trawler|catamaran|dinghy|donga|canoe)\b/i);
+  if (vesselMatch) {
+    constraints.vesselType = vesselMatch[1];
+  }
+
+  return constraints;
+}
 
 /**
  * Classifies a user query into a precise SagarSaathiIntent.
@@ -123,16 +185,69 @@ export function classifyIntent(
   const query = rawQuery.trim();
   const lower = query.toLowerCase();
 
+  // Extract constraints from query + multi-turn history
+  const extractedConstraints = extractConstraintsFromText(query, history);
+
   // Detect language mode (for lightweight logging and instruction)
   const isTelugu = /[\u0C00-\u0C7F]/.test(query);
   const isTamil = /[\u0B80-\u0BFF]/.test(query);
   const isDevanagari = /[\u0900-\u097F]/.test(query);
   const detectedLang = isTelugu ? "Telugu" : isTamil ? "Tamil" : isDevanagari ? "Hindi/Marathi" : "Hinglish/English";
 
+  // Check if query mentions any ORCA / Marine / Ocean domain concepts (Rule 14)
+  const isOrcaDomain = ORCA_DOMAIN_PATTERNS.some((p) => p.test(query));
+
+  // Helper to determine depth category (Rule 16)
+  const determineDepth = (intent: SagarSaathiIntent): QueryDepthCategory => {
+    if (intent === "SOS_QUERY") return "EMERGENCY";
+    
+    // Planning: Has operational constraints (fuel, timings) or planning keywords
+    if (
+      extractedConstraints.fuelLiters !== undefined ||
+      extractedConstraints.returnTime !== undefined ||
+      /\b(plan|schedule|route planning|best time to depart|kab niklun|kab tak|wapas kab|round trip)\b/i.test(query)
+    ) {
+      return "PLANNING";
+    }
+
+    // Comparison: "PFZ-2 kyun", "PFZ-3?", "which is better", "A vs B"
+    if (
+      /\b(kyun|kyu|why|better|difference|compare|vs|versus|kaunsa better|kaunsa accha|alternative)\b/i.test(lower) ||
+      /^pfz-\d+\??/i.test(lower)
+    ) {
+      return "COMPARISON";
+    }
+
+    // Decision: "Safe hai?", "Ja sakte hain?", "Should I go?", "Jana sahi hoga?", "Fuel enough hai?"
+    if (
+      /\b(safe|surakshit|ja sakte|should i|jana chahiye|jana sahi|feasible|enough|avoid|go or not)\b/i.test(lower) ||
+      /(సురక్షితమా|सुरक्षित|பாதுகாப்பானதா)/i.test(query) ||
+      intent === "SAFETY_QUERY"
+    ) {
+      return "DECISION";
+    }
+
+    // Explanation: "What is", "How does", "Explain", "Kyun hota hai"
+    if (/\b(what is|what are|how does|explain|meaning of|kya hota hai|samjhao|karan|reason)\b/i.test(lower)) {
+      return "EXPLANATION";
+    }
+
+    // Simple Fact: direct inquiries like "Wave kitni hai?", "High tide kab hai?"
+    if (
+      /\b(kitna|kitni|kitne|what is the wave|wind speed|high tide|low tide|distance|bearing|temperature)\b/i.test(lower) ||
+      /(ఎంత|ఎప్పుడు|எவ்வளவு|கிலோமீட்டர்)/i.test(query)
+    ) {
+      return "SIMPLE_FACT";
+    }
+
+    return "DECISION";
+  };
+
   // 1. High Priority: Emergency SOS
   if (SOS_PATTERNS.some((p) => p.test(query))) {
     return {
       intent: "SOS_QUERY",
+      depth_category: "EMERGENCY",
       confidence: 0.99,
       requires_weather: true,
       requires_pfz: false,
@@ -141,15 +256,20 @@ export function classifyIntent(
       requires_fisheries_data: false,
       is_follow_up: false,
       language: detectedLang,
+      extracted_constraints: extractedConstraints,
     };
   }
 
-  // 2. Check for Casual Acknowledgements / Greetings
-  // Single-word casual phrases like "Oyeee", "Hi", "Hello", "Accha", "Thanks bhai" MUST be GENERAL_CONVERSATION
-  const isSingleWordCasual = /^(oye+|oyee+|hi+|hii+|hello+|namaste|accha|acha|ok|okay|theek|thik|thanks|shukriya)$/i.test(query.replace(/[!.,?]+$/, ""));
+  // 2. Check for Casual Acknowledgements / Greetings ONLY if NO marine domain keywords are present
+  const isSingleWordCasual =
+    !isOrcaDomain &&
+    /^(oye+|oyee+|hi+|hii+|hello+|namaste|accha|acha|ok|okay|theek|thik|thanks|shukriya)$/i.test(
+      query.replace(/[!.,?]+$/, "")
+    );
   if (isSingleWordCasual) {
     return {
       intent: "GENERAL_CONVERSATION",
+      depth_category: "SIMPLE_FACT",
       confidence: 0.98,
       requires_weather: false,
       requires_pfz: false,
@@ -158,17 +278,21 @@ export function classifyIntent(
       requires_fisheries_data: false,
       is_follow_up: false,
       language: detectedLang,
+      extracted_constraints: extractedConstraints,
     };
   }
 
-  // 3. Multi-turn Follow-Up Delta Check
-  const isShortFollowUp = FOLLOW_UP_DELTA_PATTERNS.some((p) => p.test(query)) || (query.split(" ").length <= 4 && query.endsWith("?"));
+  // 3. Multi-turn Follow-Up Delta Check (Rule 11 & 12)
+  const isShortFollowUp =
+    FOLLOW_UP_DELTA_PATTERNS.some((p) => p.test(query)) ||
+    (query.split(" ").length <= 4 && query.endsWith("?"));
 
   if (isShortFollowUp && history.length > 0) {
     // Check if it's just a casual acknowledgement
     if (/^(accha|acha|theek hai|ok|thanks|thanks bhai|shukriya|dhanyawad)\b/i.test(lower)) {
       return {
         intent: "GENERAL_CONVERSATION",
+        depth_category: "SIMPLE_FACT",
         confidence: 0.95,
         requires_weather: false,
         requires_pfz: false,
@@ -177,14 +301,16 @@ export function classifyIntent(
         requires_fisheries_data: false,
         is_follow_up: true,
         language: detectedLang,
+        extracted_constraints: extractedConstraints,
       };
     }
 
-    // "Kal?" or "Waves?" inherits weather/safety
-    if (/^(kal\??|waves\??|lahrein\??|wind\??|hawa\??|kitne baje tak\??)/i.test(lower)) {
+    // "Kal?" or "Waves?" or "6 baje?" inherits weather/safety
+    if (/^(kal\??|waves\??|lahrein\??|wind\??|hawa\??|kitne baje|6 baje|7 baje)/i.test(lower)) {
       return {
         intent: "SEA_WEATHER_QUERY",
-        confidence: 0.94,
+        depth_category: "DECISION",
+        confidence: 0.95,
         requires_weather: true,
         requires_pfz: false,
         requires_navigation: false,
@@ -192,6 +318,7 @@ export function classifyIntent(
         requires_fisheries_data: false,
         is_follow_up: true,
         language: detectedLang,
+        extracted_constraints: extractedConstraints,
       };
     }
 
@@ -199,7 +326,8 @@ export function classifyIntent(
     if (/^(kitna door|waha tak|distance|rasta)/i.test(lower) || FUEL_PATTERNS.some((p) => p.test(query))) {
       return {
         intent: FUEL_PATTERNS.some((p) => p.test(query)) ? "FUEL_QUERY" : "NAVIGATION_QUERY",
-        confidence: 0.93,
+        depth_category: "PLANNING",
+        confidence: 0.94,
         requires_weather: false,
         requires_pfz: true,
         requires_navigation: true,
@@ -207,29 +335,33 @@ export function classifyIntent(
         requires_fisheries_data: true,
         is_follow_up: true,
         language: detectedLang,
+        extracted_constraints: extractedConstraints,
       };
     }
 
-    // "Why?" or "Kyun?" inherits previous decision reasoning
-    if (/^(why\??|kyun\??|kyu\??)/i.test(lower)) {
+    // "Why?" or "PFZ-2 kyun?" inherits comparison/decision
+    if (/^(why\??|kyun\??|kyu\??|pfz-\d+\s*(kyun|kyu|why)\??)/i.test(lower)) {
       return {
-        intent: "SAFETY_QUERY",
-        confidence: 0.92,
+        intent: "PFZ_QUERY",
+        depth_category: "COMPARISON",
+        confidence: 0.95,
         requires_weather: true,
-        requires_pfz: false,
-        requires_navigation: false,
+        requires_pfz: true,
+        requires_navigation: true,
         requires_safety: true,
-        requires_fisheries_data: false,
+        requires_fisheries_data: true,
         is_follow_up: true,
         language: detectedLang,
+        extracted_constraints: extractedConstraints,
       };
     }
   }
 
-  // 4. Casual Greetings & Chit-chat Patterns
-  if (CASUAL_GREETINGS.some((p) => p.test(query))) {
+  // 4. Casual Greetings & Chit-chat Patterns (ONLY if no marine domain concept is present)
+  if (!isOrcaDomain && CASUAL_GREETINGS.some((p) => p.test(query))) {
     return {
       intent: "GENERAL_CONVERSATION",
+      depth_category: "SIMPLE_FACT",
       confidence: 0.96,
       requires_weather: false,
       requires_pfz: false,
@@ -238,13 +370,15 @@ export function classifyIntent(
       requires_fisheries_data: false,
       is_follow_up: false,
       language: detectedLang,
+      extracted_constraints: extractedConstraints,
     };
   }
 
-  // 5. General Knowledge / Inland Queries
-  if (GENERAL_KNOWLEDGE_PATTERNS.some((p) => p.test(query))) {
+  // 5. General Knowledge Non-Marine Queries
+  if (!isOrcaDomain && GENERAL_KNOWLEDGE_PATTERNS.some((p) => p.test(query))) {
     return {
       intent: "GENERAL_CONVERSATION",
+      depth_category: "EXPLANATION",
       confidence: 0.95,
       requires_weather: false,
       requires_pfz: false,
@@ -253,60 +387,85 @@ export function classifyIntent(
       requires_fisheries_data: false,
       is_follow_up: false,
       language: detectedLang,
+      extracted_constraints: extractedConstraints,
     };
   }
 
   // 6. Specialized Domain Queries
 
-  // Fuel Query
+  // Fuel & Trip Viability Query
   if (FUEL_PATTERNS.some((p) => p.test(query))) {
     return {
       intent: "FUEL_QUERY",
-      confidence: 0.92,
-      requires_weather: false,
+      depth_category: determineDepth("FUEL_QUERY"),
+      confidence: 0.93,
+      requires_weather: true,
       requires_pfz: true,
       requires_navigation: true,
-      requires_safety: false,
+      requires_safety: true,
       requires_fisheries_data: false,
       is_follow_up: false,
       language: detectedLang,
+      extracted_constraints: extractedConstraints,
     };
   }
 
-  // Navigation Query
+  // Navigation & Route Query
   if (NAVIGATION_PATTERNS.some((p) => p.test(query))) {
     return {
       intent: "NAVIGATION_QUERY",
-      confidence: 0.92,
-      requires_weather: false,
-      requires_pfz: false,
+      depth_category: determineDepth("NAVIGATION_QUERY"),
+      confidence: 0.93,
+      requires_weather: true,
+      requires_pfz: true,
       requires_navigation: true,
-      requires_safety: false,
+      requires_safety: true,
       requires_fisheries_data: false,
       is_follow_up: false,
       language: detectedLang,
+      extracted_constraints: extractedConstraints,
     };
   }
 
-  // PFZ Query
+  // PFZ (Potential Fishing Zones) & Catch Query
   if (PFZ_PATTERNS.some((p) => p.test(query))) {
     return {
       intent: "PFZ_QUERY",
-      confidence: 0.94,
-      requires_weather: false,
+      depth_category: determineDepth("PFZ_QUERY"),
+      confidence: 0.95,
+      requires_weather: true,
       requires_pfz: true,
-      requires_navigation: false,
-      requires_safety: false,
+      requires_navigation: true,
+      requires_safety: true,
       requires_fisheries_data: true,
       is_follow_up: false,
       language: detectedLang,
+      extracted_constraints: extractedConstraints,
     };
   }
 
-  // Safety Query (Is it safe to go? Risk?)
+  // Safety & Voyage Viability Query (Is it safe? Can I go? Risk?)
   if (SAFETY_PATTERNS.some((p) => p.test(query))) {
     return {
       intent: "SAFETY_QUERY",
+      depth_category: determineDepth("SAFETY_QUERY"),
+      confidence: 0.95,
+      requires_weather: true,
+      requires_pfz: true,
+      requires_navigation: false,
+      requires_safety: true,
+      requires_fisheries_data: false,
+      is_follow_up: false,
+      language: detectedLang,
+      extracted_constraints: extractedConstraints,
+    };
+  }
+
+  // Sea State & Weather Query
+  if (SEA_WEATHER_PATTERNS.some((p) => p.test(query))) {
+    return {
+      intent: "SEA_WEATHER_QUERY",
+      depth_category: determineDepth("SEA_WEATHER_QUERY"),
       confidence: 0.93,
       requires_weather: true,
       requires_pfz: false,
@@ -315,28 +474,15 @@ export function classifyIntent(
       requires_fisheries_data: false,
       is_follow_up: false,
       language: detectedLang,
+      extracted_constraints: extractedConstraints,
     };
   }
 
-  // Sea & Weather Query
-  if (SEA_WEATHER_PATTERNS.some((p) => p.test(query))) {
-    return {
-      intent: "SEA_WEATHER_QUERY",
-      confidence: 0.91,
-      requires_weather: true,
-      requires_pfz: false,
-      requires_navigation: false,
-      requires_safety: false,
-      requires_fisheries_data: false,
-      is_follow_up: false,
-      language: detectedLang,
-    };
-  }
-
-  // App Help
+  // App Navigation Help
   if (/\b(app kaise|settings|language change|help with app|features of orca)\b/i.test(query)) {
     return {
       intent: "APP_HELP_QUERY",
+      depth_category: "SIMPLE_FACT",
       confidence: 0.9,
       requires_weather: false,
       requires_pfz: false,
@@ -345,13 +491,31 @@ export function classifyIntent(
       requires_fisheries_data: false,
       is_follow_up: false,
       language: detectedLang,
+      extracted_constraints: extractedConstraints,
     };
   }
 
-  // 7. SAFE DEFAULT (Rule #4)
-  // If no specialized intent matched: intent = GENERAL_CONVERSATION
+  // 7. General Marine Domain Fallback (Rule 14: If any marine term exists, ALWAYS inject marine context)
+  if (isOrcaDomain) {
+    return {
+      intent: "FISHING_QUERY",
+      depth_category: determineDepth("FISHING_QUERY"),
+      confidence: 0.91,
+      requires_weather: true,
+      requires_pfz: true,
+      requires_navigation: true,
+      requires_safety: true,
+      requires_fisheries_data: true,
+      is_follow_up: false,
+      language: detectedLang,
+      extracted_constraints: extractedConstraints,
+    };
+  }
+
+  // 8. Safe Default for genuine non-marine conversation
   return {
     intent: "GENERAL_CONVERSATION",
+    depth_category: determineDepth("GENERAL_CONVERSATION"),
     confidence: 0.85,
     requires_weather: false,
     requires_pfz: false,
@@ -360,5 +524,6 @@ export function classifyIntent(
     requires_fisheries_data: false,
     is_follow_up: false,
     language: detectedLang,
+    extracted_constraints: extractedConstraints,
   };
 }
