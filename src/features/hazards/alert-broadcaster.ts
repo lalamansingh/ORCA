@@ -8,61 +8,7 @@ import { GeofenceMatcher } from "./geofence-matcher";
 
 export class HazardAlertBroadcaster {
   private static userLocations: Map<string, UserLocationRecord> = new Map();
-  private static activeHazards: Hazard[] = [
-    {
-      hazard_id: "haz-mumbai-high-waves",
-      type: "HIGH_WAVES",
-      title: "HIGH WAVE & SWELL SURGE WARNING",
-      severity: "severe",
-      headline: "Dangerous wave heights (3.2m - 3.8m) detected along Coastal Maharashtra.",
-      description: "Severe swell surge and rough breaking waves observed. Small motorized craft and fiber boats are advised to return immediately to harbor.",
-      recommended_action: "Return toward the nearest safe harbor. Avoid moving farther offshore into shipping channels.",
-      issued_at: new Date(Date.now() - 3600000).toISOString(),
-      expires_at: new Date(Date.now() + 86400000).toISOString(),
-      source_provider: "INCOIS / ORCA RISK AGENT",
-      is_active: true,
-      metrics: {
-        wave_height_m: 3.4,
-        wind_speed_kmh: 42,
-        gust_kmh: 58,
-      },
-      affected_zone: {
-        zone_id: "zone-mumbai-shelf",
-        hazard_type: "HIGH_WAVES",
-        severity: "severe",
-        center_lat: 18.95,
-        center_lon: 72.82,
-        radius_km: 45,
-        safety_buffer_km: 8,
-      },
-    },
-    {
-      hazard_id: "haz-gujarat-extreme-wind",
-      type: "EXTREME_WIND",
-      title: "GALE FORCE WIND ADVISORY",
-      severity: "warning",
-      headline: "Squally wind speeds reaching 45–55 km/h with gusts up to 65 km/h.",
-      description: "Deep pressure gradient over Arabian Sea causing high turbulence.",
-      recommended_action: "Reduce cruising speed. Secure fishing nets and heavy gear on deck.",
-      issued_at: new Date(Date.now() - 7200000).toISOString(),
-      expires_at: new Date(Date.now() + 43200000).toISOString(),
-      source_provider: "IMD / INCOIS",
-      is_active: true,
-      metrics: {
-        wind_speed_kmh: 52,
-        gust_kmh: 66,
-      },
-      affected_zone: {
-        zone_id: "zone-porbandar-coast",
-        hazard_type: "EXTREME_WIND",
-        severity: "warning",
-        center_lat: 21.64,
-        center_lon: 69.60,
-        radius_km: 60,
-        safety_buffer_km: 10,
-      },
-    },
-  ];
+  private static activeHazards: Hazard[] = [];
 
   private static deliveries: Map<string, HazardAlertDelivery> = new Map();
 

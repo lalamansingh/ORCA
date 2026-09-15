@@ -29,36 +29,16 @@ export function FullScreenAlarmAlert({
 }: FullScreenAlarmAlertProps) {
   const activeHazard = propHazard || propAlert;
 
-  // Trigger loud synthesized alarm tone and continuous vibration
+  // Optional tactile vibration only if explicitly active
   useEffect(() => {
     if (!activeHazard || typeof window === "undefined") return;
 
     if (navigator.vibrate) {
       try {
-        navigator.vibrate([300, 100, 300, 100, 600]);
+        navigator.vibrate([200, 100, 200]);
       } catch (e) {
-        console.warn("[ALARM] Vibration note:", e);
+        // Silent
       }
-    }
-
-    try {
-      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (AudioContextClass) {
-        const ctx = new AudioContextClass();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(960, ctx.currentTime);
-        osc.frequency.linearRampToValueAtTime(480, ctx.currentTime + 0.4);
-        gain.gain.setValueAtTime(0.4, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.6);
-      }
-    } catch {
-      // Audio siren error handling
     }
   }, [activeHazard]);
 
