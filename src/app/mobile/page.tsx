@@ -2606,18 +2606,6 @@ export default function MobileAppPage() {
         isOpen={showSafetyOnboardingModal}
         onClose={() => setShowSafetyOnboardingModal(false)}
       />
-      <FullScreenAlarmAlert
-        alert={emergencyAlerts.triggeredAlert}
-        onAcknowledgeSafe={() => emergencyAlerts.acknowledgeAlert("SAFE")}
-        onRequestEmergencySOS={() => {
-          emergencyAlerts.acknowledgeAlert("NEED_HELP");
-          triggerDistress("hazard_alert");
-        }}
-        onViewSafeRoute={(alert) => {
-          emergencyAlerts.acknowledgeAlert("VIEWED_ROUTE");
-          setActiveTab("map");
-        }}
-      />
     </div>
   );
 }
