@@ -64,7 +64,6 @@ import { SOSCountdownModal } from "@/components/sos/sos-countdown-modal";
 import { VoiceDistressModal } from "@/components/sos/voice-distress-modal";
 import { SafetyOnboardingModal } from "@/components/sos/safety-onboarding-modal";
 import { FullScreenAlarmAlert } from "@/components/sos/full-screen-alarm-alert";
-import { DemoSimulatorBar } from "@/components/sos/demo-simulator-bar";
 import {
   isGreetingQuery,
   getConversationalGreeting,
@@ -2618,11 +2617,6 @@ export default function MobileAppPage() {
               </>
             )}
 
-            {/* In-tab Testing Simulator Tool (ISRO PS 26176) */}
-            <DemoSimulatorBar
-              selectedLang={selectedLang}
-              onShowOnboarding={() => setShowSafetyOnboardingModal(true)}
-            />
           </div>
         )}
       </main>
