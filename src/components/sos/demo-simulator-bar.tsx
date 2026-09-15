@@ -115,146 +115,144 @@ export const DemoSimulatorBar: React.FC<DemoSimulatorBarProps> = ({ onShowOnboar
   };
 
   return (
-    <div className="fixed bottom-16 left-0 right-0 z-40 px-3 md:px-6 pointer-events-none">
-      <div className="max-w-4xl mx-auto pointer-events-auto">
-        {/* Toggle pill bar */}
-        <div className="flex items-center justify-between bg-slate-950/90 backdrop-blur-md border border-amber-500/30 text-white rounded-t-xl px-4 py-2 shadow-2xl">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+    <div className="mt-4 rounded-xl overflow-hidden border border-amber-500/30 bg-slate-900/90 shadow-md">
+      {/* Toggle pill bar */}
+      <div className="flex items-center justify-between bg-slate-950/90 border-b border-amber-500/20 text-white px-3.5 py-2.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+          </span>
+          <span className="text-[11px] font-bold tracking-wider uppercase text-amber-300">
+            ISRO PS 26176 DEMO SIMULATOR
+          </span>
+          <span className="text-[9.5px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700">
+            State: <strong className="text-cyan-300">{sosState}</strong>
+          </span>
+          {pendingQueueCount > 0 && (
+            <span className="text-[9.5px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">
+              Queue: {pendingQueueCount}
             </span>
-            <span className="text-xs font-bold tracking-wider uppercase text-amber-300">
-              ISRO PS 26176 Demo Simulator
-            </span>
-            <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700">
-              State: <strong className="text-cyan-300">{sosState}</strong>
-            </span>
-            {pendingQueueCount > 0 && (
-              <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full">
-                Queue: {pendingQueueCount}
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {onShowOnboarding && (
-              <button
-                onClick={onShowOnboarding}
-                className="text-[11px] text-slate-400 hover:text-white underline underline-offset-2 transition-colors mr-2"
-              >
-                SOS Setup
-              </button>
-            )}
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="flex items-center gap-1 text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 px-2.5 py-1 rounded-md transition-colors font-medium"
-            >
-              <span>{isOpen ? 'Hide Scenarios' : 'Test Scenarios'}</span>
-              {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-            </button>
-          </div>
+          )}
         </div>
 
-        {/* Action feedback toast */}
-        {simulatedActionMessage && (
-          <div className="bg-cyan-950/90 border border-cyan-500/40 text-cyan-200 text-xs px-4 py-2 font-medium flex items-center gap-2 animate-fadeIn">
-            <Radio className="w-4 h-4 text-cyan-400 animate-pulse" />
-            <span>{simulatedActionMessage}</span>
-          </div>
-        )}
-
-        {/* Expanded simulation control drawer */}
-        {isOpen && (
-          <div className="bg-slate-900/95 backdrop-blur-xl border-x border-b border-amber-500/30 p-4 rounded-b-xl shadow-2xl text-white space-y-3 animate-fadeIn">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {/* Trigger 1: Hardware key simulation */}
-              <button
-                onClick={simulateHardwareTriplePress}
-                className="flex flex-col items-center justify-center p-2.5 rounded-lg bg-red-950/40 border border-red-500/30 hover:bg-red-900/40 hover:border-red-500/60 transition-all text-left group"
-              >
-                <div className="flex items-center gap-1.5 text-red-400 text-xs font-bold mb-1">
-                  <Volume2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                  <span>3x Vol-Down SOS</span>
-                </div>
-                <span className="text-[10px] text-slate-400 text-center leading-tight">
-                  Simulates triple hardware click (F1 / Alt+V)
-                </span>
-              </button>
-
-              {/* Trigger 2: Cyclone Hazard Simulation */}
-              <button
-                onClick={simulateCycloneBroadcast}
-                className="flex flex-col items-center justify-center p-2.5 rounded-lg bg-amber-950/40 border border-amber-500/30 hover:bg-amber-900/40 hover:border-amber-500/60 transition-all text-left group"
-              >
-                <div className="flex items-center gap-1.5 text-amber-400 text-xs font-bold mb-1">
-                  <Wind className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                  <span>Cyclone Warning</span>
-                </div>
-                <span className="text-[10px] text-slate-400 text-center leading-tight">
-                  Triggers full-screen marine alarm overlay
-                </span>
-              </button>
-
-              {/* Trigger 3: High Wave Warning */}
-              <button
-                onClick={simulateHighWavesBroadcast}
-                className="flex flex-col items-center justify-center p-2.5 rounded-lg bg-blue-950/40 border border-blue-500/30 hover:bg-blue-900/40 hover:border-blue-500/60 transition-all text-left group"
-              >
-                <div className="flex items-center gap-1.5 text-blue-400 text-xs font-bold mb-1">
-                  <AlertTriangle className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                  <span>High Wave Alert</span>
-                </div>
-                <span className="text-[10px] text-slate-400 text-center leading-tight">
-                  Simulates INCOIS 5m+ surge hazard
-                </span>
-              </button>
-
-              {/* Trigger 4: Offline Toggle Simulation */}
-              <button
-                onClick={simulateOfflineToggle}
-                className={`flex flex-col items-center justify-center p-2.5 rounded-lg border transition-all text-left group ${
-                  isSimulatingOffline
-                    ? 'bg-amber-950/60 border-amber-500 text-amber-300'
-                    : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:border-slate-500'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 text-xs font-bold mb-1">
-                  {isSimulatingOffline ? <WifiOff className="w-3.5 h-3.5 text-amber-400" /> : <Wifi className="w-3.5 h-3.5 text-emerald-400" />}
-                  <span>{isSimulatingOffline ? 'Mode: Offline' : 'Mode: Online'}</span>
-                </div>
-                <span className="text-[10px] text-slate-400 text-center leading-tight">
-                  {isSimulatingOffline ? 'Queueing in IndexedDB' : 'Direct cellular/satellite'}
-                </span>
-              </button>
-            </div>
-
-            {/* Quick status & reset bar */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px] text-slate-400">
-              <div className="flex items-center gap-3">
-                {lastSentReport ? (
-                  <span className="text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Last SOS: {lastSentReport.sos_id.slice(-6)} ({lastSentReport.status})
-                  </span>
-                ) : (
-                  <span>No active SOS transmitted</span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {sosState !== 'IDLE' && (
-                  <button
-                    onClick={manualCancel}
-                    className="text-red-400 hover:text-red-300 font-semibold underline text-[11px]"
-                  >
-                    Reset SOS Machine
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {onShowOnboarding && (
+            <button
+              onClick={onShowOnboarding}
+              className="text-[10px] text-slate-400 hover:text-white underline underline-offset-2 transition-colors mr-1"
+            >
+              Setup
+            </button>
+          )}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex items-center gap-1 text-[11px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 px-2 py-1 rounded transition-colors font-medium"
+          >
+            <span>{isOpen ? 'Hide Scenarios' : 'Test Scenarios'}</span>
+            {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+          </button>
+        </div>
       </div>
+
+      {/* Action feedback toast */}
+      {simulatedActionMessage && (
+        <div className="bg-cyan-950/90 border-b border-cyan-500/40 text-cyan-200 text-xs px-3.5 py-2 font-medium flex items-center gap-2">
+          <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+          <span>{simulatedActionMessage}</span>
+        </div>
+      )}
+
+      {/* Expanded simulation control drawer */}
+      {isOpen && (
+        <div className="p-3.5 space-y-3 text-white">
+          <div className="grid grid-cols-2 gap-2">
+            {/* Trigger 1: Hardware key simulation */}
+            <button
+              onClick={simulateHardwareTriplePress}
+              className="flex flex-col items-center justify-center p-2.5 rounded-lg bg-red-950/40 border border-red-500/30 hover:bg-red-900/40 hover:border-red-500/60 transition-all text-left group"
+            >
+              <div className="flex items-center gap-1.5 text-red-400 text-xs font-bold mb-1">
+                <Volume2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                <span>3x Vol-Down SOS</span>
+              </div>
+              <span className="text-[10px] text-slate-400 text-center leading-tight">
+                Simulates triple hardware click (F1 / Alt+V)
+              </span>
+            </button>
+
+            {/* Trigger 2: Cyclone Hazard Simulation */}
+            <button
+              onClick={simulateCycloneBroadcast}
+              className="flex flex-col items-center justify-center p-2.5 rounded-lg bg-amber-950/40 border border-amber-500/30 hover:bg-amber-900/40 hover:border-amber-500/60 transition-all text-left group"
+            >
+              <div className="flex items-center gap-1.5 text-amber-400 text-xs font-bold mb-1">
+                <Wind className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                <span>Cyclone Warning</span>
+              </div>
+              <span className="text-[10px] text-slate-400 text-center leading-tight">
+                Triggers full-screen marine alarm overlay
+              </span>
+            </button>
+
+            {/* Trigger 3: High Wave Warning */}
+            <button
+              onClick={simulateHighWavesBroadcast}
+              className="flex flex-col items-center justify-center p-2.5 rounded-lg bg-blue-950/40 border border-blue-500/30 hover:bg-blue-900/40 hover:border-blue-500/60 transition-all text-left group"
+            >
+              <div className="flex items-center gap-1.5 text-blue-400 text-xs font-bold mb-1">
+                <AlertTriangle className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                <span>High Wave Alert</span>
+              </div>
+              <span className="text-[10px] text-slate-400 text-center leading-tight">
+                Simulates INCOIS 5m+ surge hazard
+              </span>
+            </button>
+
+            {/* Trigger 4: Offline Toggle Simulation */}
+            <button
+              onClick={simulateOfflineToggle}
+              className={`flex flex-col items-center justify-center p-2.5 rounded-lg border transition-all text-left group ${
+                isSimulatingOffline
+                  ? 'bg-amber-950/60 border-amber-500 text-amber-300'
+                  : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:border-slate-500'
+              }`}
+            >
+              <div className="flex items-center gap-1.5 text-xs font-bold mb-1">
+                {isSimulatingOffline ? <WifiOff className="w-3.5 h-3.5 text-amber-400" /> : <Wifi className="w-3.5 h-3.5 text-emerald-400" />}
+                <span>{isSimulatingOffline ? 'Mode: Offline' : 'Mode: Online'}</span>
+              </div>
+              <span className="text-[10px] text-slate-400 text-center leading-tight">
+                {isSimulatingOffline ? 'Queueing in IndexedDB' : 'Direct cellular/satellite'}
+              </span>
+            </button>
+          </div>
+
+          {/* Quick status & reset bar */}
+          <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+            <div className="flex items-center gap-3">
+              {lastSentReport ? (
+                <span className="text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Last SOS: {lastSentReport.sos_id.slice(-6)} ({lastSentReport.status})
+                </span>
+              ) : (
+                <span>No active SOS transmitted</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {sosState !== 'IDLE' && (
+                <button
+                  onClick={manualCancel}
+                  className="text-red-400 hover:text-red-300 font-semibold underline text-[11px]"
+                >
+                  Reset SOS
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

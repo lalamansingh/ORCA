@@ -2465,6 +2465,9 @@ export default function MobileAppPage() {
                 ))}
               </>
             )}
+
+            {/* In-tab Testing Simulator Tool (ISRO PS 26176) */}
+            <DemoSimulatorBar onShowOnboarding={() => setShowSafetyOnboardingModal(true)} />
           </div>
         )}
       </main>
