@@ -146,6 +146,7 @@ interface MobileChatProps {
   onOpenPFZTab?: () => void;
   onOpenWeatherTab?: () => void;
   onOpenAlertsTab?: () => void;
+  onOpenMapTab?: () => void;
 }
 
 interface ChatMessage {
@@ -162,6 +163,7 @@ export function MobileChat({
   onOpenPFZTab,
   onOpenWeatherTab,
   onOpenAlertsTab,
+  onOpenMapTab,
 }: MobileChatProps) {
   const langConfig = LOCALIZED_GREETINGS[selectedLang] || LOCALIZED_GREETINGS.hi;
   const activeVoiceCode = MOBILE_LANGUAGES.find((l) => l.code === selectedLang)?.voiceCode || "hi-IN";
@@ -406,7 +408,21 @@ export function MobileChat({
               </div>
 
               <div style={{ fontSize: "13.5px" }}>
-                <FormattedChatMessage text={msg.text} />
+                <FormattedChatMessage
+                  text={msg.text}
+                  onAction={(action) => {
+                    if (action === "map" || action === "route") {
+                      if (onOpenMapTab) onOpenMapTab();
+                      else if (onOpenWeatherTab) onOpenWeatherTab();
+                    } else if (action === "pfz") {
+                      if (onOpenPFZTab) onOpenPFZTab();
+                    } else if (action === "alerts" || action === "sos") {
+                      if (onOpenAlertsTab) onOpenAlertsTab();
+                    } else if (action === "weather") {
+                      if (onOpenWeatherTab) onOpenWeatherTab();
+                    }
+                  }}
+                />
               </div>
 
               {/* Quick Metrics Card if present in bot answer */}
