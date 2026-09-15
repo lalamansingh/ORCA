@@ -1857,26 +1857,6 @@ export default function MobileAppPage() {
               </span>
             </div>
 
-            {/* AI Saathi Independent Language Selector Bar */}
-            <div className="m-chat-lang-bar">
-              <div className="m-chat-lang-title">
-                <Globe size={13} style={{ color: "#38bdf8" }} />
-                <span>భాష / Lang:</span>
-              </div>
-              <div className="m-chat-lang-chips">
-                {SUPPORTED_LANGUAGES.map((l) => (
-                  <button
-                    key={l.code}
-                    type="button"
-                    className={`m-chat-lang-chip ${saathiLang === l.code ? "active" : ""}`}
-                    onClick={() => setSaathiLang(l.code)}
-                  >
-                    {l.native}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Quick Suggestion Chips in current Saathi language */}
             <div className="m-quick-chips">
               {[
@@ -1951,8 +1931,12 @@ export default function MobileAppPage() {
                 }}
               >
                 <VoiceMic
-                  selectedLang={saathiVoiceCode}
+                  selectedLang={selectedLang}
                   compact={true}
+                  onLanguageChange={(newLang) => {
+                    setSelectedLang(newLang);
+                    setSaathiLang(newLang);
+                  }}
                   onTranscript={(transcript) => {
                     setQueryInput(transcript);
                     void handleSendChat(transcript);

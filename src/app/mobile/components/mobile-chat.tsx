@@ -160,6 +160,7 @@ interface ChatMessage {
 export function MobileChat({
   location,
   selectedLang,
+  onSelectLang,
   onOpenPFZTab,
   onOpenWeatherTab,
   onOpenAlertsTab,
@@ -506,7 +507,8 @@ export function MobileChat({
         <VoiceMic
           onTranscript={(text) => handleSendQuery(text)}
           disabled={loading}
-          selectedLang={activeVoiceCode}
+          selectedLang={selectedLang}
+          onLanguageChange={onSelectLang}
           compact={true}
         />
         <input

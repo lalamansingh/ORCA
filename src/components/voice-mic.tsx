@@ -11,16 +11,24 @@ type VoiceMicProps = {
   compact?: boolean;
 };
 
-const VOICE_LANGS: Array<{ code: string; label: string; short: string }> = [
-  { code: "hi-IN", label: "हिंदी (Hindi)", short: "हि" },
-  { code: "en-IN", label: "English (India)", short: "EN" },
-  { code: "ta-IN", label: "தமிழ் (Tamil)", short: "த" },
-  { code: "te-IN", label: "తెలుగు (Telugu)", short: "తె" },
-  { code: "ml-IN", label: "മലയാളം (Malayalam)", short: "മ" },
-  { code: "gu-IN", label: "ગુજરાતી (Gujarati)", short: "ગુ" },
-  { code: "mr-IN", label: "मराठी (Marathi)", short: "म" },
-  { code: "bn-IN", label: "বাংলা (Bengali)", short: "বা" },
-  { code: "kn-IN", label: "ಕನ್ನಡ (Kannada)", short: "ಕ" },
+export interface VoiceLangItem {
+  code: string;
+  langCode: string;
+  label: string;
+  short: string;
+}
+
+export const VOICE_LANGS: VoiceLangItem[] = [
+  { code: "hi-IN", langCode: "hi", label: "हिन्दी (Hindi)", short: "HI" },
+  { code: "en-IN", langCode: "en", label: "English", short: "EN" },
+  { code: "ta-IN", langCode: "ta", label: "தமிழ் (Tamil)", short: "TA" },
+  { code: "te-IN", langCode: "te", label: "తెలుగు (Telugu)", short: "TE" },
+  { code: "ml-IN", langCode: "ml", label: "മലയാളം (Malayalam)", short: "ML" },
+  { code: "gu-IN", langCode: "gu", label: "ગુજરાતી (Gujarati)", short: "GU" },
+  { code: "mr-IN", langCode: "mr", label: "मराठी (Marathi)", short: "MR" },
+  { code: "bn-IN", langCode: "bn", label: "বাংলা (Bengali)", short: "BN" },
+  { code: "kn-IN", langCode: "kn", label: "ಕನ್ನಡ (Kannada)", short: "KN" },
+  { code: "or-IN", langCode: "or", label: "ଓଡ଼ିଆ (Odia)", short: "OR" },
 ];
 
 // TypeScript Web Speech API definitions
@@ -40,17 +48,23 @@ interface SpeechRecognitionInstance extends EventTarget {
   onend: (() => void) | null;
 }
 
-export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN", onLanguageChange, compact = false }: VoiceMicProps) {
+export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi", onLanguageChange, compact = false }: VoiceMicProps) {
   const [isListening, setIsListening] = useState(false);
-  const [lang, setLang] = useState<string>(selectedLang);
   const [supported, setSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
+  const currentLangObj =
+    VOICE_LANGS.find((v) => v.langCode === selectedLang || v.code === selectedLang) ||
+    VOICE_LANGS[0];
+
+  const [lang, setLang] = useState<string>(currentLangObj.code);
+
   useEffect(() => {
-    if (selectedLang && selectedLang !== lang) {
-      setLang(selectedLang);
+    const matched = VOICE_LANGS.find((v) => v.langCode === selectedLang || v.code === selectedLang);
+    if (matched && matched.code !== lang) {
+      setLang(matched.code);
     }
-  }, [selectedLang]);
+  }, [selectedLang, lang]);
 
   useEffect(() => {
     const SpeechRecognition =
@@ -80,8 +94,7 @@ export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN
       };
 
       recognitionRef.current = recognition;
-      const timer = window.setTimeout(() => setSupported(true), 0);
-      return () => window.clearTimeout(timer);
+      setSupported(true);
     }
   }, [lang, onTranscript]);
 
@@ -101,33 +114,30 @@ export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN
     }
   };
 
-  if (!supported) return null;
-
-  const currentLangObj = VOICE_LANGS.find((v) => v.code === lang) || VOICE_LANGS[0];
-
   return (
     <div className="voice-mic-container" style={{ display: "inline-flex", alignItems: "center", gap: compact ? "4px" : "6px", flexShrink: 0 }}>
       <button
         type="button"
         className={`voice-mic-button ${isListening ? "listening" : ""}`}
         onClick={toggleListen}
-        disabled={disabled}
-        title={isListening ? "Listening... Click to stop" : "Speak your question (Voice Mic)"}
+        disabled={disabled || !supported}
+        title={!supported ? "Voice recognition not supported in this browser" : isListening ? "Listening... Click to stop" : "Speak your question (Voice Mic)"}
         aria-label="Voice input"
         style={{
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          width: compact ? "32px" : "36px",
-          height: compact ? "32px" : "36px",
+          width: compact ? "34px" : "36px",
+          height: compact ? "34px" : "36px",
           borderRadius: "50%",
           border: isListening ? "2px solid #e17a2c" : "1px solid rgba(8, 37, 54, 0.15)",
           backgroundColor: isListening ? "#e17a2c" : "rgba(8, 37, 54, 0.05)",
           color: isListening ? "#fff" : "inherit",
-          cursor: "pointer",
+          cursor: supported ? "pointer" : "not-allowed",
           transition: "all 0.2s ease",
           position: "relative",
           flexShrink: 0,
+          opacity: supported ? 1 : 0.6,
         }}
       >
         {isListening ? <MicOff size={compact ? 15 : 17} /> : <Mic size={compact ? 15 : 17} />}
@@ -153,36 +163,45 @@ export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "rgba(14, 116, 144, 0.08)",
-            border: "1px solid rgba(14, 116, 144, 0.22)",
-            borderRadius: "10px",
-            padding: "2px 5px",
+            background: "#f1f5f9",
+            border: "1px solid #cbd5e1",
+            borderRadius: "8px",
+            padding: "3px 7px",
             cursor: "pointer",
-            height: "26px",
+            height: "28px",
+            minWidth: "42px",
             flexShrink: 0,
+            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
-          title={`Speech Language: ${currentLangObj.label}`}
+          title={`Language: ${currentLangObj.label}`}
         >
           <span
             style={{
-              fontSize: "11px",
-              fontWeight: 700,
-              color: "var(--mobile-marine, #082536)",
+              fontSize: "11.5px",
+              fontWeight: 800,
+              color: "#0f172a",
               display: "inline-flex",
               alignItems: "center",
-              gap: "2px",
+              gap: "3px",
               pointerEvents: "none",
               userSelect: "none",
             }}
           >
             {currentLangObj.short}
-            <span style={{ fontSize: "8px", opacity: 0.6 }}>▼</span>
+            <span style={{ fontSize: "8.5px", color: "#64748b" }}>▼</span>
           </span>
           <select
-            value={lang}
+            value={currentLangObj.langCode}
             onChange={(e) => {
-              setLang(e.target.value);
-              onLanguageChange?.(e.target.value);
+              const chosenLangCode = e.target.value;
+              const found = VOICE_LANGS.find((v) => v.langCode === chosenLangCode || v.code === chosenLangCode);
+              if (found) {
+                setLang(found.code);
+                onLanguageChange?.(found.langCode);
+              } else {
+                setLang(chosenLangCode);
+                onLanguageChange?.(chosenLangCode);
+              }
             }}
             style={{
               position: "absolute",
@@ -192,11 +211,15 @@ export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN
               height: "100%",
               opacity: 0,
               cursor: "pointer",
+              zIndex: 10,
+              WebkitAppearance: "none",
+              MozAppearance: "none",
+              appearance: "none",
             }}
-            aria-label="Voice language"
+            aria-label="Select Assistant Language"
           >
             {VOICE_LANGS.map((v) => (
-              <option key={v.code} value={v.code} style={{ background: "#0f172a", color: "#fff" }}>
+              <option key={v.langCode} value={v.langCode} style={{ background: "#0f172a", color: "#fff", fontSize: "13px" }}>
                 {v.label}
               </option>
             ))}
@@ -206,10 +229,17 @@ export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN
         <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "11px", opacity: 0.85 }}>
           <Globe size={12} />
           <select
-            value={lang}
+            value={currentLangObj.langCode}
             onChange={(e) => {
-              setLang(e.target.value);
-              onLanguageChange?.(e.target.value);
+              const chosenLangCode = e.target.value;
+              const found = VOICE_LANGS.find((v) => v.langCode === chosenLangCode || v.code === chosenLangCode);
+              if (found) {
+                setLang(found.code);
+                onLanguageChange?.(found.langCode);
+              } else {
+                setLang(chosenLangCode);
+                onLanguageChange?.(chosenLangCode);
+              }
             }}
             style={{
               background: "transparent",
@@ -219,10 +249,10 @@ export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi-IN
               cursor: "pointer",
               outline: "none",
             }}
-            aria-label="Voice language"
+            aria-label="Select Assistant Language"
           >
             {VOICE_LANGS.map((v) => (
-              <option key={v.code} value={v.code} style={{ background: "#0f172a", color: "#fff" }}>
+              <option key={v.langCode} value={v.langCode} style={{ background: "#0f172a", color: "#fff" }}>
                 {v.label}
               </option>
             ))}
