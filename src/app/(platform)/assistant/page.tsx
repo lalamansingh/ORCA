@@ -9,6 +9,8 @@ import { sendMessage, type ConversationReply } from "@/lib/api/ai";
 import { classifyIntent } from "@/features/ai/intent-router";
 import { publishSelectedLocation, useSharedSelectedLocation } from "@/features/map/location-store";
 import { VoiceMic, VoiceSpeaker } from "@/components/voice-mic";
+import { useRouter } from "next/navigation";
+import { FormattedChatMessage } from "@/features/ai/mobile-assistant-helper";
 import "../demo-polish.css";
 
 const SUPPORTED_LANGUAGES = [
@@ -139,6 +141,7 @@ const LOCALIZED_PROMPTS: Record<string, { welcome: string; placeholder: string; 
 };
 
 export default function AssistantPage() {
+  const router = useRouter();
   const [selectedLangCode, setSelectedLangCode] = useState("hi");
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<{ query: string; reply: ConversationReply }[]>([]);
@@ -170,6 +173,7 @@ export default function AssistantPage() {
         messages.at(-1)?.reply.conversation_id,
         {
           history,
+          constraints: routing.extracted_constraints,
           language: selectedLangCode,
         }
       );
@@ -284,8 +288,21 @@ export default function AssistantPage() {
                     border: "1px solid rgba(56, 189, 248, 0.2)",
                   }}
                 >
-                  <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.6, fontSize: "13.5px", color: "#f8fafc", flex: 1 }}>
-                    {reply.answer}
+                  <div style={{ lineHeight: 1.6, fontSize: "13.5px", color: "#f8fafc", flex: 1, minWidth: 0 }}>
+                    <FormattedChatMessage
+                      text={reply.answer}
+                      onAction={(action) => {
+                        if (action === "map" || action === "route") {
+                          router.push("/routes");
+                        } else if (action === "pfz") {
+                          router.push("/map");
+                        } else if (action === "weather" || action === "dashboard") {
+                          router.push("/dashboard");
+                        } else if (action === "alerts" || action === "sos") {
+                          router.push("/alerts");
+                        }
+                      }}
+                    />
                   </div>
                   <VoiceSpeaker text={reply.answer} />
                 </div>
