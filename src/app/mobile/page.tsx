@@ -2543,14 +2543,25 @@ export default function MobileAppPage() {
                 />
 
                 {/* Local Harbor Police & VTS Signals Direct Contact Box */}
-                <div className="m-sos-port-box">
-                  <div className="m-sos-port-title">
-                    <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <MapPin size={14} style={{ color: "#087d98" }} />
+                <div
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "16px",
+                    padding: "16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                    boxShadow: "0 2px 10px rgba(8, 37, 54, 0.05)",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 800, fontSize: "13px", color: "#082536" }}>
+                      <MapPin size={15} style={{ color: "#087d98" }} />
                       <span>{sectorSOS.harborName} ({sectorSOS.state})</span>
                     </span>
-                    <span style={{ fontSize: "10px", color: "#64748b", fontWeight: 600 }}>
-                      Local Port Ops
+                    <span style={{ fontSize: "10.5px", color: "#475569", fontWeight: 700, background: "#f1f5f9", padding: "2px 8px", borderRadius: "10px" }}>
+                      {alertUi.localSosTitle}
                     </span>
                   </div>
 
@@ -2558,7 +2569,7 @@ export default function MobileAppPage() {
                     <a href={`tel:${sectorSOS.coastGuardPhone}`} className="m-sos-local-btn">
                       <div className="m-sos-local-label">
                         <span className="m-sos-local-name">{sectorSOS.coastGuardStation}</span>
-                        <span className="m-sos-local-desc">Indian Coast Guard MRCC</span>
+                        <span className="m-sos-local-desc">Indian Coast Guard Regional Rescue</span>
                       </div>
                       <span className="m-sos-local-call">
                         <PhoneCall size={11} /> {sectorSOS.coastGuardPhone}
@@ -2587,7 +2598,7 @@ export default function MobileAppPage() {
                   </div>
 
                   <div className="m-sos-vhf-badge">
-                    <Radio size={13} style={{ color: "#16a34a" }} />
+                    <Radio size={14} style={{ color: "#16a34a" }} />
                     <span>{alertUi.vhfDistressLabel} ({sectorSOS.vhfChannel})</span>
                   </div>
                 </div>

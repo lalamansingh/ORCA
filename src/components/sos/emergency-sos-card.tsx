@@ -308,30 +308,41 @@ export function EmergencySOSCard({
   const isSent = workflowState === "SENT" || workflowState === "QUEUED_OFFLINE";
 
   return (
-    <div className="m-sos-emergency-container">
+    <div
+      style={{
+        background: "#ffffff",
+        border: "1px solid #e2e8f0",
+        borderRadius: "16px",
+        padding: "16px",
+        boxShadow: "0 2px 10px rgba(8, 37, 54, 0.05)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px",
+      }}
+    >
       {/* Top Header & Fisherman Identity Profile */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div
             style={{
-              width: "32px",
-              height: "32px",
-              borderRadius: "8px",
-              background: "rgba(225, 29, 72, 0.15)",
-              border: "1px solid rgba(244, 63, 94, 0.3)",
+              width: "34px",
+              height: "34px",
+              borderRadius: "10px",
+              background: "#ffe4e6",
+              border: "1px solid #fecdd3",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#f43f5e",
+              color: "#e11d48",
             }}
           >
-            <ShieldAlert size={18} />
+            <ShieldAlert size={19} />
           </div>
           <div>
-            <strong style={{ fontSize: "13.5px", color: "#f8fafc", display: "block", letterSpacing: "0.2px" }}>
+            <strong style={{ fontSize: "14px", color: "#0f172a", display: "block", fontWeight: 800 }}>
               {i18n.title}
             </strong>
-            <span style={{ fontSize: "10.5px", color: "#94a3b8" }}>
+            <span style={{ fontSize: "11px", color: "#64748b" }}>
               {locationLabel}
             </span>
           </div>
@@ -341,20 +352,20 @@ export function EmergencySOSCard({
           type="button"
           onClick={onOpenOnboarding}
           style={{
-            background: "rgba(255, 255, 255, 0.08)",
-            border: "1px solid rgba(255, 255, 255, 0.18)",
-            color: "#e2e8f0",
+            background: "#f8fafc",
+            border: "1px solid #cbd5e1",
+            color: "#334155",
             padding: "5px 10px",
             borderRadius: "8px",
             fontSize: "11px",
-            fontWeight: 600,
+            fontWeight: 700,
             display: "flex",
             alignItems: "center",
-            gap: "5px",
+            gap: "4px",
             cursor: "pointer",
           }}
         >
-          <HelpCircle size={13} style={{ color: "#38bdf8" }} />
+          <HelpCircle size={13} style={{ color: "#0284c7" }} />
           <span>{i18n.setup}</span>
         </button>
       </div>
@@ -364,26 +375,26 @@ export function EmergencySOSCard({
         <div
           style={{
             background: isResolved
-              ? "rgba(16, 185, 129, 0.12)"
+              ? "#f0fdf4"
               : isAck || isResponding
-              ? "rgba(14, 165, 233, 0.15)"
-              : "rgba(225, 29, 72, 0.15)",
-            border: `1.5px solid ${isResolved ? "#10b981" : isAck || isResponding ? "#38bdf8" : "#f43f5e"}`,
+              ? "#f0f9ff"
+              : "#fff1f2",
+            border: `1.5px solid ${isResolved ? "#86efac" : isAck || isResponding ? "#7dd3fc" : "#fca5a5"}`,
             borderRadius: "14px",
             padding: "14px",
-            color: "#ffffff",
+            color: "#0f172a",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               {isResolved ? (
-                <CheckCircle2 size={18} style={{ color: "#34d399" }} />
+                <CheckCircle2 size={18} style={{ color: "#16a34a" }} />
               ) : isAck ? (
-                <CheckCircle2 size={18} style={{ color: "#38bdf8" }} />
+                <CheckCircle2 size={18} style={{ color: "#0284c7" }} />
               ) : (
-                <Clock size={18} style={{ color: "#fbbf24" }} />
+                <Clock size={18} style={{ color: "#d97706" }} />
               )}
-              <strong style={{ fontSize: "13px" }}>
+              <strong style={{ fontSize: "13px", color: isResolved ? "#166534" : isAck ? "#075985" : "#9f1239" }}>
                 {isResolved
                   ? i18n.resolved
                   : isAck
@@ -399,33 +410,33 @@ export function EmergencySOSCard({
                 fontWeight: 800,
                 padding: "2px 7px",
                 borderRadius: "6px",
-                background: "rgba(0, 0, 0, 0.35)",
-                color: "#e2e8f0",
+                background: "rgba(0, 0, 0, 0.08)",
+                color: "#334155",
               }}
             >
               {activeReport.delivery_path === "direct" ? "DIRECT" : "OFFLINE RELAY"}
             </span>
           </div>
 
-          <p style={{ fontSize: "11.5px", color: "#cbd5e1", margin: "4px 0 10px 0", lineHeight: 1.4 }}>
+          <p style={{ fontSize: "11.5px", color: "#334155", margin: "4px 0 10px 0", lineHeight: 1.45 }}>
             {isAck ? i18n.ackDesc : i18n.loggedDesc}
           </p>
 
           <div
             style={{
-              background: "rgba(0, 0, 0, 0.3)",
+              background: "#ffffff",
               padding: "10px",
               borderRadius: "8px",
-              fontSize: "11px",
+              fontSize: "11.5px",
               marginBottom: "10px",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              border: "1px solid #e2e8f0",
             }}
           >
-            <div style={{ color: "#94a3b8", fontSize: "10px" }}>{i18n.transcriptLabel}</div>
-            <div style={{ fontStyle: "italic", color: "#f8fafc", marginTop: "2px" }}>
+            <div style={{ color: "#64748b", fontSize: "10px", fontWeight: 600 }}>{i18n.transcriptLabel}</div>
+            <div style={{ fontStyle: "italic", color: "#0f172a", marginTop: "3px", fontWeight: 600 }}>
               &ldquo;{activeReport.transcript}&rdquo;
             </div>
-            <div style={{ color: "#38bdf8", fontSize: "10.5px", marginTop: "6px", fontWeight: 600 }}>
+            <div style={{ color: "#0284c7", fontSize: "11px", marginTop: "6px", fontWeight: 700 }}>
               📍 {activeReport.latitude.toFixed(4)}° N, {activeReport.longitude.toFixed(4)}° E (±{activeReport.accuracy_meters}m)
             </div>
           </div>
@@ -435,9 +446,9 @@ export function EmergencySOSCard({
             onClick={resetSOS}
             style={{
               width: "100%",
-              background: "rgba(255, 255, 255, 0.15)",
-              border: "1px solid rgba(255, 255, 255, 0.25)",
-              color: "#ffffff",
+              background: "#f1f5f9",
+              border: "1px solid #cbd5e1",
+              color: "#334155",
               padding: "8px",
               borderRadius: "8px",
               fontSize: "11.5px",
@@ -450,8 +461,19 @@ export function EmergencySOSCard({
         </div>
       ) : (
         /* Primary In-App SOS Big Trigger Control */
-        <div className="m-sos-hero-action">
-          <p style={{ fontSize: "11.5px", color: "#fecdd3", margin: 0, lineHeight: 1.45 }}>
+        <div
+          style={{
+            background: "#fff5f5",
+            border: "1px dashed #fca5a5",
+            borderRadius: "14px",
+            padding: "14px",
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          }}
+        >
+          <p style={{ fontSize: "11.5px", color: "#475569", margin: 0, lineHeight: 1.45 }}>
             {i18n.triggerDesc}
           </p>
 
@@ -463,38 +485,75 @@ export function EmergencySOSCard({
             onTouchStart={() => setIsPressing(true)}
             onTouchEnd={() => setIsPressing(false)}
             onClick={armSOS}
+            style={{
+              width: "100%",
+              background: "linear-gradient(135deg, #e11d48 0%, #be123c 100%)",
+              border: "none",
+              color: "#ffffff",
+              padding: "13px",
+              borderRadius: "12px",
+              fontSize: "15px",
+              fontWeight: 900,
+              letterSpacing: "0.3px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              boxShadow: "0 4px 14px rgba(225, 29, 72, 0.35)",
+            }}
           >
             <ShieldAlert size={20} />
             <span>{i18n.triggerBtn}</span>
           </button>
 
-          <div style={{ fontSize: "10.5px", color: "#94a3b8" }}>
+          <div style={{ fontSize: "10.5px", color: "#64748b" }}>
             💡 {i18n.hwTrigger}
           </div>
         </div>
       )}
 
       {/* Live System Status Indicators (GPS & Network Relay State) */}
-      <div className="m-sos-telemetry-grid">
-        <div className="m-sos-telemetry-pill">
-          <MapPin size={15} style={{ color: gpsAvailable ? "#34d399" : "#fbbf24", flexShrink: 0 }} />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+        <div
+          style={{
+            background: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            padding: "8px 10px",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <MapPin size={15} style={{ color: gpsAvailable ? "#16a34a" : "#d97706", flexShrink: 0 }} />
           <div>
-            <span className="m-sos-telemetry-label">{i18n.gpsStatus}</span>
-            <span className="m-sos-telemetry-val" style={{ color: gpsAvailable ? "#34d399" : "#fbbf24" }}>
+            <span style={{ fontSize: "9.5px", color: "#64748b", display: "block" }}>{i18n.gpsStatus}</span>
+            <span style={{ fontSize: "11.5px", fontWeight: 700, color: gpsAvailable ? "#16a34a" : "#d97706", display: "block" }}>
               {gpsAvailable ? i18n.gpsAvail : i18n.gpsLast}
             </span>
           </div>
         </div>
 
-        <div className="m-sos-telemetry-pill">
+        <div
+          style={{
+            background: "#f8fafc",
+            border: "1px solid #e2e8f0",
+            padding: "8px 10px",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
           {isOnline ? (
-            <Wifi size={15} style={{ color: "#34d399", flexShrink: 0 }} />
+            <Wifi size={15} style={{ color: "#16a34a", flexShrink: 0 }} />
           ) : (
-            <WifiOff size={15} style={{ color: "#fbbf24", flexShrink: 0 }} />
+            <WifiOff size={15} style={{ color: "#d97706", flexShrink: 0 }} />
           )}
           <div>
-            <span className="m-sos-telemetry-label">{i18n.netRelay}</span>
-            <span className="m-sos-telemetry-val" style={{ color: isOnline ? "#34d399" : "#fbbf24" }}>
+            <span style={{ fontSize: "9.5px", color: "#64748b", display: "block" }}>{i18n.netRelay}</span>
+            <span style={{ fontSize: "11.5px", fontWeight: 700, color: isOnline ? "#16a34a" : "#d97706", display: "block" }}>
               {isOnline ? i18n.netOnline : i18n.netOffline}
             </span>
           </div>
@@ -502,14 +561,46 @@ export function EmergencySOSCard({
       </div>
 
       {/* Emergency Direct Hotlines */}
-      <div className="m-sos-helplines-grid">
-        <a href="tel:1554" className="m-sos-helpline-pill cg">
-          <PhoneCall size={13} style={{ color: "#f43f5e" }} />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+        <a
+          href="tel:1554"
+          style={{
+            background: "#fff1f2",
+            border: "1px solid #fecdd3",
+            color: "#be123c",
+            padding: "10px 8px",
+            borderRadius: "10px",
+            fontSize: "11.5px",
+            fontWeight: 800,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+            textDecoration: "none",
+          }}
+        >
+          <PhoneCall size={13} style={{ color: "#e11d48" }} />
           <span>{i18n.cgCall}</span>
         </a>
 
-        <a href="tel:1093" className="m-sos-helpline-pill mp">
-          <PhoneCall size={13} style={{ color: "#38bdf8" }} />
+        <a
+          href="tel:1093"
+          style={{
+            background: "#f0f9ff",
+            border: "1px solid #bae6fd",
+            color: "#0369a1",
+            padding: "10px 8px",
+            borderRadius: "10px",
+            fontSize: "11.5px",
+            fontWeight: 800,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+            textDecoration: "none",
+          }}
+        >
+          <PhoneCall size={13} style={{ color: "#0284c7" }} />
           <span>{i18n.mpCall}</span>
         </a>
       </div>
