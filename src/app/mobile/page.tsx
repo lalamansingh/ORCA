@@ -38,6 +38,7 @@ import { usePFZ } from "@/features/pfz/hooks/use-pfz";
 import { useOceanProducts } from "@/features/ocean-products/hooks/use-ocean-products";
 import { formatMeasurement, degreesToCompass, updatedAgo } from "@/features/conditions/format";
 import { sendMessage, type ConversationReply } from "@/lib/api/ai";
+import { classifyIntent } from "@/features/ai/intent-router";
 import { MarineMap } from "@/components/marine-map";
 import { VoiceMic, VoiceSpeaker } from "@/components/voice-mic";
 import type { SelectedLocation } from "@/features/map/types";
@@ -1052,55 +1053,64 @@ export default function MobileAppPage() {
     // Master LLM Architecture:
     // Pass user query, conversation history (multi-turn context), constraints, and live port evidence
     // to the LLM to genuinely generate the response at runtime.
+    const history = chatMessages.slice(-8).map((m) => ({
+      role: (m.sender === "user" ? "user" : "assistant") as "user" | "assistant",
+      content: m.text,
+    }));
+
+    // Semantic Intent Classification (Rule #1 & #3)
+    const routing = classifyIntent(q, history);
+    const isGeneral = routing.intent === "GENERAL_CONVERSATION";
+
+    // Load domain data ONLY if the intent requires it (Rule #3: Never fetch before routing)
+    const liveEvidence = isGeneral
+      ? undefined
+      : {
+          locationLabel: liveRiskContext.locationLabel,
+          waveHeight: liveRiskContext.waveHeight,
+          windSpeed: liveRiskContext.windSpeed,
+          windGust: liveRiskContext.windGust,
+          sst: liveRiskContext.sst,
+          currentSpeed: liveRiskContext.currentSpeed,
+          riskLevel: liveRiskContext.riskLevel,
+          riskScore: liveRiskContext.riskScore,
+          alerts: partitionedAlerts.localAlerts.map((a) => ({
+            title: a.title,
+            severity: a.severityLabel,
+            desc: a.desc || a.advice,
+          })),
+          pfz: displayPFZList.map((p) => ({
+            name: p.name,
+            dist: p.dist,
+            dir: p.dir,
+            depth: p.depth,
+            yield: p.yield,
+            fish: p.fish,
+          })),
+        };
+
+    // Detect user operational constraints (fuel, timing) if relevant
+    const constraints: Record<string, unknown> = {};
+    if (routing.requires_navigation || routing.intent === "FUEL_QUERY") {
+      const fuelData = detectFuelConstraint(q);
+      const timeData = detectTimeConstraint(q);
+      if (fuelData.hasFuel && fuelData.liters) constraints.fuelLiters = fuelData.liters;
+      if (timeData.hasTime && timeData.returnHour) constraints.returnTime = timeData.returnHour;
+    }
+
     try {
       const prevReplies = chatMessages.filter((m) => m.reply?.conversation_id);
       const lastConvId = prevReplies.length > 0 ? prevReplies[prevReplies.length - 1]?.reply?.conversation_id : undefined;
 
-      // Extract conversation history for delta-based follow-up reasoning
-      const history = chatMessages.slice(-8).map((m) => ({
-        role: (m.sender === "user" ? "user" : "assistant") as "user" | "assistant",
-        content: m.text,
-      }));
-
-      // Assemble live port evidence from the currently monitored coastal sector
-      const liveEvidence = {
-        locationLabel: liveRiskContext.locationLabel,
-        waveHeight: liveRiskContext.waveHeight,
-        windSpeed: liveRiskContext.windSpeed,
-        windGust: liveRiskContext.windGust,
-        sst: liveRiskContext.sst,
-        currentSpeed: liveRiskContext.currentSpeed,
-        riskLevel: liveRiskContext.riskLevel,
-        riskScore: liveRiskContext.riskScore,
-        alerts: partitionedAlerts.localAlerts.map((a) => ({
-          title: a.title,
-          severity: a.severityLabel,
-          desc: a.desc || a.advice,
-        })),
-        pfz: displayPFZList.map((p) => ({
-          name: p.name,
-          dist: p.dist,
-          dir: p.dir,
-          depth: p.depth,
-          yield: p.yield,
-          fish: p.fish,
-        })),
-      };
-
-      // Detect any user-declared operational constraints (fuel, timing)
-      const fuelData = detectFuelConstraint(q);
-      const timeData = detectTimeConstraint(q);
-      const constraints: Record<string, unknown> = {};
-      if (fuelData.hasFuel && fuelData.liters) constraints.fuelLiters = fuelData.liters;
-      if (timeData.hasTime && timeData.returnHour) constraints.returnTime = timeData.returnHour;
-
       const reply = await sendMessage(
         q,
-        {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          label: liveRiskContext.locationLabel,
-        },
+        isGeneral
+          ? undefined
+          : {
+              latitude: location.latitude,
+              longitude: location.longitude,
+              label: liveRiskContext.locationLabel,
+            },
         lastConvId,
         {
           history,
@@ -1119,16 +1129,39 @@ export default function MobileAppPage() {
       };
       setChatMessages((prev) => [...prev, botMsg]);
     } catch (err) {
-      console.warn("AI Saathi runtime note, utilizing resilient grounded copilot synthesis:", err);
-      const fallbackAnswer = isGeneralKnowledgeQuery(q)
-        ? generateGeneralKnowledgeReply(q, saathiLang)
-        : generateIntelligentSaathiReply(
-            q,
-            saathiLang,
-            liveRiskContext,
-            partitionedAlerts.localAlerts,
-            displayPFZList
-          );
+      console.warn("AI Saathi runtime note, utilizing resilient conversational synthesis:", err);
+      let fallbackAnswer = "";
+      if (isGeneral) {
+        const lower = q.toLowerCase();
+        if (/^(oye+|oyee+|hey+|heyy+)\b/i.test(lower)) {
+          fallbackAnswer = "Haan bhai 😄 bolo, kya scene hai? Main aapki kya madad kar sakta hoon?";
+        } else if (/^(hi+|hello+|namaste)\b/i.test(lower)) {
+          fallbackAnswer = saathiLang === "te"
+            ? "నమస్కారం! ఎలా ఉన్నారు? మీకు ఎలాంటి సహాయం కావాలి?"
+            : saathiLang === "en"
+            ? "Hello! How are you doing today? How can I assist you?"
+            : "नमस्ते! कैसे हैं आप? मैं आपकी किस प्रकार सहायता कर सकता हूँ?";
+        } else if (/^(kaise ho|kya haal)\b/i.test(lower)) {
+          fallbackAnswer = "Main badhiya hoon bhai! Aap batao, sab kaisa chal raha hai?";
+        } else if (/^(thank|shukriya|dhanyawad)\b/i.test(lower)) {
+          fallbackAnswer = "Arey koi baat nahi bhai! Kabhi bhi zaroorat ho to batana. 😊";
+        } else if (/^(accha|theek hai|ok)\b/i.test(lower)) {
+          fallbackAnswer = "Ji bhai, agar koi aur sawal ho to zaroor poochiye!";
+        } else if (isGeneralKnowledgeQuery(q)) {
+          fallbackAnswer = generateGeneralKnowledgeReply(q, saathiLang);
+        } else {
+          fallbackAnswer = "Ji boliye, main aapki kaise madad kar sakta hoon?";
+        }
+      } else {
+        fallbackAnswer = generateIntelligentSaathiReply(
+          q,
+          saathiLang,
+          liveRiskContext,
+          partitionedAlerts.localAlerts,
+          displayPFZList
+        );
+      }
+
       setChatMessages((prev) => [
         ...prev,
         {

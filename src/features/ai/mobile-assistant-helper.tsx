@@ -687,14 +687,34 @@ export function generateIntelligentSaathiReply(
     }
   }
 
-  // --- 11. GENERAL CONVERSATIONAL MARINE FALLBACK (DECISION FIRST) ---
-  if (lang === "en") {
-    return `📍 **${loc}** (\`${coords}\`):\n\n${isSafe ? "🟢 **Conditions are currently favourable.**" : isCaution ? "🟡 **Caution advised for coastal operations.**" : "🔴 **Hazardous sea conditions detected.**"}\n\n• **Current Sea Risk**: **${isSafe ? "LOW RISK (Safe Sea)" : isCaution ? "MODERATE RISK (Caution)" : "HIGH RISK (Danger)"}** (${liveRisk.riskScore}/100)\n• **Waves**: ${wave} | **Wind**: ${wind}\n• **Fisheries**: Nearest PFZ corridor is ${topPFZ.dist} offshore (${topPFZ.dir}).\n\nAsk me anything about today's weather, PFZ coordinates, fuel feasibility, or safety!\n\n[🌊 View Sea Conditions](#action-weather)\n[🗺️ View Route on Map](#action-map)`;
-  } else if (lang === "te") {
-    return `📍 **${loc}** (\`${coords}\`):\n\n${isSafe ? "🟢 **ప్రస్తుతం పరిస్థితులు అనుకూలంగా ఉన్నాయి.**" : isCaution ? "🟡 **జాగ్రత్త అవసరం.**" : "🔴 **సముద్రం ప్రమాదకరంగా ఉంది.**"}\n\n• **భద్రతా స్కోరు**: ${liveRisk.riskScore}/100\n• **అలలు**: ${wave} | **గాలి**: ${wind}\n• **చేపల వేట**: సమీప జోన్ తీరం నుండి ${topPFZ.dist} వద్ద ఉంది.\n\n[🌊 వాతావరణం](#action-weather)\n[🗺️ మ్యాప్‌లో చూడండి](#action-map)`;
-  } else {
-    return `📍 **${loc}** (\`${coords}\`):\n\n${isSafe ? "🟢 **फिलहाल समुद्री स्थितियां अनुकूल हैं।**" : isCaution ? "🟡 **सावधानी बरतने की सलाह दी जाती है।**" : "🔴 **समुद्र में उच्च जोखिम की स्थिति है।**"}\n\n• **समुद्री जोखिम स्कोर**: ${liveRisk.riskScore}/100 (${isSafe ? "कम जोखिम" : isCaution ? "मध्यम" : "उच्च खतरा"})\n• **लहरें**: ${wave} | **हवा की गति**: ${wind}\n• **मत्स्य क्षेत्र (PFZ)**: निकटतम क्षेत्र तट से ${topPFZ.dist} (${topPFZ.dir}) पर स्थित है।\n\nआप मुझसे मछली पकड़ने, ईंधन योजना, मौसम या सुरक्षा के बारे में कुछ भी पूछ सकते हैं!\n\n[🌊 समुद्री मौसम जांचें](#action-weather)\n[🗺️ मैप पर मछली क्षेत्र देखें](#action-map)`;
+  // --- 11. GENERAL CASUAL CONVERSATION FALLBACK (RULE #4: SAFE DEFAULT) ---
+  const lowerQ = query.toLowerCase();
+  if (/^(oye+|oyee+|hey+|heyy+)\b/i.test(lowerQ)) {
+    return "Haan bhai 😄 bolo, kya scene hai? Main aapki kya madad kar sakta hoon?";
   }
+  if (/^(hi+|hello+|namaste)\b/i.test(lowerQ)) {
+    return lang === "te"
+      ? "నమస్కారం! ఎలా ఉన్నారు? మీకు ఎలాంటి సహాయం కావాలి?"
+      : lang === "en"
+      ? "Hello! How are you doing today? How can I assist you?"
+      : "नमस्ते! कैसे हैं आप? मैं आपकी किस प्रकार सहायता कर सकता हूँ?";
+  }
+  if (/^(kaise ho|kya haal)\b/i.test(lowerQ)) {
+    return "Main badhiya hoon bhai! Aap batao, sab kaisa chal raha hai?";
+  }
+  if (/^(thank|shukriya|dhanyawad)\b/i.test(lowerQ)) {
+    return "Arey koi baat nahi bhai! Kabhi bhi zaroorat ho to batana. 😊";
+  }
+  if (/^(accha|theek hai|ok)\b/i.test(lowerQ)) {
+    return "Ji bhai, agar koi aur sawal ho to zaroor poochiye!";
+  }
+  if (lang === "te") {
+    return "నమస్కారం! నేను సాగర్ సాథిని. మీకు ఎలా సహాయపడగలను?";
+  }
+  if (lang === "en") {
+    return "Hello! I am Sagar Saathi, your coastal and marine companion. How can I help you today?";
+  }
+  return "नमस्ते! मैं सागर साथी हूँ। बताइए, मैं आपकी क्या मदद कर सकता हूँ?";
 }
 
 // ==========================================

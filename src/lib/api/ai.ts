@@ -45,23 +45,45 @@ export type ConversationReply = {
   orchestration: OrchestrationResult;
 };
 
-export const sendMessage = (
+export const sendMessage = async (
   query: string,
   selected_location?: Record<string, unknown>,
   conversation_id?: string,
   options?: SendMessageOptions
-) =>
-  apiClient<ConversationReply>(`${API_V1_PREFIX}/ai/conversations/messages`, {
+): Promise<ConversationReply> => {
+  const payload = {
+    query,
+    selected_location,
+    conversation_id,
+    history: options?.history,
+    constraints: options?.constraints,
+    live_evidence: options?.live_evidence,
+    language: options?.language,
+  };
+
+  // Try direct Next.js App Router serverless route first
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 65_000);
+    const res = await fetch("/api/v1/ai/conversations/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (res.ok) {
+      return (await res.json()) as ConversationReply;
+    }
+  } catch (directErr) {
+    console.warn("Direct route fetch notice, using fallback apiClient:", directErr);
+  }
+
+  return apiClient<ConversationReply>(`${API_V1_PREFIX}/ai/conversations/messages`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query,
-      selected_location,
-      conversation_id,
-      history: options?.history,
-      constraints: options?.constraints,
-      live_evidence: options?.live_evidence,
-      language: options?.language,
-    }),
+    body: JSON.stringify(payload),
     timeoutMs: 65_000,
   });
+};
+
