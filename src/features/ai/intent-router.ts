@@ -41,6 +41,8 @@ export interface ExtractedConstraints {
   returnTime?: string;
   departureTime?: string;
   vesselType?: string;
+  targetLat?: number;
+  targetLon?: number;
 }
 
 export interface IntentClassificationResult {
@@ -96,32 +98,33 @@ const FUEL_PATTERNS = [
 
 // Navigation / Route patterns
 const NAVIGATION_PATTERNS = [
-  /\b(ghar wapas|harbor wapas|wapas jana|port rasta|route to|harbor ka rasta|direction to|bearing to|navigation|kis disha|heading|kaise laute|route|compass)\b/i,
-  /(తిరిగి వెళ్ళాలి|రస్తా|దారి|வழி|रस्ता|दिशा|वापसी)/i,
+  /\b(ghar wapas|harbor wapas|wapas jana|port rasta|route to|harbor ka rasta|direction to|bearing to|navigation|kis disha|heading|kaise laute|route|compass|safe passage|safe corridor|waypoint|fairway|distance to|how far|nautical miles?|bearing|briefing for route|safe navigation)\b/i,
+  /(తిరిగి వెళ్ళాలి|రస్తా|దారి|வழி|रस्ता|दिशा|वापसी|मार्ग|ദിശ)/i,
 ];
 
 // PFZ (Potential Fishing Zone) patterns
 const PFZ_PATTERNS = [
-  /\b(pfz|potential fishing zone|fishing zone|machhli|machli|macchi|fish|fishes|catch|pomfret|surmai|tuna|mackerel|ribbonfish|hilsa|sardine|prawns|jhinga|chlorophyll|sst front|fish productivity)\b/i,
-  /(మత్స్య క్షేత్రం|చేపలు ఎక్కడ|చేపల వేట|మీன்பிடி மண்டலம்|மச்சலி|मछली क्षेत्र|मछली कहाँ|मछली किधर|मछली)/i,
+  /\b(pfz|potential fishing zone|potential fishing zones|fishing zone|fishing zones|machhli|machli|macchi|fish|fishes|fishing|catch|pomfret|surmai|tuna|mackerel|ribbonfish|hilsa|sardine|prawns|shrimp|jhinga|chlorophyll|sst front|fish productivity|where to fish|good catch|yield)\b/i,
+  /(మత్స్య క్షేత్రం|చేపలు ఎక్కడ|చేపల వేట|మీன்பிடி மண்டலம்|மச்சலி|मछली क्षेत्र|मछली कहाँ|मछली किधर|मछली|മത്സ്യ)/i,
 ];
 
 // Sea & Weather patterns
 const SEA_WEATHER_PATTERNS = [
-  /\b(wave|waves|swell|wind|wind speed|lahrein|lehar|hawa ki gati|hawa|currents|tide|tides|high tide|low tide|water temp|samundar ka mausam|samundar kaisa|sea state|sea condition|sea kaisa hai)\b/i,
-  /(అలలు|గాలి|తరంగాలు|ఉష్ణోగ్రత|లాటా|वारे|அலைகள்|காற்று|लहरें|हवा|ज्वार|भाटा|समुद्र)/i,
+  /\b(wave|waves|swell|wind|winds|wind speed|wind direction|gust|gusts|current|currents|tide|tides|high tide|low tide|water temp|water temperature|sea temp|sea temperature|sst|sea state|sea conditions?|sea weather|sea status|ocean state|ocean conditions?|ocean weather|marine conditions?|marine weather|weather conditions?|weather at|weather in|weather today|weather forecast|live weather|sea|ocean|marine|lahrein|lehar|hawa ki gati|hawa|samundar ka mausam|samundar kaisa|samundar status|samudra|kaisa mausam|conditions? at|conditions?)\b/i,
+  /(అలలు|గాలి|తరంగాలు|ఉష్ణోగ్రత|లాటా|वारे|அலைகள்|காற்று|लहरें|हवा|ज्वार|भाटा|समुद्र|मौसम|వాతావరణం|வானிலை|हवामान)/i,
 ];
 
 // Safety / Departure patterns
 const SAFETY_PATTERNS = [
-  /\b(safe hai|ja sakte hain|samundar jana sahi|cyclone|warning|alert|danger|khatra|kya main ja sakta|kya hum ja sakte|risk kitna|surakshit hai|kal safe|safe to go|should i go|jana chahiye|jana sahi hoga)\b/i,
-  /(సురక్షితమా|భద్రతా|सुरक्षित आहे का|பாதுகாப்பானதா|सुरक्षित है|जाना सही है|जाना सुरक्षित)/i,
+  /\b(safe hai|ja sakte hain|samundar jana sahi|cyclone|warning|alert|danger|khatra|kya main ja sakta|kya hum ja sakte|risk kitna|surakshit hai|kal safe|safe to go|should i go|jana chahiye|jana sahi hoga|is it safe|can i go|safe for fishing|safety assessment|voyage safe|risk score)\b/i,
+  /(సురక్షితమా|భద్రతా|सुरक्षित आहे का|பாதுகாப்பானதா|सुरक्षित है|जाना सही है|जाना सुरक्षित|സുരക്ഷിതമാണോ|સુરક્ષિત)/i,
 ];
 
 // Comprehensive ORCA Domain Keyword Matcher (Rule 14)
 const ORCA_DOMAIN_PATTERNS = [
-  /\b(fishing|fishermen|fisherman|pfz|machli|machhli|macchi|jhinga|shikaar|sea\s*state|sst|chlorophyll|marine|ocean|coastal|tide|tides|high\s*tide|low\s*tide|wave|waves|swell|wind|winds|current|currents|harbour|harbor|jetty|port|cyclone|lightning|vessel|trawler|boat|boats|catamaran|dinghy|navigation|corridor|boundary|boundaries|geofencing|route|fish|productivity|satellite|diesel|fuel)\b/i,
-  /(मछली|मत्स्य|समुद्र|समंदर|लहर|लहरें|हवा|चक्रवात|नाव|बंदरगाह|डीजल|ईंधन|చేపలు|మత్స్య|సముద్రం|అలలు|గాలి|బోటు|తుఫాను|డీజిల్|ఇంధనం|మీன்|மீன்பிடி|கடல்|அலைகள்|காற்று|படகு|புயல்|எரிபொருள்|मासे|लाटा|वारे|बोट|वादळ)/i,
+  /\b(fishing|fishermen|fisherman|pfz|machli|machhli|macchi|jhinga|shikaar|sea|sea\s*state|sea\s*conditions?|sea\s*weather|ocean|ocean\s*conditions?|marine|marine\s*conditions?|coastal|tide|tides|high\s*tide|low\s*tide|wave|waves|swell|wind|winds|current|currents|harbour|harbor|jetty|port|dock|coast|inshore|offshore|cyclone|lightning|vessel|trawler|boat|boats|catamaran|dinghy|navigation|corridor|fairway|waypoint|boundary|boundaries|geofencing|route|fish|fishes|catch|yield|chlorophyll|sst|productivity|satellite|diesel|fuel|coordinate|coordinates|coords?|latitude|longitude|lat|lon|degrees?|conditions?|weather|voyage|sail|sailing)\b/i,
+  /\d{1,2}(?:\.\d+)?\s*°?\s*[NSns]\s*[,/ ]+\s*\d{1,3}(?:\.\d+)?\s*°?\s*[EWew]/i,
+  /(मछली|मत्स्य|समुद्र|समंदर|लहर|लहरें|हवा|चक्रवात|नाव|बंदरगाह|डीजल|ईंधन|निर्देशांक|చేపలు|మత్స్య|సముద్రం|అలలు|గాలి|బోటు|తుఫాను|డీజిల్|ఇంధనం|మీన్|మీன்பிடி|கடல்|அலைகள்|காற்று|படகு|புயல்|எரிபொருள்|மாसे|लाटा|वारे|बोट|वादळ)/i,
 ];
 
 // Follow-up delta triggers
@@ -137,7 +140,7 @@ const FOLLOW_UP_DELTA_PATTERNS = [
 ];
 
 /**
- * Extracts operational user constraints from query text and conversation history
+ * Extracts operational user constraints and coordinates from query text and conversation history
  */
 export function extractConstraintsFromText(
   query: string,
@@ -145,6 +148,19 @@ export function extractConstraintsFromText(
 ): ExtractedConstraints {
   const allTexts = [...history.map((h) => h.content), query].join(" ");
   const constraints: ExtractedConstraints = {};
+
+  // GPS coordinates parsing: e.g. "18.988°N, 72.943°E" or "15.400°N, 73.800°E" or "18.988, 72.943"
+  const coordMatch = allTexts.match(/(\d{1,2}(?:\.\d+)?)\s*°?\s*([NSns])?\s*[,/ ]+\s*(\d{1,3}(?:\.\d+)?)\s*°?\s*([EWew])?/);
+  if (coordMatch) {
+    let lat = parseFloat(coordMatch[1]);
+    let lon = parseFloat(coordMatch[3]);
+    if (coordMatch[2] && coordMatch[2].toUpperCase() === "S") lat = -lat;
+    if (coordMatch[4] && coordMatch[4].toUpperCase() === "W") lon = -lon;
+    if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+      constraints.targetLat = lat;
+      constraints.targetLon = lon;
+    }
+  }
 
   // Fuel liters: e.g. "18L", "18 litre", "15 liters", "20 ltr", "18 लीटर"
   const fuelMatch = allTexts.match(/(\d+(\.\d+)?)\s*(l|litre|litres|liter|liters|ltr|लीटर|లీటర్|லிட்டர்)\b/i);

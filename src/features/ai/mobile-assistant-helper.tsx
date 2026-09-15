@@ -481,7 +481,7 @@ export function isWeatherQuery(text: string): boolean {
     lower.includes("wave") ||
     lower.includes("lehar") ||
     lower.includes("लहर") ||
-    lower.includes("అలలు") ||
+    lower.includes("अलలు") ||
     lower.includes("లాటా") ||
     lower.includes("அலை") ||
     lower.includes("wind") ||
@@ -492,7 +492,27 @@ export function isWeatherQuery(text: string): boolean {
     lower.includes("காற்று") ||
     lower.includes("sst") ||
     lower.includes("current") ||
-    lower.includes("dhara")
+    lower.includes("dhara") ||
+    lower.includes("sea condition") ||
+    lower.includes("sea conditions") ||
+    lower.includes("ocean condition") ||
+    lower.includes("ocean conditions") ||
+    lower.includes("marine condition") ||
+    lower.includes("marine conditions") ||
+    lower.includes("sea state") ||
+    lower.includes("sea weather") ||
+    lower.includes("ocean state") ||
+    lower.includes("sea status") ||
+    lower.includes("coordinate") ||
+    lower.includes("coordinates") ||
+    lower.includes("coord") ||
+    lower.includes("coords") ||
+    lower.includes("latitude") ||
+    lower.includes("longitude") ||
+    lower.includes("समुद्र") ||
+    lower.includes("समंदर") ||
+    lower.includes("निर्देशांक") ||
+    /\d{1,2}(?:\.\d+)?\s*°?\s*[NSns]\s*[,/ ]+\s*\d{1,3}(?:\.\d+)?\s*°?\s*[EWew]/i.test(text)
   );
 }
 
@@ -679,7 +699,7 @@ export function generateIntelligentSaathiReply(
   // --- 10. WEATHER & LIVE SEA STATUS ---
   if (isWeatherQuery(query)) {
     if (lang === "en") {
-      return `📍 **Live Ocean Weather & Conditions — ${loc}** (\`${coords}\`):\n\n• 🌊 **Significant Wave Height**: **${wave}**\n• 💨 **Wind Speed**: **${wind}**\n• 🌡️ **Sea Surface Temperature (SST)**: **${sst}**\n• 🧭 **Ocean Surface Currents**: **${currents}**\n• 🛡️ **Safety Status**: **${isSafe ? "🟢 LOW RISK (Favourable)" : isCaution ? "🟡 MODERATE RISK (Caution)" : "🔴 HIGH RISK (Danger)"}** (${liveRisk.riskScore}/100)\n\n💡 **Operational Guidance**: ${liveRisk.recommendation || (isSafe ? "Conditions are calm and optimal for coastal sailing and fisheries." : "Maintain caution and monitoring.")}\n\n[🌊 View Detailed Dashboard](#action-weather)\n[🗺️ View Coastal Map](#action-map)`;
+      return `Captain, ${isSafe ? "🟢" : isCaution ? "🟡" : "🔴"} **${coords} (${loc})** — The sea is ${isSafe ? "calm and safe for voyage" : isCaution ? "moderate, exercise caution" : "rough and hazardous"}. You can plan operations accordingly.\n\n🌊 **Sea State & Weather Snapshot (${coords})**\n* **Wave Height (${wave})**: ${isSafe ? "Gentle chop. Navigation is smooth and comfortable for both small fiber boats and larger trawlers." : "Elevated waves. Maintain high vigilance."}\n* **Wind & Gusts (${wind})**: ${isSafe ? "Favourable breeze. Ideal conditions for drift fishing or steady navigation." : "Strong gusts active. Secure equipment."}\n* **Risk Score (${liveRisk.riskScore} - ${isSafe ? "Low Risk" : isCaution ? "Moderate Risk" : "High Risk"})**: ${alerts && alerts.length > 0 ? "Active advisory bulletins in place." : "No severe cyclone or high-wave hazards detected."}\n* **Sea Surface Temperature (${sst})**: Optimal for coastal marine life and fish aggregation.\n* **Ocean Current (${currents})**: Steady flow within normal operational parameters.\n\n⏰ **Recommended Window**\n* **Best Time to Go**: Morning hours are optimal. Plan return before afternoon coastal breeze shifts to ensure safe harbor arrival.\n\nAre you heading towards **${topPFZ.name}** (${topPFZ.dist} offshore, bearing ${topPFZ.dir})? Let me know to lock the waypoints on your map!\n\n[🗺️ View Route on Map](#action-map)\n[🌊 View Sea Conditions](#action-weather)`;
     } else if (lang === "te") {
       return `📍 **${loc}** (\`${coords}\`) ప్రత్యక్ష సముద్ర వాతావరణం:\n\n• 🌊 **అలల ఎత్తు**: **${wave}**\n• 💨 **గాలి వేగం**: **${wind}**\n• 🌡️ **సముద్ర ఉష్ణోగ్రత (SST)**: **${sst}**\n• 🧭 **ప్రవాహాలు**: **${currents}**\n• 🛡️ **భద్రత**: **${isSafe ? "🟢 సురక్షితం" : isCaution ? "🟡 జాగ్రత్త" : "🔴 ప్రమాదం"}** (${liveRisk.riskScore}/100)\n\n[🌊 వాతావరణ వివరాలు](#action-weather)\n[🗺️ మ్యాప్‌లో చూడండి](#action-map)`;
     } else {

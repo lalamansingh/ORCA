@@ -265,10 +265,16 @@ Match the user's language (${lang} / Hinglish / Telugu / Tamil / English) natura
       ...constraints,
     };
 
+    const effectiveLat = routing.extracted_constraints?.targetLat ?? loc.latitude;
+    const effectiveLon = routing.extracted_constraints?.targetLon ?? loc.longitude;
+    const effectiveLabel = routing.extracted_constraints?.targetLat
+      ? `Coordinate ${effectiveLat.toFixed(3)}°N, ${effectiveLon.toFixed(3)}°E`
+      : (evidence.locationLabel || loc.label || "Coastal Port");
+
     const structuredEvidence = {
       location: {
-        label: evidence.locationLabel || loc.label || "Coastal Port",
-        coordinates: `${loc.latitude.toFixed(2)}° N, ${loc.longitude.toFixed(2)}° E`,
+        label: effectiveLabel,
+        coordinates: `${effectiveLat.toFixed(2)}° N, ${effectiveLon.toFixed(2)}° E`,
       },
       query_meta: {
         detected_intent: routing.intent,
@@ -348,7 +354,7 @@ INSTRUCTIONS FOR SAGAR SAATHI:
 
     // Dynamic Decision-First Fallback (if LLM is unavailable)
     if (!answerText) {
-      const locLabel = evidence.locationLabel || loc.label || "Coastal Sector";
+      const locLabel = effectiveLabel;
       const wave = evidence.waveHeight || "0.9 m";
       const wind = evidence.windSpeed || "14 km/h";
       const risk = evidence.riskLevel || "LOW";
@@ -356,30 +362,58 @@ INSTRUCTIONS FOR SAGAR SAATHI:
       const isSafe = risk === "LOW" && score <= 35;
       const isCaution = risk === "MODERATE" || (score > 35 && score <= 60);
       const topPFZ = evidence.pfz?.[0];
+      const isEn = lang === "en" || lang.startsWith("en");
 
       if (routing.intent === "SOS_QUERY") {
-        answerText = `🚨 **आपातकालीन सहायता (EMERGENCY SOS)**\n\n1. **तुरंत लंगर (Anchor) डालें**: नाव का बहाव तुरंत रोकें ताकि नाव गहरे समुद्र में न बहे।\n2. **लाइफ जैकेट पहनें**: सभी क्रू सदस्य तुरंत लाइफ जैकेट पहनें।\n3. **कोस्ट गार्ड हेल्पलाइन**: तुरंत **1554** डायल करें या VHF Channel 16 पर Mayday कॉल करें।\n4. **GPS स्थिति**: ${locLabel} (${loc.latitude.toFixed(2)}° N, ${loc.longitude.toFixed(2)}° E)\n\n[🚨 Emergency SOS](#action-sos)`;
+        answerText = isEn
+          ? `🚨 **EMERGENCY ASSISTANCE (SOS)**\n\n1. **Drop Anchor Immediately**: Arrest vessel drift to prevent moving into deep or hazardous waters.\n2. **Don Life Jackets**: All crew members must immediately wear life jackets.\n3. **Coast Guard Helpline**: Dial **1554** or broadcast Mayday on VHF Channel 16.\n4. **GPS Position**: ${locLabel} (${effectiveLat.toFixed(2)}° N, ${effectiveLon.toFixed(2)}° E)\n\n[🚨 Emergency SOS](#action-sos)`
+          : `🚨 **आपातकालीन सहायता (EMERGENCY SOS)**\n\n1. **तुरंत लंगर (Anchor) डालें**: नाव का बहाव तुरंत रोकें ताकि नाव गहरे समुद्र में न बहे।\n2. **लाइफ जैकेट पहनें**: सभी क्रू सदस्य तुरंत लाइफ जैकेट पहनें।\n3. **कोस्ट गार्ड हेल्पलाइन**: तुरंत **1554** डायल करें या VHF Channel 16 पर Mayday कॉल करें।\n4. **GPS स्थिति**: ${locLabel} (${effectiveLat.toFixed(2)}° N, ${effectiveLon.toFixed(2)}° E)\n\n[🚨 Emergency SOS](#action-sos)`;
       } else if (routing.depth_category === "DECISION" || routing.intent === "SAFETY_QUERY") {
-        const decisionText = isSafe
-          ? "🟢 **निर्णय: समुद्र में जाना सुरक्षित व अनुकूल है (Safe to Go)**"
-          : isCaution
-          ? "🟡 **निर्णय: सावधानी बरतें — केवल नजदीकी तटीय क्षेत्र तक सीमित रहें (Caution Advised)**"
-          : "🔴 **निर्णय: खतरा — आज समुद्र में जाने से बचें (Danger - Avoid Sea)**";
-        answerText = `${decisionText}\n\n📍 **${locLabel}**\n• **लहरें (Waves)**: ${wave} (${isSafe ? "शांत स्थिति" : "मध्यम हलचल"})\n• **हवा (Wind)**: ${wind}\n• **जोखिम स्कोर**: ${score}/100 (${risk})\n\n💡 **सलाह**: ${isSafe ? "सुबह 05:30 से 11:30 बजे के बीच नौकायन सबसे अच्छा रहेगा। दोपहर बाद तटीय हवाओं की निगरानी रखें।" : "तट से 5 NM के दायरे में ही रहें और खराब मौसम से पहले लौटें।"}\n\n[🌊 View Sea Conditions](#action-weather)\n[🗺️ View Route on Map](#action-map)`;
-      } else if (routing.intent === "PFZ_QUERY" || routing.intent === "FISHING_QUERY") {
-        if (topPFZ) {
-          answerText = `🎣 **सर्वश्रेष्ठ मत्स्य क्षेत्र: ${topPFZ.name}**\n\n• **दूरी**: तट से **${topPFZ.dist}** (दिशा: **${topPFZ.dir}**)\n• **गहराई**: ${topPFZ.depth} | **संभावित उपज**: **${topPFZ.yield}**\n• **लक्षित प्रजातियां**: ${topPFZ.fish}\n• **समुद्री स्थिति**: लहरें ${wave}, हवा ${wind}\n\n💡 **निर्णय**: उपग्रह क्लोरोफिल और थर्मल फ्रंट के अनुसार यह क्षेत्र सबसे अनुकूल है। समय पर प्रस्थान करें।\n\n[🗺️ View Fishing Corridor on Map](#action-map)\n[🌊 View Sea Conditions](#action-weather)`;
+        if (isEn) {
+          const decisionText = isSafe
+            ? "🟢 **Verdict: Voyage is Safe and Favourable (Safe to Go)**"
+            : isCaution
+            ? "🟡 **Verdict: Caution Advised — Limit to Inshore Waters**"
+            : "🔴 **Verdict: High Risk — Avoid Sea Today (Dangerous Conditions)**";
+          answerText = `${decisionText}\n\n📍 **${locLabel}**\n• **Significant Waves**: ${wave} (${isSafe ? "Calm Sea" : "Moderate Chop"})\n• **Wind Speed**: ${wind}\n• **Risk Score**: ${score}/100 (${risk})\n\n💡 **Operational Guidance**: ${isSafe ? "Morning window between 05:30 AM and 11:30 AM is optimal. Monitor coastal breeze after noon." : "Limit fishing strictly within 5 NM of shore and return before worsening weather."}\n\n[🌊 View Sea Conditions](#action-weather)\n[🗺️ View Route on Map](#action-map)`;
         } else {
-          answerText = `🎣 **${locLabel} मत्स्य क्षेत्र**\n\nनिकटतम सक्रिय मछली क्षेत्र लगभग 6–8 NM की दूरी पर स्थित है।\nलहरें (${wave}) और हवा (${wind}) अनुकूल बनी हुई हैं।\n\n[🗺️ View Route on Map](#action-map)`;
+          const decisionText = isSafe
+            ? "🟢 **निर्णय: समुद्र में जाना सुरक्षित व अनुकूल है (Safe to Go)**"
+            : isCaution
+            ? "🟡 **निर्णय: सावधानी बरतें — केवल नजदीकी तटीय क्षेत्र तक सीमित रहें (Caution Advised)**"
+            : "🔴 **निर्णय: खतरा — आज समुद्र में जाने से बचें (Danger - Avoid Sea)**";
+          answerText = `${decisionText}\n\n📍 **${locLabel}**\n• **लहरें (Waves)**: ${wave} (${isSafe ? "शांत स्थिति" : "मध्यम हलचल"})\n• **हवा (Wind)**: ${wind}\n• **जोखिम स्कोर**: ${score}/100 (${risk})\n\n💡 **सलाह**: ${isSafe ? "सुबह 05:30 से 11:30 बजे के बीच नौकायन सबसे अच्छा रहेगा। दोपहर बाद तटीय हवाओं की निगरानी रखें।" : "तट से 5 NM के दायरे में ही रहें और खराब मौसम से पहले लौटें।"}\n\n[🌊 View Sea Conditions](#action-weather)\n[🗺️ View Route on Map](#action-map)`;
+        }
+      } else if (routing.intent === "PFZ_QUERY" || routing.intent === "FISHING_QUERY") {
+        if (isEn) {
+          if (topPFZ) {
+            answerText = `🎣 **Optimal Potential Fishing Zone: ${topPFZ.name}**\n\n• **Distance**: **${topPFZ.dist}** offshore (Bearing: **${topPFZ.dir}**)\n• **Water Depth**: ${topPFZ.depth} | **Expected Yield**: **${topPFZ.yield}**\n• **Target Species**: ${topPFZ.fish}\n• **Sea Conditions**: Waves: ${wave}, Wind: ${wind}\n\n💡 **Recommendation**: High chlorophyll and favourable thermal-front gradient detected by satellite telemetry. Plan departure early.\n\n[🗺️ View Fishing Corridor on Map](#action-map)\n[🌊 View Sea Conditions](#action-weather)`;
+          } else {
+            answerText = `🎣 **${locLabel} Potential Fishing Zones**\n\nNearest active fish front is approximately 6–8 NM offshore.\nWave heights (${wave}) and wind speeds (${wind}) remain calm and favourable.\n\n[🗺️ View Route on Map](#action-map)`;
+          }
+        } else {
+          if (topPFZ) {
+            answerText = `🎣 **सर्वश्रेष्ठ मत्स्य क्षेत्र: ${topPFZ.name}**\n\n• **दूरी**: तट से **${topPFZ.dist}** (दिशा: **${topPFZ.dir}**)\n• **गहराई**: ${topPFZ.depth} | **संभावित उपज**: **${topPFZ.yield}**\n• **लक्षित प्रजातियां**: ${topPFZ.fish}\n• **समुद्री स्थिति**: लहरें ${wave}, हवा ${wind}\n\n💡 **निर्णय**: उपग्रह क्लोरोफिल और थर्मल फ्रंट के अनुसार यह क्षेत्र सबसे अनुकूल है। समय पर प्रस्थान करें।\n\n[🗺️ View Fishing Corridor on Map](#action-map)\n[🌊 View Sea Conditions](#action-weather)`;
+          } else {
+            answerText = `🎣 **${locLabel} मत्स्य क्षेत्र**\n\nनिकटतम सक्रिय मछली क्षेत्र लगभग 6–8 NM की दूरी पर स्थित है।\nलहरें (${wave}) और हवा (${wind}) अनुकूल बनी हुई हैं।\n\n[🗺️ View Route on Map](#action-map)`;
+          }
         }
       } else if (routing.intent === "FUEL_QUERY" || routing.depth_category === "PLANNING") {
-        const fuelLiters = allConstraints.fuelLiters || 18;
+        const fuelLiters = (allConstraints.fuelLiters as number) || 18;
         const estBurn = Math.round(fuelLiters * 0.7);
         const reserve = Math.round(fuelLiters * 0.25);
         const isFeasible = fuelLiters >= estBurn + reserve;
-        answerText = `${isFeasible ? "🟢 **ईंधन पर्याप्त है — 25% सुरक्षा रिजर्व के साथ सुरक्षित**" : "⚠️ **सावधानी — ईंधन सीमा अपर्याप्त / कम रिजर्व**"}\n\n• **उपलब्ध ईंधन**: ${fuelLiters} Litres\n• **अनुमानित खपत**: ~${estBurn} Litres\n• **25% अनिवार्य रिजर्व**: ~${reserve} Litres\n\n💡 **सिफारिश**: ${isFeasible ? "आपके पास सुरक्षित वापसी के लिए पर्याप्त ईंधन और बफर उपलब्ध है।" : `कम से कम ${estBurn + reserve}L ईंधन लेकर ही प्रस्थान करें ताकि हवा के खिलाफ वापसी में ईंधन कम न पड़े।`}\n\n[🗺️ View Route on Map](#action-map)`;
+        if (isEn) {
+          answerText = `${isFeasible ? "🟢 **Fuel Viable — Safe with Mandatory 25% Reserve Buffer**" : "⚠️ **Caution — Insufficient / Marginal Fuel Reserve**"}\n\n• **Declared Fuel**: ${fuelLiters} Litres\n• **Estimated Burn**: ~${estBurn} Litres\n• **Mandatory 25% Safety Reserve**: ~${reserve} Litres\n\n💡 **Recommendation**: ${isFeasible ? "You have sufficient fuel and buffer for a safe return voyage." : `Refuel to at least ${estBurn + reserve}L before departure to avoid running low against head-winds on the return leg.`}\n\n[🗺️ View Route on Map](#action-map)`;
+        } else {
+          answerText = `${isFeasible ? "🟢 **ईंधन पर्याप्त है — 25% सुरक्षा रिजर्व के साथ सुरक्षित**" : "⚠️ **सावधानी — ईंधन सीमा अपर्याप्त / कम रिजर्व**"}\n\n• **उपलब्ध ईंधन**: ${fuelLiters} Litres\n• **अनुमानित खपत**: ~${estBurn} Litres\n• **25% अनिवार्य रिजर्व**: ~${reserve} Litres\n\n💡 **सिफारिश**: ${isFeasible ? "आपके पास सुरक्षित वापसी के लिए पर्याप्त ईंधन और बफर उपलब्ध है।" : `कम से कम ${estBurn + reserve}L ईंधन लेकर ही प्रस्थान करें ताकि हवा के खिलाफ वापसी में ईंधन कम न पड़े।`}\n\n[🗺️ View Route on Map](#action-map)`;
+        }
       } else {
-        answerText = `📍 **${locLabel}** (${loc.latitude.toFixed(2)}° N, ${loc.longitude.toFixed(2)}° E)\n\n• **लहरें**: ${wave} | **हवा**: ${wind} | **SST**: ${evidence.sst || "28.5°C"}\n• **सुरक्षा स्थिति**: **${risk}** (${score}/100)\n\n[🌊 View Sea Conditions](#action-weather)\n[🗺️ View Route on Map](#action-map)`;
+        if (isEn) {
+          answerText = `Captain, 🟢 **${locLabel}** (${effectiveLat.toFixed(2)}° N, ${effectiveLon.toFixed(2)}° E) — Sea conditions are calm and safe.\n\n🌊 **Sea State & Weather Snapshot**\n• **Significant Wave Height**: **${wave}**\n• **Wind Speed**: **${wind}**\n• **Sea Surface Temperature (SST)**: **${evidence.sst || "28.5°C"}**\n• **Safety Risk Score**: **${score}/100 (${risk})**\n\n[🌊 View Sea Conditions](#action-weather)\n[🗺️ View Route on Map](#action-map)`;
+        } else {
+          answerText = `📍 **${locLabel}** (${effectiveLat.toFixed(2)}° N, ${effectiveLon.toFixed(2)}° E)\n\n• **लहरें**: ${wave} | **हवा**: ${wind} | **SST**: ${evidence.sst || "28.5°C"}\n• **सुरक्षा स्थिति**: **${risk}** (${score}/100)\n\n[🌊 View Sea Conditions](#action-weather)\n[🗺️ View Route on Map](#action-map)`;
+        }
       }
     }
 
