@@ -68,6 +68,12 @@ import {
   isAdvisoryQuery,
   isFishingQuery,
   isWeatherQuery,
+  isGeneralKnowledgeQuery,
+  generateGeneralKnowledgeReply,
+  detectEngineFailureQuery,
+  detectFuelConstraint,
+  detectTimeConstraint,
+  detectBoundaryQuery,
   type LiveRiskContext,
 } from "@/features/ai/mobile-assistant-helper";
 
@@ -1057,16 +1063,36 @@ export default function MobileAppPage() {
       return;
     }
 
-    // 2. High-precision intent recognition:
-    // (Inland non-marine, user name intro, capabilities & data sources, advisories & alerts, fishing suitability & PFZ, live weather)
+    // 2. Dual Mode: General Knowledge & Non-Marine Questions (Section 4)
+    if (isGeneralKnowledgeQuery(q)) {
+      const gkAnswer = generateGeneralKnowledgeReply(q, saathiLang);
+      const botMsg: ChatMessage = {
+        id: `b-gk-${Date.now()}`,
+        sender: "bot",
+        text: gkAnswer,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setChatMessages((prev) => [...prev, botMsg]);
+      setChatLoading(false);
+      return;
+    }
+
+    // 3. Engine failure & drift emergency mode (Section 15)
+    const isEngineFailure = detectEngineFailureQuery(q);
+
+    // 4. Sagar Saathi Decision-Support Intents:
+    // (Fuel-aware, time-aware, boundary, inland, user name, capabilities, advisories, fishing suitability, live weather)
     const isInland = detectInlandCity(q);
     const isPersonal = detectUserName(q);
     const isCap = isCapabilitiesQuery(q);
     const isAdv = isAdvisoryQuery(q);
     const isFish = isFishingQuery(q);
     const isWeath = isWeatherQuery(q);
+    const isFuel = detectFuelConstraint(q).hasFuel;
+    const isTime = detectTimeConstraint(q).hasTime;
+    const isBoundary = detectBoundaryQuery(q);
 
-    if (isInland || isPersonal || isCap || isAdv || isFish || isWeath) {
+    if (isEngineFailure || isInland || isPersonal || isCap || isAdv || isFish || isWeath || isFuel || isTime || isBoundary) {
       const intelligentAnswer = generateIntelligentSaathiReply(
         q,
         saathiLang,
@@ -1085,7 +1111,7 @@ export default function MobileAppPage() {
       return;
     }
 
-    // 3. For any other query, contact backend but intercept the rigid static template
+    // 5. For other queries, query backend but protect against rigid template fallbacks
     try {
       const prevReplies = chatMessages.filter((m) => m.reply?.conversation_id);
       const lastConvId = prevReplies.length > 0 ? prevReplies[prevReplies.length - 1]?.reply?.conversation_id : undefined;
@@ -1126,7 +1152,9 @@ export default function MobileAppPage() {
         ans.includes("Safety Assessment:");
 
       const finalText = isRigidTemplate
-        ? generateIntelligentSaathiReply(q, saathiLang, liveRiskContext, partitionedAlerts.localAlerts, displayPFZList)
+        ? (isGeneralKnowledgeQuery(q)
+            ? generateGeneralKnowledgeReply(q, saathiLang)
+            : generateIntelligentSaathiReply(q, saathiLang, liveRiskContext, partitionedAlerts.localAlerts, displayPFZList))
         : ans;
 
       const botMsg: ChatMessage = {
@@ -1139,13 +1167,15 @@ export default function MobileAppPage() {
       setChatMessages((prev) => [...prev, botMsg]);
     } catch (err) {
       console.warn("AI Saathi backend notice, using local intelligent reasoning:", err);
-      const fallbackAnswer = generateIntelligentSaathiReply(
-        q,
-        saathiLang,
-        liveRiskContext,
-        partitionedAlerts.localAlerts,
-        displayPFZList
-      );
+      const fallbackAnswer = isGeneralKnowledgeQuery(q)
+        ? generateGeneralKnowledgeReply(q, saathiLang)
+        : generateIntelligentSaathiReply(
+            q,
+            saathiLang,
+            liveRiskContext,
+            partitionedAlerts.localAlerts,
+            displayPFZList
+          );
       setChatMessages((prev) => [
         ...prev,
         {
@@ -1586,8 +1616,12 @@ export default function MobileAppPage() {
                           setActiveTab("map");
                         } else if (action === "pfz") {
                           setActiveTab("pfz");
-                        } else if (action === "alerts") {
+                        } else if (action === "alerts" || action === "sos") {
                           setActiveTab("alerts");
+                        } else if (action === "weather" || action === "dashboard") {
+                          setActiveTab("overview");
+                        } else if (action === "route") {
+                          setActiveTab("map");
                         }
                       }}
                     />
