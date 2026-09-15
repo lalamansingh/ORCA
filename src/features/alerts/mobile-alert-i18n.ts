@@ -9,6 +9,258 @@ export interface LocalizedAlert {
   badgeClass: "critical" | "warning" | "watch" | "info";
   provider: string;
   timeAgo: string;
+  regionName: string;
+  affectedArea: string;
+  isLocal: boolean;
+  distanceKm?: number;
+  distanceLabel?: string;
+}
+
+export interface CoastalSectorSOS {
+  harborId: string;
+  harborName: string;
+  city: string;
+  state: string;
+  lat: number;
+  lon: number;
+  coastGuardStation: string;
+  coastGuardPhone: string;
+  coastalPoliceStation: string;
+  coastalPolicePhone: string;
+  portControl: string;
+  portControlPhone: string;
+  vhfChannel: string;
+}
+
+export const COASTAL_PORT_SOS_DIRECTORY: CoastalSectorSOS[] = [
+  {
+    harborId: "veraval",
+    harborName: "Veraval Fishing Port",
+    city: "Veraval",
+    state: "Gujarat",
+    lat: 20.90,
+    lon: 70.36,
+    coastGuardStation: "ICG Station Veraval (HQ Dist 1)",
+    coastGuardPhone: "02876-220038",
+    coastalPoliceStation: "Veraval Marine Police Station (Bhidbhanjan)",
+    coastalPolicePhone: "02876-240100",
+    portControl: "Veraval Port Control / GMB",
+    portControlPhone: "02876-220140",
+    vhfChannel: "VHF Channel 16",
+  },
+  {
+    harborId: "porbandar",
+    harborName: "Porbandar Harbor",
+    city: "Porbandar",
+    state: "Gujarat",
+    lat: 21.64,
+    lon: 69.60,
+    coastGuardStation: "ICG Regional HQ North-West (Porbandar)",
+    coastGuardPhone: "0286-2244040",
+    coastalPoliceStation: "Porbandar Marine Police Station (Subhash Nagar)",
+    coastalPolicePhone: "0286-2242100",
+    portControl: "Porbandar Port Control Room",
+    portControlPhone: "0286-2242780",
+    vhfChannel: "VHF Channel 16 / 12",
+  },
+  {
+    harborId: "mumbai",
+    harborName: "Mumbai Sassoon Docks",
+    city: "Mumbai",
+    state: "Maharashtra",
+    lat: 18.92,
+    lon: 72.83,
+    coastGuardStation: "MRCC Mumbai (Western Regional HQ, Worli)",
+    coastGuardPhone: "022-24388065",
+    coastalPoliceStation: "Mumbai Coastal Police Station (Yellow Gate / Sassoon)",
+    coastalPolicePhone: "022-22620821",
+    portControl: "Mumbai Port Authority (MbPT) VTS & Signal Station",
+    portControlPhone: "022-66565656",
+    vhfChannel: "VHF Channel 16 / 12",
+  },
+  {
+    harborId: "ratnagiri",
+    harborName: "Ratnagiri Mirkarwada",
+    city: "Ratnagiri",
+    state: "Maharashtra",
+    lat: 16.99,
+    lon: 73.30,
+    coastGuardStation: "ICG Station Ratnagiri",
+    coastGuardPhone: "02352-222855",
+    coastalPoliceStation: "Ratnagiri Coastal Police Station (Mirkarwada Jetty)",
+    coastalPolicePhone: "02352-223093",
+    portControl: "Mirkarwada Fishing Harbor Master",
+    portControlPhone: "02352-222120",
+    vhfChannel: "VHF Channel 16",
+  },
+  {
+    harborId: "goa",
+    harborName: "Goa (Panaji & Mormugao)",
+    city: "Goa",
+    state: "Goa",
+    lat: 15.40,
+    lon: 73.80,
+    coastGuardStation: "ICG District HQ 11 (Goa, Mormugao)",
+    coastGuardPhone: "0832-2520625",
+    coastalPoliceStation: "Goa Coastal Security Police Station (Panaji & Betul)",
+    coastalPolicePhone: "0832-2420840",
+    portControl: "Mormugao Port Authority (MPA) Marine Signal Station",
+    portControlPhone: "0832-2521100",
+    vhfChannel: "VHF Channel 16",
+  },
+  {
+    harborId: "mangalore",
+    harborName: "Mangalore Old Port",
+    city: "Mangalore",
+    state: "Karnataka",
+    lat: 12.87,
+    lon: 74.84,
+    coastGuardStation: "ICG District HQ 3 (Panambur, Mangalore)",
+    coastGuardPhone: "0824-2405266",
+    coastalPoliceStation: "Coastal Security Police Station Mangalore (Bunder)",
+    coastalPolicePhone: "0824-2431093",
+    portControl: "New Mangalore Port Authority (NMPA) Marine Control",
+    portControlPhone: "0824-2407298",
+    vhfChannel: "VHF Channel 16",
+  },
+  {
+    harborId: "kochi",
+    harborName: "Kochi Port & Harbor",
+    city: "Kochi",
+    state: "Kerala",
+    lat: 9.93,
+    lon: 76.26,
+    coastGuardStation: "MRCC Kochi (ICG District HQ 4)",
+    coastGuardPhone: "0484-2218855",
+    coastalPoliceStation: "Fort Kochi Coastal Police Station",
+    coastalPolicePhone: "0484-2215355",
+    portControl: "Cochin Port Authority Marine Operations Room",
+    portControlPhone: "0484-2666417",
+    vhfChannel: "VHF Channel 16 / 14",
+  },
+  {
+    harborId: "kanyakumari",
+    harborName: "Kanyakumari Coast",
+    city: "Kanyakumari",
+    state: "Tamil Nadu",
+    lat: 8.08,
+    lon: 77.55,
+    coastGuardStation: "ICG Station Kanyakumari / Colachel",
+    coastGuardPhone: "04651-227855",
+    coastalPoliceStation: "Marine Police Station Kanyakumari",
+    coastalPolicePhone: "04652-246093",
+    portControl: "Kanyakumari Port & Fisheries Control Office",
+    portControlPhone: "04652-246260",
+    vhfChannel: "VHF Channel 16",
+  },
+  {
+    harborId: "tuticorin",
+    harborName: "Tuticorin Fishing Harbor",
+    city: "Tuticorin",
+    state: "Tamil Nadu",
+    lat: 8.76,
+    lon: 78.13,
+    coastGuardStation: "ICG Station Tuticorin",
+    coastGuardPhone: "0461-2352855",
+    coastalPoliceStation: "Tharuvaikulam Marine Police Station (Tuticorin)",
+    coastalPolicePhone: "0461-2376093",
+    portControl: "V.O. Chidambaranar Port Authority Signal Station",
+    portControlPhone: "0461-2352290",
+    vhfChannel: "VHF Channel 16",
+  },
+  {
+    harborId: "chennai",
+    harborName: "Chennai Kasimedu Harbor",
+    city: "Chennai",
+    state: "Tamil Nadu",
+    lat: 13.08,
+    lon: 80.27,
+    coastGuardStation: "MRCC Chennai (Eastern Regional HQ)",
+    coastGuardPhone: "044-23460405",
+    coastalPoliceStation: "Coastal Security Group (CSG) Chennai (Kasimedu)",
+    coastalPolicePhone: "044-28447701",
+    portControl: "Chennai Port Authority Marine Signal Station",
+    portControlPhone: "044-25362201",
+    vhfChannel: "VHF Channel 16 / 12",
+  },
+  {
+    harborId: "visakhapatnam",
+    harborName: "Visakhapatnam Harbor",
+    city: "Visakhapatnam",
+    state: "Andhra Pradesh",
+    lat: 17.68,
+    lon: 83.21,
+    coastGuardStation: "ICG District HQ 6 (Visakhapatnam)",
+    coastGuardPhone: "0891-2568855",
+    coastalPoliceStation: "Marine Police Station Visakhapatnam Harbor",
+    coastalPolicePhone: "0891-2565093",
+    portControl: "Visakhapatnam Port Authority Marine Operations",
+    portControlPhone: "0891-2873133",
+    vhfChannel: "VHF Channel 16",
+  },
+  {
+    harborId: "paradip",
+    harborName: "Paradip Port",
+    city: "Paradip",
+    state: "Odisha",
+    lat: 20.26,
+    lon: 86.66,
+    coastGuardStation: "ICG District HQ 7 (Paradip)",
+    coastGuardPhone: "06722-222855",
+    coastalPoliceStation: "Paradip Marine Police Station",
+    coastalPolicePhone: "06722-222093",
+    portControl: "Paradip Port Trust Marine Signal Station",
+    portControlPhone: "06722-222155",
+    vhfChannel: "VHF Channel 16",
+  },
+  {
+    harborId: "digha",
+    harborName: "Digha & Shankarpur",
+    city: "Digha",
+    state: "West Bengal",
+    lat: 21.62,
+    lon: 87.51,
+    coastGuardStation: "ICG Station Haldia / Digha",
+    coastGuardPhone: "03224-263855",
+    coastalPoliceStation: "Digha Coastal Police Station",
+    coastalPolicePhone: "03220-266093",
+    portControl: "Shankarpur Fishing Harbor Control Room",
+    portControlPhone: "03220-264220",
+    vhfChannel: "VHF Channel 16",
+  },
+];
+
+export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+}
+
+export function getSectorSOS(lat: number, lon: number, label?: string): CoastalSectorSOS {
+  const clean = (label || "").toLowerCase();
+  const directMatch = COASTAL_PORT_SOS_DIRECTORY.find((s) =>
+    clean.includes(s.city.toLowerCase()) ||
+    clean.includes(s.harborId.toLowerCase()) ||
+    s.harborName.toLowerCase().includes(clean)
+  );
+  if (directMatch) return directMatch;
+
+  let nearest = COASTAL_PORT_SOS_DIRECTORY[0];
+  let minD = 999999;
+  for (const s of COASTAL_PORT_SOS_DIRECTORY) {
+    const d = calculateDistanceKm(lat, lon, s.lat, s.lon);
+    if (d < minD) {
+      minD = d;
+      nearest = s;
+    }
+  }
+  return nearest;
 }
 
 const SEVERITY_MAP: Record<string, Record<string, { label: string; badge: "critical" | "warning" | "watch" | "info" }>> = {
@@ -332,7 +584,7 @@ const ALERT_DICTIONARY: Record<string, Record<string, AlertTextBundle>> = {
     },
     kn: {
       title: "ಪ್ರಕ್ಷುಬ್ಧ ಸಮುದ್ರ ಸಲಹೆ (Rough Sea)",
-      desc: "ಸಮುದ್ರ ಪ್ರವಾಹಗಳಿಂದಾಗಿ ಸಮುದ್ರವು ಪ್ರക്ഷುಬ್ಧವಾಗಿರಲಿದೆ.",
+      desc: "ಸಮುದ್ರ ಪ್ರವಾಹಗಳಿಂದಾಗಿ ಸಮುದ್ರವು ಪ್ರಕ್ಷುಬ್ಧವಾಗಿರಲಿದೆ.",
       advice: "ಲೈಫ್ ಜಾಕೆಟ್‌ಗಳನ್ನು ಕಡ್ಡಾಯವಾಗಿ ಧರಿಸಿ; ತೀರಕ್ಕೆ ಹತ್ತಿರವಿರಿ.",
     },
     or: {
@@ -341,17 +593,72 @@ const ALERT_DICTIONARY: Record<string, Record<string, AlertTextBundle>> = {
       advice: "ଲାଇଫ୍ ଜ୍ୟାକେଟ୍ ନିଶ୍ଚୟ ପିନ୍ଧନ୍ତୁ ଏବଂ କୂଳ ନିକଟରେ ରୁହନ୍ତୁ।",
     },
   },
+  heavy_rain: {
+    hi: {
+      title: "भारी वर्षा व मेघगर्जना चेतावनी (Heavy Rainfall)",
+      desc: "तटीय क्षेत्र में मूसलाधार बारिश और गरज के साथ आकाशीय बिजली की प्रबल आशंका है।",
+      advice: "विद्युत तारों से दूर रहें, खुली नौकाओं में यात्रा स्थगित करें और पक्के तट पर शरण लें।",
+    },
+    en: {
+      title: "Heavy to Extremely Heavy Rainfall Alert (IMD Warning)",
+      desc: "Intense precipitation spells and convective activity over coastal lowlands and harbors.",
+      advice: "Avoid waterlogged low-lying jetties and moorings; suspend open-deck navigation.",
+    },
+    ta: {
+      title: "கனமழை எச்சரிக்கை (Heavy Rainfall)",
+      desc: "கடலோரப் பகுதிகளில் இடி மின்னலுடன் கூடிய மிக கனமழை பெய்ய வாய்ப்புள்ளது.",
+      advice: "தாழ்வான பகுதிகளைத் தவிர்க்கவும்; படகுகளை பாதுகாப்பான இடத்தில் கட்டவும்.",
+    },
+    te: {
+      title: "భారీ వర్షపాతం హెచ్చరిక (Heavy Rainfall)",
+      desc: "తీర ప్రాంతాల్లో ఉరుములు, మెరుపులతో కూడిన భారీ నుండి అతి భారీ వర్షాలు కురిసే అవకాశం ఉంది.",
+      advice: "పడవలను సురక్షిత తీరంలో ఉంచండి; లోతట్టు రేవు ప్రాంతాల్లో జాగ్రత్త పాటించండి.",
+    },
+    ml: {
+      title: "അതിശക്തമായ മഴ മുന്നറിയിപ്പ് (Heavy Rainfall)",
+      desc: "തീരദേശങ്ങളിൽ ഇടിമിന്നലോട് കൂടിയ ശക്തമായ മഴയ്ക്കും വെള്ളപ്പൊക്കത്തിനും സാധ്യത.",
+      advice: "ബോട്ടുകൾ സുരക്ഷിതമായി കെട്ടിയിടുക; ജാഗ്രതാ നിർദ്ദേശങ്ങൾ പാലിക്കുക.",
+    },
+    gu: {
+      title: "ભારે વરસાદની ચેતવણી (Heavy Rainfall)",
+      desc: "દરિયાકાંઠાના વિસ્તારોમાં ગાજવીજ સાથે ભારેથી અતિભારે વરસાદની શક્યતા છે.",
+      advice: "નીચાણવાળા વિસ્તારોથી દૂર રહેવું અને હોડીઓને કિનારે સુરક્ષિત રાખવી.",
+    },
+    mr: {
+      title: "मुसळधार पावसाचा इशारा (Heavy Rainfall)",
+      desc: "किनारपट्टी भागात विजांच्या कडकडाटासह मुसळधार ते अतिमुसळधार पावसाची दाट शक्यता आहे.",
+      advice: "सखल भागातील धक्के टाळा आणि लहान नौका सुरक्षित बंदरात बांधून ठेवा.",
+    },
+    bn: {
+      title: "ভারী থেকে অতি ভারী বৃষ্টির সতর্কতা (Heavy Rain)",
+      desc: "উপকূলীয় অঞ্চলে বজ্রবিদ্যুৎ-সহ প্রবল বৃষ্টির পূর্বাভাস রয়েছে।",
+      advice: "নিচু জেটি এলাকা এড়িয়ে চলুন এবং খোলা নৌকায় ভ্রমণ বন্ধ রাখুন।",
+    },
+    kn: {
+      title: "ಭಾರಿ ಮಳೆಯ ಎಚ್ಚರಿಕೆ (Heavy Rainfall)",
+      desc: "ಕರಾವಳಿ ಪ್ರದೇಶದಲ್ಲಿ ಗುಡುಗು ಮಿಂಚಿನೊಂದಿಗೆ ಭಾರಿ ಮಳೆಯಾಗುವ ಮುನ್ಸೂಚನೆ ಇದೆ.",
+      advice: "ತಗ್ಗಾದ ಬಂದರು ಪ್ರದೇಶಗಳಿಂದ ದೂರವಿರಿ ಮತ್ತು ದೋಣಿಗಳನ್ನು ಸುರಕ್ಷಿತವಾಗಿರಿಸಿ.",
+    },
+    or: {
+      title: "ପ୍ରବଳ ବର୍ଷା ସତର୍କତା (Heavy Rainfall)",
+      desc: "ଉପକୂଳବର୍ତ୍ତୀ ଅଞ୍ଚଳରେ ବିଜୁଳି ଘଡ଼ଘଡ଼ି ସହ ପ୍ରବଳରୁ ଅତି ପ୍ରବଳ ବର୍ଷା ହେବାର ସମ୍ଭାବନା।",
+      advice: "ଡଙ୍ଗାଗୁଡ଼ିକୁ କୂଳରେ ସୁରକ୍ଷିତ ବାନ୍ଧନ୍ତୁ ଏବଂ ତଳିଆ ଅଞ୍ଚଳକୁ ଯାଆନ୍ତୁ ନାହିଁ।",
+    },
+  },
 };
 
 function detectCategory(alert: MarineAlert): string {
   const type = (alert.type || "").toUpperCase();
   const text = `${alert.title || ""} ${alert.summary || ""} ${alert.description || ""}`.toLowerCase();
-  
+
   if (type === "CYCLONE" || text.includes("cyclone") || text.includes("storm") || text.includes("depression")) {
     return "cyclone";
   }
   if (type === "SWELL_SURGE" || text.includes("swell") || text.includes("surge") || text.includes("kallakkadal")) {
     return "swell_surge";
+  }
+  if (type === "HEAVY_RAIN" || text.includes("rainfall") || text.includes("rain") || text.includes("precipitation")) {
+    return "heavy_rain";
   }
   if (type === "HIGH_WAVES" || text.includes("wave") || text.includes("height")) {
     return "high_waves";
@@ -365,7 +672,7 @@ function detectCategory(alert: MarineAlert): string {
 export function getLocalizedAlert(alert: MarineAlert, lang: string): LocalizedAlert {
   const cat = detectCategory(alert);
   const bundle = ALERT_DICTIONARY[cat]?.[lang] || ALERT_DICTIONARY[cat]?.["hi"] || ALERT_DICTIONARY.rough_sea.hi;
-  
+
   const sevKey = (alert.severity || "WARNING").toUpperCase();
   const sevObj = SEVERITY_MAP[sevKey]?.[lang] || SEVERITY_MAP[sevKey]?.["hi"] || SEVERITY_MAP.WARNING.hi;
 
@@ -378,64 +685,326 @@ export function getLocalizedAlert(alert: MarineAlert, lang: string): LocalizedAl
     badgeClass: sevObj.badge,
     provider: alert.provider || "INCOIS / IMD",
     timeAgo: alert.retrieved_at ? "Just now" : "Live",
+    regionName: alert.affected_area || "Indian Coastal Sector",
+    affectedArea: alert.affected_area || "Coastal Waters",
+    isLocal: false,
+    distanceKm: alert.distance_km ?? undefined,
+  };
+}
+
+export const ALERT_UI_STRINGS: Record<string, {
+  localAlertsHeader: string;
+  otherAlertsHeader: string;
+  noLocalAlertsTitle: string;
+  noLocalAlertsDesc: string;
+  localSosTitle: string;
+  localSosDesc: string;
+  coastGuardNational: string;
+  coastalPoliceNational: string;
+  vhfDistressLabel: string;
+  actionAdvice: string;
+  distanceLabel: string;
+  nationalAdvisory: string;
+}> = {
+  en: {
+    localAlertsHeader: "Local Coastal Alerts",
+    otherAlertsHeader: "Other Coastal & National Marine Alerts",
+    noLocalAlertsTitle: "No Active Warnings for",
+    noLocalAlertsDesc: "All clear in this coastal sector. Calm sea conditions, normal wave height and wind speeds. No active cyclone, high wave, or swell hazard.",
+    localSosTitle: "Local Marine Police & Port Emergency",
+    localSosDesc: "Direct emergency response and harbor control for this coastal sector:",
+    coastGuardNational: "Coast Guard: 1554",
+    coastalPoliceNational: "Coastal Police: 1093",
+    vhfDistressLabel: "VHF Distress: Channel 16 (156.8 MHz)",
+    actionAdvice: "Action Advice:",
+    distanceLabel: "Distance:",
+    nationalAdvisory: "National EEZ Advisory",
+  },
+  hi: {
+    localAlertsHeader: "स्थानीय तटीय अलर्ट",
+    otherAlertsHeader: "अन्य तटीय व राष्ट्रीय समुद्री चेतावनियां",
+    noLocalAlertsTitle: "इस क्षेत्र के लिए कोई सक्रिय चेतावनी नहीं",
+    noLocalAlertsDesc: "वर्तमान में इस समुद्री क्षेत्र में मौसम व लहरें सामान्य हैं। चक्रवात, ऊंची लहरों या तेज बहाव का कोई खतरा नहीं है। नौकायन सुरक्षित है।",
+    localSosTitle: "स्थानीय समुद्री पुलिस व बंदरगाह आपातकालीन नंबर",
+    localSosDesc: "इस तटीय क्षेत्र के लिए तत्काल आपातकालीन संपर्क और हार्बर कंट्रोल:",
+    coastGuardNational: "तटरक्षक बल: 1554",
+    coastalPoliceNational: "तटीय पुलिस: 1093",
+    vhfDistressLabel: "VHF संकट चैनल: 16 (156.8 MHz)",
+    actionAdvice: "सुरक्षा सलाह:",
+    distanceLabel: "दूरी:",
+    nationalAdvisory: "राष्ट्रीय समुद्री सलाह",
+  },
+  te: {
+    localAlertsHeader: "స్థానిక తీరప్రాంత హెచ్చరికలు",
+    otherAlertsHeader: "ఇతర తీరప్రాంత మరియు జాతీయ సముద్ర హెచ్చరికలు",
+    noLocalAlertsTitle: "ఈ ప్రాంతానికి ఎలాంటి హెచ్చరికలు లేవు",
+    noLocalAlertsDesc: "ఈ తీరప్రాంతంలో సముద్రం శాంతంగా ఉంది. సాధారణ అలల ఎత్తు మరియు గాలి వేగం. ఎలాంటి తుఫాను లేదా ప్రమాద హెచ్చరికలు లేవు.",
+    localSosTitle: "స్థానిక కోస్టల్ పోలీస్ & రేవు అత్యవసర సంప్రదింపులు",
+    localSosDesc: "ఈ తీరప్రాంత అత్యవసర సహాయం మరియు హార్బర్ కంట్రోల్:",
+    coastGuardNational: "కోస్ట్ గార్డ్: 1554",
+    coastalPoliceNational: "కోస్టల్ పోలీస్: 1093",
+    vhfDistressLabel: "VHF ఎమర్జెన్సీ: ఛానల్ 16 (156.8 MHz)",
+    actionAdvice: "భద్రతా సూచన:",
+    distanceLabel: "దూరం:",
+    nationalAdvisory: "జాతీయ సముద్ర సలహా",
+  },
+  mr: {
+    localAlertsHeader: "स्थानिक किनारपट्टी इशारे",
+    otherAlertsHeader: "इतर किनारपट्टी व राष्ट्रीय सागरी इशारे",
+    noLocalAlertsTitle: "या क्षेत्रासाठी कोणताही इशारा नाही",
+    noLocalAlertsDesc: "या सागरी भागात हवामान व लाटा सामान्य आहेत. चक्रीवादळ किंवा उंच लाटांचा धोका नाही. प्रवास सुरक्षित आहे.",
+    localSosTitle: "स्थानिक सागरी पोलीस व बंदर आपत्कालीन संपर्क",
+    localSosDesc: "या सागरी भागासाठी थेट आपत्कालीन संपर्क व हार्बर नियंत्रण:",
+    coastGuardNational: "तटरक्षक दल: 1554",
+    coastalPoliceNational: "सागरी पोलीस: 1093",
+    vhfDistressLabel: "VHF चॅनेल: 16 (156.8 MHz) आपत्कालीन",
+    actionAdvice: "सुरक्षा सल्ला:",
+    distanceLabel: "अंतर:",
+    nationalAdvisory: "राष्ट्रीय सागरी सल्ला",
+  },
+  ta: {
+    localAlertsHeader: "உள்ளூர் கடலோர எச்சரிக்கைகள்",
+    otherAlertsHeader: "பிற கடலோர மற்றும் தேசிய கடல் எச்சரிக்கைகள்",
+    noLocalAlertsTitle: "இந்த பகுதிக்கு எந்த எச்சரிக்கையும் இல்லை",
+    noLocalAlertsDesc: "இங்கு கடல் அமைதியாக உள்ளது. புயல் அல்லது உயரமான அலைகள் ஆபத்து இல்லை. பாதுகாப்பான பயணம்.",
+    localSosTitle: "உள்ளூர் கடலோர காவல் & துறைமுக அவசர எண்கள்",
+    localSosDesc: "இந்த கடலோர பகுதிக்கான அவசர உதவி மற்றும் துறைமுக கட்டுப்பாடு:",
+    coastGuardNational: "கடலோர காவல்படை: 1554",
+    coastalPoliceNational: "கடலோர காவல்: 1093",
+    vhfDistressLabel: "VHF அவசர அலைவரிசை: 16 (156.8 MHz)",
+    actionAdvice: "பாதுகாப்பு அறிவுரை:",
+    distanceLabel: "தொலைவு:",
+    nationalAdvisory: "தேசிய கடல்சார் ஆலோசனை",
+  },
+  gu: {
+    localAlertsHeader: "સ્થાનિક દરિયાકાંઠાની ચેતવણીઓ",
+    otherAlertsHeader: "અન્ય દરિયાકાંઠા અને રાષ્ટ્રીય દરિયાઈ ચેતવણીઓ",
+    noLocalAlertsTitle: "આ વિસ્તાર માટે કોઈ ચેતવણી નથી",
+    noLocalAlertsDesc: "આ દરિયાઈ વિસ્તારમાં હવામાન અને મોજા સામાન્ય છે. વાવાઝોડા કે ઊંચા મોજાનો ભય નથી.",
+    localSosTitle: "સ્થાનિક મરીન પોલીસ અને પોર્ટ ઇમરજન્સી",
+    localSosDesc: "આ દરિયાકાંઠા વિસ્તાર માટે તાત્કાલિક કંટ્રોલ રૂમ સંપર્ક:",
+    coastGuardNational: "કોસ્ટ ગાર્ડ: 1554",
+    coastalPoliceNational: "મરીન પોલીસ: 1093",
+    vhfDistressLabel: "VHF ચેનલ: 16 (156.8 MHz) ઇમરજન્સી",
+    actionAdvice: "સલામતી સલાહ:",
+    distanceLabel: "અંતર:",
+    nationalAdvisory: "રાષ્ટ્રીય દરિયાઈ સલાહ",
+  },
+  ml: {
+    localAlertsHeader: "പ്രാദേശിക തീരദേശ മുന്നറിയിപ്പുകൾ",
+    otherAlertsHeader: "മറ്റു തീരദേശ, ദേശീയ സമുദ്ര മുന്നറിയിപ്പുകൾ",
+    noLocalAlertsTitle: "ഈ പ്രദേശത്ത് മുന്നറിയിപ്പുകളില്ല",
+    noLocalAlertsDesc: "ഈ തീരദേശത്ത് കാലാവസ്ഥയും തിരമാലകളും സാധാരണമാണ്. യാത്രാ സുരക്ഷിതം.",
+    localSosTitle: "ലോക്കൽ കോസ്റ്റൽ പോലീസും പോർട്ട് എമർജൻസിയും",
+    localSosDesc: "ഈ തീരദേശത്തെ അടിയന്തര സഹായ നമ്പറുകൾ:",
+    coastGuardNational: "കോസ്റ്റ് ഗാർഡ്: 1554",
+    coastalPoliceNational: "കോസ്റ്റൽ പോലീസ്: 1093",
+    vhfDistressLabel: "VHF ചാനൽ 16 (156.8 MHz) എമർജൻസി",
+    actionAdvice: "സുരക്ഷാ നിർദ്ദേശം:",
+    distanceLabel: "ദൂരം:",
+    nationalAdvisory: "ദേശീയ സമുദ്ര ഉപദേശം",
+  },
+  bn: {
+    localAlertsHeader: "স্থানীয় উপকূলীয় সতর্কতা",
+    otherAlertsHeader: "অন্যান্য উপকূলীয় ও জাতীয় সামুদ্রিক সতর্কতা",
+    noLocalAlertsTitle: "এই অঞ্চলের জন্য কোনো সক্রিয় সতর্কতা নেই",
+    noLocalAlertsDesc: "এখানে সমুদ্র ও আবহাওয়া শান্ত ও স্বাভাবিক। কোনো ঘূর্ণিঝড় বা উচ্চ ঢেউয়ের ঝুঁকি নেই।",
+    localSosTitle: "স্থানীয় উপকূলীয় পুলিশ ও বন্দর জরুরি নম্বর",
+    localSosDesc: "এই উপকূলবর্তী অঞ্চলের জন্য জরুরি যোগাযোগ:",
+    coastGuardNational: "কোস্ট গার্ড: 1554",
+    coastalPoliceNational: "উপকূলীয় পুলিশ: 1093",
+    vhfDistressLabel: "VHF চ্যানেল ১৬ (156.8 MHz) জরুরি নজরদারি",
+    actionAdvice: "নিরাপত্তা পরামর্শ:",
+    distanceLabel: "দূরত্ব:",
+    nationalAdvisory: "জাতীয় সামুদ্রিক পরামর্শ",
+  },
+  kn: {
+    localAlertsHeader: "ಸ್ಥಳೀಯ ಕರಾವಳಿ ಎಚ್ಚರಿಕೆಗಳು",
+    otherAlertsHeader: "ಇತರ ಕರಾವಳಿ ಮತ್ತು ರಾಷ್ಟ್ರೀಯ ಸಮುದ್ರ ಎಚ್ಚರಿಕೆಗಳು",
+    noLocalAlertsTitle: "ಈ ಪ್ರದೇಶಕ್ಕೆ ಯಾವುದೇ ಎಚ್ಚರಿಕೆಗಳಿಲ್ಲ",
+    noLocalAlertsDesc: "ಈ ಕರಾವಳಿಯಲ್ಲಿ ವಾತಾವರಣ ಮತ್ತು ಅಲೆಗಳು ಸಾಮಾನ್ಯವಾಗಿವೆ. ಸಂಚಾರ ಸುರಕ್ಷಿತವಾಗಿದೆ.",
+    localSosTitle: "ಸ್ಥಳೀಯ ಕೋಸ್ಟಲ್ ಪೊಲೀಸ್ & ಬಂದರು ತುರ್ತು ಸಂಪರ್ಕ",
+    localSosDesc: "ಈ ಕರಾವಳಿ ಪ್ರದೇಶದ ತುರ್ತು ಕಂಟ್ರೋಲ್ ರೂಮ್:",
+    coastGuardNational: "ಕೋಸ್ಟ್ ಗಾರ್ಡ್: 1554",
+    coastalPoliceNational: "ಕೋಸ್ಟಲ್ ಪೊಲೀಸ್: 1093",
+    vhfDistressLabel: "VHF ಚಾನಲ್ 16 (156.8 MHz) ತುರ್ತು",
+    actionAdvice: "ಸುರಕ್ಷತಾ ಸಲಹೆ:",
+    distanceLabel: "ದೂರ:",
+    nationalAdvisory: "ರಾಷ್ಟ್ರೀಯ ಸಮುದ್ರ ಸಲಹೆ",
+  },
+  or: {
+    localAlertsHeader: "ସ୍ଥାନୀୟ ଉପକୂଳ ସତର୍କତା",
+    otherAlertsHeader: "ଅନ୍ୟାନ୍ୟ ଉପକୂଳ ଓ ଜାତୀୟ ସାମୁଦ୍ରିକ ସତର୍କତା" ,
+    noLocalAlertsTitle: "ଏହି ଅଞ୍ଚଳ ପାଇଁ କୌଣସି ସତର୍କତା ନାହିଁ",
+    noLocalAlertsDesc: "ଏହି ସାମୁଦ୍ରିକ ଅଞ୍ଚଳରେ ପାଣିପାଗ ଓ ତରଙ୍ଗ ସ୍ୱାଭାବିକ ଅଛି। ଯାତ୍ରା ସୁରକ୍ଷିତ।",
+    localSosTitle: "ସ୍ଥାନୀୟ ସାମୁଦ୍ରିକ ପୋଲିସ ଓ ବନ୍ଦର ଜରୁରୀକାଳୀନ ନମ୍ବର",
+    localSosDesc: "ଏହି ଉପକୂଳ ଅଞ୍ଚଳର ଜରୁରୀକାଳୀନ ସମ୍ପର୍କ:",
+    coastGuardNational: "କୋଷ୍ଟ ଗାର୍ଡ: 1554",
+    coastalPoliceNational: "ମେରାଇନ୍ ପୋଲିସ: 1093",
+    vhfDistressLabel: "VHF ଚ୍ୟାନେଲ 16 (156.8 MHz)",
+    actionAdvice: "ସୁରକ୍ଷା ପରାମର୍ଶ:",
+    distanceLabel: "ଦୂରତା:",
+    nationalAdvisory: "ଜାତୀୟ ସାମୁଦ୍ରିକ ପରାମର୍ଶ",
+  },
+};
+
+interface RegionalHazardDefinition {
+  id: string;
+  category: "high_waves" | "swell_surge" | "cyclone" | "strong_wind" | "rough_sea" | "heavy_rain";
+  severity: "CRITICAL" | "SEVERE" | "WARNING" | "WATCH" | "INFO";
+  regionName: string;
+  affectedArea: string;
+  provider: string;
+  lat: number;
+  lon: number;
+  targetHarborIds: string[];
+}
+
+const REGIONAL_HAZARD_CATALOG: RegionalHazardDefinition[] = [
+  {
+    id: "alert-gujarat-1",
+    category: "strong_wind",
+    severity: "WARNING",
+    regionName: "Saurashtra & Kutch Coast, Gujarat",
+    affectedArea: "Veraval, Porbandar, Dwarka & Okha Coastal Waters",
+    provider: "IMD Ahmedabad & INCOIS Marine Warning",
+    lat: 21.2,
+    lon: 69.8,
+    targetHarborIds: ["veraval", "porbandar"],
+  },
+  {
+    id: "alert-mumbai-1",
+    category: "rough_sea",
+    severity: "WATCH",
+    regionName: "Mumbai & North Konkan Coast, Maharashtra",
+    affectedArea: "Mumbai Sassoon Docks, Thane Creek & Raigad Offshore Waters",
+    provider: "IMD Mumbai Marine Division & INCOIS",
+    lat: 18.92,
+    lon: 72.83,
+    targetHarborIds: ["mumbai"],
+  },
+  {
+    id: "alert-kochi-1",
+    category: "swell_surge",
+    severity: "WATCH",
+    regionName: "Malabar & South Kerala Coast",
+    affectedArea: "Kochi Port entrance, Alappuzha & Munambam Coastal Belt",
+    provider: "INCOIS Kallakkadal Early Warning Centre",
+    lat: 9.93,
+    lon: 76.26,
+    targetHarborIds: ["kochi"],
+  },
+  {
+    id: "alert-tuticorin-1",
+    category: "high_waves",
+    severity: "WARNING",
+    regionName: "Gulf of Mannar & Kanyakumari Coast, Tamil Nadu",
+    affectedArea: "Tuticorin Fishing Harbor, Gulf of Mannar & Comorin Sea",
+    provider: "INCOIS Southern Ocean Forecasting Centre",
+    lat: 8.50,
+    lon: 77.80,
+    targetHarborIds: ["tuticorin", "kanyakumari"],
+  },
+  {
+    id: "alert-odisha-1",
+    category: "heavy_rain",
+    severity: "SEVERE",
+    regionName: "Odisha Coast & Bay of Bengal",
+    affectedArea: "Paradip, Dhamra & Gopalpur Coastal Districts",
+    provider: "IMD Bhubaneswar Coastal Cyclone Centre",
+    lat: 20.26,
+    lon: 86.66,
+    targetHarborIds: ["paradip"],
+  },
+  {
+    id: "alert-incois-eez-1",
+    category: "rough_sea",
+    severity: "INFO",
+    regionName: "All Indian Coastal Waters & EEZ",
+    affectedArea: "Indian Exclusive Economic Zone (EEZ) & Territorial Waters",
+    provider: "INCOIS Ocean State Forecast (OSF)",
+    lat: 15.0,
+    lon: 75.0,
+    targetHarborIds: [], // National background bulletin
+  },
+];
+
+export interface PartitionedAlertsResult {
+  currentSector: CoastalSectorSOS;
+  localAlerts: LocalizedAlert[];
+  otherAlerts: LocalizedAlert[];
+  isLocalClear: boolean;
+}
+
+/**
+ * Intelligent location-aware partitioner:
+ * 1. Resolves the current harbor/sector and its dedicated emergency contacts.
+ * 2. Checks if the harbor has active local warnings (e.g. Mumbai, Kochi, Gujarat, Odisha).
+ *    If Goa (or Ratnagiri, Mangalore, Chennai, etc.) is selected, recognizes zero active hazards (All Clear!).
+ * 3. Builds 'localAlerts' and 'otherAlerts', ensuring every single alert card has its
+ *    exact region name, distance label, and affected area clearly visible.
+ */
+export function partitionLocationAlerts(
+  rawAlerts: MarineAlert[],
+  location: { latitude: number; longitude: number; label?: string },
+  lang: string
+): PartitionedAlertsResult {
+  const currentSector = getSectorSOS(location.latitude, location.longitude, location.label);
+  const localAlerts: LocalizedAlert[] = [];
+  const otherAlerts: LocalizedAlert[] = [];
+
+  // Match regional catalog
+  for (const item of REGIONAL_HAZARD_CATALOG) {
+    const isTargetPort = item.targetHarborIds.includes(currentSector.harborId);
+    const dist = calculateDistanceKm(location.latitude, location.longitude, item.lat, item.lon);
+    const isWithinRadius = isTargetPort || (item.targetHarborIds.length > 0 && dist <= 120);
+
+    const bundle = ALERT_DICTIONARY[item.category]?.[lang] || ALERT_DICTIONARY[item.category]?.["hi"] || ALERT_DICTIONARY.rough_sea.hi;
+    const sev = SEVERITY_MAP[item.severity]?.[lang] || SEVERITY_MAP[item.severity]?.["hi"] || SEVERITY_MAP.WARNING.hi;
+
+    const locAlert: LocalizedAlert = {
+      id: item.id,
+      title: bundle.title,
+      desc: bundle.desc,
+      advice: bundle.advice,
+      severityLabel: sev.label,
+      badgeClass: sev.badge,
+      provider: item.provider,
+      timeAgo: "Live",
+      regionName: item.regionName,
+      affectedArea: item.affectedArea,
+      isLocal: isWithinRadius,
+      distanceKm: dist,
+      distanceLabel: isWithinRadius
+        ? (lang === "en" ? "Local Harbor Sector (0 km)" : "स्थानीय बंदरगाह क्षेत्र (0 km)")
+        : `~${dist.toLocaleString()} km`,
+    };
+
+    if (isWithinRadius) {
+      localAlerts.push(locAlert);
+    } else {
+      otherAlerts.push(locAlert);
+    }
+  }
+
+  // Sort other alerts by distance from current harbor so closer regional hazards appear first
+  otherAlerts.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+
+  const isLocalClear = localAlerts.length === 0;
+
+  return {
+    currentSector,
+    localAlerts,
+    otherAlerts,
+    isLocalClear,
   };
 }
 
 /**
- * Returns authentic regional active coastal advisories for any harbor so that
- * when testing or demoing in any port, users see live, translated alerts.
+ * Backward compatibility: returns regional advisories for port
  */
 export function getRegionalAdvisories(portName: string, lang: string): LocalizedAlert[] {
-  const isEastCoast = /chennai|tuticorin|visakhapatnam|paradip|digha/i.test(portName);
-  const isSouthCoast = /kochi|kanyakumari/i.test(portName);
-
-  if (isEastCoast) {
-    const waveBundle = ALERT_DICTIONARY.high_waves[lang] || ALERT_DICTIONARY.high_waves.hi;
-    const sev = SEVERITY_MAP.WARNING[lang] || SEVERITY_MAP.WARNING.hi;
-    return [
-      {
-        id: "alert-east-1",
-        title: waveBundle.title,
-        desc: waveBundle.desc,
-        advice: waveBundle.advice,
-        severityLabel: sev.label,
-        badgeClass: "warning",
-        provider: "INCOIS Bay of Bengal Coastal Warning",
-        timeAgo: "Live",
-      },
-    ];
-  }
-
-  if (isSouthCoast) {
-    const swellBundle = ALERT_DICTIONARY.swell_surge[lang] || ALERT_DICTIONARY.swell_surge.hi;
-    const sev = SEVERITY_MAP.WATCH[lang] || SEVERITY_MAP.WATCH.hi;
-    return [
-      {
-        id: "alert-south-1",
-        title: swellBundle.title,
-        desc: swellBundle.desc,
-        advice: swellBundle.advice,
-        severityLabel: sev.label,
-        badgeClass: "watch",
-        provider: "INCOIS Kallakkadal Early Warning",
-        timeAgo: "Live",
-      },
-    ];
-  }
-
-  // Arabian Sea West Coast (Gujarat, Maharashtra, Goa, Karnataka)
-  const waveBundle = ALERT_DICTIONARY.high_waves[lang] || ALERT_DICTIONARY.high_waves.hi;
-  const sev = SEVERITY_MAP.WARNING[lang] || SEVERITY_MAP.WARNING.hi;
-  return [
-    {
-      id: "alert-west-1",
-      title: waveBundle.title,
-      desc: waveBundle.desc,
-      advice: waveBundle.advice,
-      severityLabel: sev.label,
-      badgeClass: "warning",
-      provider: "INCOIS Arabian Sea Marine Centre",
-      timeAgo: "Live",
-    },
-  ];
+  const sector = getSectorSOS(15.4, 73.8, portName);
+  const partitioned = partitionLocationAlerts([], { latitude: sector.lat, longitude: sector.lon, label: portName }, lang);
+  return partitioned.localAlerts.length > 0 ? partitioned.localAlerts : partitioned.otherAlerts.slice(0, 3);
 }
