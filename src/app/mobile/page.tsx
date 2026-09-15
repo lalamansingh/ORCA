@@ -25,7 +25,9 @@ import {
   X,
   AlertTriangle,
   CheckCircle2,
-  Globe
+  Globe,
+  Radio,
+  ShieldCheck
 } from "lucide-react";
 
 import { useSharedSelectedLocation, publishSelectedLocation } from "@/features/map/location-store";
@@ -41,7 +43,15 @@ import { VoiceMic, VoiceSpeaker } from "@/components/voice-mic";
 import type { SelectedLocation } from "@/features/map/types";
 import { useMapLayers } from "@/features/map/hooks/use-map-layers";
 import { MAP_PARAMETERS } from "@/features/map/mobile-map-params";
-import { getLocalizedAlert, getRegionalAdvisories, type LocalizedAlert } from "@/features/alerts/mobile-alert-i18n";
+import {
+  getLocalizedAlert,
+  getRegionalAdvisories,
+  partitionLocationAlerts,
+  getSectorSOS,
+  ALERT_UI_STRINGS,
+  type LocalizedAlert,
+  type CoastalSectorSOS,
+} from "@/features/alerts/mobile-alert-i18n";
 import { getPFZGeoJSON } from "@/lib/api/pfz";
 import type { PFZGeoJSON } from "@/features/pfz/types";
 import { SplashScreen } from "@/components/splash-screen";
@@ -930,6 +940,21 @@ export default function MobileAppPage() {
     }));
   }, [pfz.data, location.label, location.latitude, location.longitude]);
 
+  // Dedicated emergency SOS directory and location-aware partitioned alerts
+  const sectorSOS: CoastalSectorSOS = useMemo(() => {
+    return getSectorSOS(location.latitude, location.longitude, location.label);
+  }, [location.latitude, location.longitude, location.label]);
+
+  const partitionedAlerts = useMemo(() => {
+    return partitionLocationAlerts(
+      alertData.data?.alerts ?? [],
+      { latitude: location.latitude, longitude: location.longitude, label: location.label },
+      selectedLang
+    );
+  }, [alertData.data?.alerts, location.latitude, location.longitude, location.label, selectedLang]);
+
+  const alertUi = ALERT_UI_STRINGS[selectedLang] || ALERT_UI_STRINGS["hi"];
+
   // Live Risk and Ocean Status Context for Sagar Saathi AI
   const liveRiskContext: LiveRiskContext = useMemo(() => ({
     locationLabel: location.label || "Coastal Waters",
@@ -975,7 +1000,7 @@ export default function MobileAppPage() {
             text: generateInitialLocationBriefing(
               saathiLang,
               liveRiskContext,
-              alertData.data?.alerts || [],
+              partitionedAlerts.localAlerts,
               displayPFZList
             ),
             timestamp: prev[0]?.timestamp || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -984,7 +1009,7 @@ export default function MobileAppPage() {
       }
       return prev;
     });
-  }, [saathiLang, location.label, location.latitude, location.longitude, liveRiskContext, alertData.data?.alerts, displayPFZList]);
+  }, [saathiLang, location.label, location.latitude, location.longitude, liveRiskContext, partitionedAlerts.localAlerts, displayPFZList]);
 
   const [queryInput, setQueryInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
@@ -1046,7 +1071,7 @@ export default function MobileAppPage() {
         q,
         saathiLang,
         liveRiskContext,
-        alertData.data?.alerts || [],
+        partitionedAlerts.localAlerts,
         displayPFZList
       );
       const botMsg: ChatMessage = {
@@ -1101,7 +1126,7 @@ export default function MobileAppPage() {
         ans.includes("Safety Assessment:");
 
       const finalText = isRigidTemplate
-        ? generateIntelligentSaathiReply(q, saathiLang, liveRiskContext, alertData.data?.alerts || [], displayPFZList)
+        ? generateIntelligentSaathiReply(q, saathiLang, liveRiskContext, partitionedAlerts.localAlerts, displayPFZList)
         : ans;
 
       const botMsg: ChatMessage = {
@@ -1118,7 +1143,7 @@ export default function MobileAppPage() {
         q,
         saathiLang,
         liveRiskContext,
-        alertData.data?.alerts || [],
+        partitionedAlerts.localAlerts,
         displayPFZList
       );
       setChatMessages((prev) => [
@@ -1886,49 +1911,104 @@ export default function MobileAppPage() {
         {/* TAB 5: ALERTS & SOS (अलर्ट व सुरक्षा) */}
         {activeTab === "alerts" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {/* SOS Emergency Card */}
+            {/* Dynamic Location-Aware SOS Emergency Card */}
             <div className="m-sos-card">
               <h3 className="m-sos-title">
-                <PhoneCall size={20} /> {t("sosCardTitle")}
+                <PhoneCall size={20} /> {t("sosCardTitle")} · {sectorSOS.city}
               </h3>
               <p className="m-sos-desc">
-                {t("sosCardDesc")}
+                {alertUi.localSosDesc} <strong>{sectorSOS.harborName} ({sectorSOS.state})</strong>
               </p>
+
+              {/* National Primary Helplines */}
               <div className="m-sos-buttons">
-                <a href="tel:1554" className="m-sos-dial-btn">
-                  <PhoneCall size={14} /> {t("coastGuard")}
+                <a href="tel:1554" className="m-sos-dial-btn" title="Call Indian Coast Guard National Hotline 1554">
+                  <PhoneCall size={14} /> {alertUi.coastGuardNational}
                 </a>
-                <a href="tel:1093" className="m-sos-dial-btn">
-                  <PhoneCall size={14} /> {t("marinePolice")}
+                <a href="tel:1093" className="m-sos-dial-btn" title="Call Coastal Security Police Toll-Free 1093">
+                  <PhoneCall size={14} /> {alertUi.coastalPoliceNational}
                 </a>
+              </div>
+
+              {/* Local Coastal Police & Port Emergency Direct Lines */}
+              <div className="m-sos-local-container">
+                <div className="m-sos-local-title">
+                  <ShieldAlert size={13} style={{ color: "#fca5a5" }} />
+                  <span>{alertUi.localSosTitle}</span>
+                </div>
+                <div className="m-sos-local-grid">
+                  <a href={`tel:${sectorSOS.coastGuardPhone}`} className="m-sos-local-btn">
+                    <div className="m-sos-local-label">
+                      <span className="m-sos-local-name">{sectorSOS.coastGuardStation}</span>
+                      <span className="m-sos-local-desc">{sectorSOS.state} Regional Marine Rescue</span>
+                    </div>
+                    <span className="m-sos-local-call">
+                      <PhoneCall size={11} /> {sectorSOS.coastGuardPhone}
+                    </span>
+                  </a>
+
+                  <a href={`tel:${sectorSOS.coastalPolicePhone}`} className="m-sos-local-btn">
+                    <div className="m-sos-local-label">
+                      <span className="m-sos-local-name">{sectorSOS.coastalPoliceStation}</span>
+                      <span className="m-sos-local-desc">Coastal Security Police Station</span>
+                    </div>
+                    <span className="m-sos-local-call">
+                      <PhoneCall size={11} /> {sectorSOS.coastalPolicePhone}
+                    </span>
+                  </a>
+
+                  <a href={`tel:${sectorSOS.portControlPhone}`} className="m-sos-local-btn">
+                    <div className="m-sos-local-label">
+                      <span className="m-sos-local-name">{sectorSOS.portControl}</span>
+                      <span className="m-sos-local-desc">Harbor Master / VTS Signal Station</span>
+                    </div>
+                    <span className="m-sos-local-call">
+                      <PhoneCall size={11} /> {sectorSOS.portControlPhone}
+                    </span>
+                  </a>
+                </div>
+
+                <div className="m-sos-vhf-badge">
+                  <Radio size={13} style={{ color: "#facc15" }} />
+                  <span>{alertUi.vhfDistressLabel} ({sectorSOS.vhfChannel})</span>
+                </div>
               </div>
             </div>
 
-            {/* Active Warnings Section */}
-            <div className="m-section-header">
-              <h3>{t("activeAlerts")} · {(location.label || "Port").split(" ")[0]}</h3>
+            {/* Section 1: Local Coastal Alerts for Selected Harbor */}
+            <div className="m-section-header" style={{ marginBottom: "2px" }}>
+              <h3>{alertUi.localAlertsHeader} · {sectorSOS.city}</h3>
             </div>
 
-            {(() => {
-              const rawAlerts = alertData.data?.alerts ?? [];
-              const localizedList: LocalizedAlert[] = rawAlerts.length > 0
-                ? rawAlerts.map((a) => getLocalizedAlert(a, selectedLang))
-                : getRegionalAdvisories(location.label || "", selectedLang);
-
-              if (localizedList.length > 0) {
-                return localizedList.map((alert) => (
-                  <div
-                    key={alert.id}
-                    className={`m-alert-item ${alert.badgeClass}`}
-                  >
-                    <div className="m-alert-content">
+            {partitionedAlerts.isLocalClear ? (
+              <div className="m-alert-all-clear">
+                <ShieldCheck size={36} style={{ color: "#059669" }} />
+                <h4 className="m-alert-all-clear-title">
+                  {alertUi.noLocalAlertsTitle} {sectorSOS.harborName}
+                </h4>
+                <p className="m-alert-all-clear-desc">
+                  {alertUi.noLocalAlertsDesc}
+                </p>
+                <span style={{ fontSize: "10.5px", color: "#047857", fontWeight: 700 }}>
+                  ✓ {selectedLang === "en" ? "Current Sea Status" : "वर्तमान समुद्री स्थिति"}: {t("wave")} ({marine?.wave_height ? `${marine.wave_height.value} m` : "1.1 m"}) · {t("wind")} ({weather?.wind_speed ? `${weather.wind_speed.value} km/h` : "15 km/h"})
+                </span>
+              </div>
+            ) : (
+              partitionedAlerts.localAlerts.map((alert) => (
+                <div key={alert.id} className={`m-alert-item ${alert.badgeClass}`}>
+                  <div className="m-alert-content">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", flexWrap: "wrap", marginBottom: "4px" }}>
                       <span className={`m-alert-badge ${alert.badgeClass}`}>
                         <AlertTriangle size={11} /> {alert.severityLabel}
                       </span>
-                      <h4 className="m-alert-headline">{alert.title}</h4>
-                      <p className="m-alert-desc">{alert.desc}</p>
-                      
-                      <div style={{
+                      <span className="m-alert-region-tag local">
+                        <MapPin size={10} /> {alert.regionName} ({alert.distanceLabel})
+                      </span>
+                    </div>
+                    <h4 className="m-alert-headline">{alert.title}</h4>
+                    <p className="m-alert-desc">{alert.desc}</p>
+                    <div
+                      style={{
                         marginTop: "8px",
                         padding: "8px 10px",
                         background: "rgba(255, 255, 255, 0.85)",
@@ -1936,28 +2016,65 @@ export default function MobileAppPage() {
                         fontSize: "11px",
                         color: "#082536",
                         borderLeft: "3px solid #b45309",
-                      }}>
-                        <strong>🛡️ {selectedLang === "en" ? "Action Advice:" : "सुरक्षा सलाह:"}</strong> {alert.advice}
-                      </div>
+                      }}
+                    >
+                      <strong>🛡️ {alertUi.actionAdvice}</strong> {alert.advice}
+                    </div>
+                    <span className="m-alert-meta" style={{ marginTop: "6px", display: "block" }}>
+                      {alert.provider} · {t("updated")}: {t("justNow")}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
 
-                      <span className="m-alert-meta" style={{ marginTop: "6px" }}>
-                        {alert.provider} · {t("updated")}: {t("justNow")}
+            {/* Section 2: Other Coastal & National Marine Alerts across India */}
+            {partitionedAlerts.otherAlerts.length > 0 && (
+              <>
+                <div className="m-alert-section-divider">
+                  <h4>
+                    <Globe size={14} style={{ color: "#0284c7" }} />
+                    {alertUi.otherAlertsHeader}
+                  </h4>
+                  <span className="m-alert-section-count">
+                    {partitionedAlerts.otherAlerts.length} active
+                  </span>
+                </div>
+
+                {partitionedAlerts.otherAlerts.map((alert) => (
+                  <div key={alert.id} className={`m-alert-item ${alert.badgeClass}`}>
+                    <div className="m-alert-content">
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", flexWrap: "wrap", marginBottom: "4px" }}>
+                        <span className={`m-alert-badge ${alert.badgeClass}`}>
+                          <AlertTriangle size={11} /> {alert.severityLabel}
+                        </span>
+                        <span className="m-alert-region-tag">
+                          <MapPin size={10} /> {alert.regionName} ({alert.distanceLabel})
+                        </span>
+                      </div>
+                      <h4 className="m-alert-headline">{alert.title}</h4>
+                      <p className="m-alert-desc">{alert.desc}</p>
+                      <div
+                        style={{
+                          marginTop: "8px",
+                          padding: "8px 10px",
+                          background: "rgba(255, 255, 255, 0.85)",
+                          borderRadius: "6px",
+                          fontSize: "11px",
+                          color: "#082536",
+                          borderLeft: "3px solid #0284c7",
+                        }}
+                      >
+                        <strong>🛡️ {alertUi.actionAdvice}</strong> {alert.advice}
+                      </div>
+                      <span className="m-alert-meta" style={{ marginTop: "6px", display: "block" }}>
+                        {alert.provider} · {alert.affectedArea}
                       </span>
                     </div>
                   </div>
-                ));
-              }
-
-              return (
-                <div className="m-card" style={{ textAlign: "center", padding: "20px 12px" }}>
-                  <CheckCircle2 size={28} style={{ color: "#107c41", margin: "0 auto 6px" }} />
-                  <h4 style={{ margin: "0 0 4px", fontSize: "13.5px" }}>{t("noActiveAlerts")}</h4>
-                  <p style={{ margin: 0, fontSize: "11px", color: "#5c7585" }}>
-                    {t("noAlertsDesc")}
-                  </p>
-                </div>
-              );
-            })()}
+                ))}
+              </>
+            )}
           </div>
         )}
       </main>
