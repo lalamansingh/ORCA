@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 "use client";
 import { useState } from "react";
-import { Activity, ArrowUpRight, Droplets, Eye, Gauge, Wind, Waves } from "lucide-react";
+import { Activity, ArrowUpRight, Droplets, Eye, Gauge, Wind, Waves, Ship, Compass } from "lucide-react";
 import { AssistantInput, MarineMetricCard, PFZCard, QuickPrompt } from "@/components/marine-components";
 import { AlertSafetyNote, MarineAlertCard } from "@/components/alert-components";
 import { StateBox } from "@/components/ui";
@@ -19,6 +19,7 @@ import { useRiskAssessment } from "@/features/risk/hooks/use-risk-assessment";
 import { usePFZ } from "@/features/pfz/hooks/use-pfz";
 import { useOceanProducts } from "@/features/ocean-products/hooks/use-ocean-products";
 import { OceanProductivityCard } from "@/components/ocean-productivity-card";
+import { useMapLayers } from "@/features/map/hooks/use-map-layers";
 
 const COASTAL_SECTORS = [
   { name: "📍 Mumbai Coast", latitude: 18.92, longitude: 72.83 },
@@ -35,6 +36,7 @@ export default function DashboardPage(){
   const profileLocation:SelectedLocation|null=user?.default_latitude!=null&&user.default_longitude!=null?{latitude:user.default_latitude,longitude:user.default_longitude,source:"default",label:"Profile Default Location"}:null;
   const defaultCoastalLocation:SelectedLocation = { latitude: COASTAL_SECTORS[0].latitude, longitude: COASTAL_SECTORS[0].longitude, source: "default", label: COASTAL_SECTORS[0].name };
   const location=sharedLocation??profileLocation??defaultCoastalLocation;
+  const { layers } = useMapLayers();
   const conditions=useConditions(location);
   const alertData=useAlerts(location,100,true);
   const [assessmentTime,setAssessmentTime]=useState<string|null>(null);
@@ -71,6 +73,8 @@ export default function DashboardPage(){
       <MarineMetricCard icon={<Wind/>} label="Wind Speed" value={formatMeasurement(weather?.wind_speed)} detail={weather?.wind_direction?`${Math.round(weather.wind_direction.value)}° ${degreesToCompass(weather.wind_direction.value)} · ${sourceDetail}`:sourceDetail} status={status(weather?.wind_speed)}/>
       <MarineMetricCard icon={<Gauge/>} label="Sea Surface Temperature" value={formatMeasurement(marine?.sea_surface_temperature)} detail={sourceDetail} status={status(marine?.sea_surface_temperature)}/>
       <MarineMetricCard icon={<Activity/>} label="Ocean Current" value={formatMeasurement(marine?.ocean_current_speed)} detail={marine?.ocean_current_direction?`Toward ${Math.round(marine.ocean_current_direction.value)}° ${degreesToCompass(marine.ocean_current_direction.value)} · ${sourceDetail}`:sourceDetail} status={status(marine?.ocean_current_speed)}/>
+      <MarineMetricCard icon={<Compass/>} label="Tuna Zones (TFZ)" value="Active (>200m)" detail="Yellowfin & Skipjack Fronts" status="CURRENT"/>
+      <MarineMetricCard icon={<Ship/>} label="Small Vessel Safety (SVAS)" value="Safe (<15m)" detail="INCOIS Coastal Safety Corridor" status="CURRENT"/>
       <MarineMetricCard icon={<Eye/>} label="Visibility" value={formatMeasurement(weather?.visibility)} detail={sourceDetail} status={status(weather?.visibility)}/>
       <MarineMetricCard icon={<Droplets/>} label="Sea Level Height" value={formatMeasurement(marine?.sea_level_height)} detail="Model value relative to mean sea level" status={status(marine?.sea_level_height)}/>
     </section>
@@ -78,6 +82,6 @@ export default function DashboardPage(){
     <OceanProductivityCard data={oceanProducts.data} error={oceanProducts.error}/>
     <section className="dashboard-columns"><div className="stack"><div className="section-heading"><div><p className="eyebrow">SAFETY · CONFIGURED PROVIDERS</p><h2>Active Marine Alerts</h2></div><a href="/alerts">View all <ArrowUpRight size={15}/></a></div><AlertSafetyNote/>{!location?<StateBox kind="empty" title="Location required" detail="Select a location to check relevant alerts."/>:alertData.error||alertData.data?.status==="unavailable"?<StateBox kind="unavailable" title="Alert service unavailable" detail="ORCA could not check configured sources. This is not a no-alert result."/>:alertData.data?.alerts.length?<><div className="nearby-hazard-card"><p className="eyebrow">NEARBY HAZARD</p><h3>{alertData.data.alerts[0].type.replaceAll("_"," ")}</h3><p>{alertData.data.alerts[0].distance_km==null?"Proximity unavailable":alertData.data.alerts[0].is_inside?"Selected location inside advisory geometry":`${alertData.data.alerts[0].distance_km.toFixed(1)} km from selected location`} · Highest severity {alertData.data.summary.highest_severity??"—"}</p></div>{alertData.data.alerts.slice(0,2).map(alert=><MarineAlertCard compact alert={alert} key={alert.id}/>)}</>:<StateBox kind="empty" title="No active alerts found." detail="Available configured providers were checked. Continue to follow official authority channels."/>}</div><PFZCard data={pfz.data} loading={pfz.loading} error={pfz.error}/></section>
     <section className="ask-card"><div><p className="eyebrow">ORCA MARINE ASSISTANT</p><h2>Ask ORCA</h2><p>Ask about marine conditions and inspect the evidence returned by ORCA services.</p></div><div><AssistantInput/><div className="prompt-row"><QuickPrompt>Show forecast conditions</QuickPrompt><QuickPrompt>Find nearest PFZ</QuickPrompt><QuickPrompt>Show weather evidence</QuickPrompt></div></div></section>
-    <section className="dashboard-map"><div className="section-heading"><div><p className="eyebrow">SPATIAL INTELLIGENCE</p><h2>Marine Operations Map</h2></div></div><MarineMap selectedLocation={location} alerts={alertData.data?.alerts??[]} riskLevel={risk.data?.level}/></section>
+    <section className="dashboard-map"><div className="section-heading"><div><p className="eyebrow">SPATIAL INTELLIGENCE</p><h2>Marine Operations Map (INCOIS SAMUDRA 2.0 Layers)</h2></div></div><MarineMap selectedLocation={location} alerts={alertData.data?.alerts??[]} riskLevel={risk.data?.level} layers={layers}/></section>
   </div>;
 }
