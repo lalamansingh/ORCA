@@ -18,6 +18,8 @@ import { API_BASE_URL, API_V1_PREFIX } from "@/lib/api/config";
 
 type Props = {
   routeGeometry?: import("geojson").LineString | null;
+  routeStartPoint?: { latitude: number; longitude: number; label?: string } | null;
+  routeEndPoint?: { latitude: number; longitude: number; label?: string } | null;
   large?: boolean;
   compact?: boolean;
   layers?: MarineMapLayer[];
@@ -65,6 +67,8 @@ const interactiveLayerIds = [
 
 export function MarineMap({
   routeGeometry,
+  routeStartPoint,
+  routeEndPoint,
   large = false,
   compact = false,
   layers = [],
@@ -518,6 +522,34 @@ export function MarineMap({
         paint: { "line-color": "#38bdf8", "line-width": 4.5 },
       });
       map.addLayer({
+        id: "orca-route-waypoint-halo",
+        type: "circle",
+        source: "orca-calculated-route",
+        filter: ["==", ["geometry-type"], "Point"],
+        paint: {
+          "circle-radius": [
+            "case",
+            ["==", ["get", "kind"], "boat_origin"], 24,
+            ["==", ["get", "kind"], "target_pin"], 26,
+            12
+          ],
+          "circle-color": [
+            "case",
+            ["==", ["get", "kind"], "boat_origin"], "#38bdf8",
+            ["==", ["get", "kind"], "target_pin"], "#ef4444",
+            "#06b6d4"
+          ],
+          "circle-opacity": 0.28,
+          "circle-stroke-width": 1.5,
+          "circle-stroke-color": [
+            "case",
+            ["==", ["get", "kind"], "boat_origin"], "#38bdf8",
+            ["==", ["get", "kind"], "target_pin"], "#f87171",
+            "#67e8f9"
+          ],
+        },
+      });
+      map.addLayer({
         id: "orca-route-waypoint-points",
         type: "circle",
         source: "orca-calculated-route",
@@ -525,14 +557,14 @@ export function MarineMap({
         paint: {
           "circle-radius": [
             "case",
-            ["==", ["get", "kind"], "boat_origin"], 9,
-            ["==", ["get", "kind"], "target_pin"], 10,
-            6.5
+            ["==", ["get", "kind"], "boat_origin"], 11,
+            ["==", ["get", "kind"], "target_pin"], 13,
+            7
           ],
           "circle-color": [
             "case",
             ["==", ["get", "kind"], "boat_origin"], "#0284c7",
-            ["==", ["get", "kind"], "target_pin"], "#ef4444",
+            ["==", ["get", "kind"], "target_pin"], "#dc2626",
             "#06b6d4"
           ],
           "circle-stroke-width": 3,
@@ -547,12 +579,13 @@ export function MarineMap({
         layout: {
           "text-field": [
             "case",
-            ["==", ["get", "kind"], "boat_origin"], ["concat", "🛥️ ", ["get", "name"]],
+            ["==", ["get", "kind"], "boat_origin"], ["concat", "🟢 ", ["get", "name"]],
             ["==", ["get", "kind"], "target_pin"], ["concat", "📍 ", ["get", "name"]],
             ["concat", "⚓ ", ["get", "name"]]
           ],
-          "text-size": 11.5,
-          "text-offset": [0, 1.5],
+          "text-size": 12,
+          "text-offset": [0, 1.6],
+          "text-allow-overlap": true,
         },
         paint: {
           "text-color": "#ffffff",
@@ -690,6 +723,28 @@ export function MarineMap({
       clearTimeout(t3);
     };
   }, [state, compact]);
+
+  // Turn-by-Turn GPS Navigation Map Helpers (North Reset & Re-centre)
+  useEffect(() => {
+    const handleResetNorth = () => {
+      mapRef.current?.easeTo({ bearing: 0, pitch: 0, duration: 400 });
+    };
+    const handleRecenterStart = () => {
+      if (routeStartPoint && mapRef.current) {
+        mapRef.current.easeTo({
+          center: [routeStartPoint.longitude, routeStartPoint.latitude],
+          zoom: Math.max(mapRef.current.getZoom(), 9),
+          duration: 500,
+        });
+      }
+    };
+    window.addEventListener("orca-map-reset-north", handleResetNorth);
+    window.addEventListener("orca-map-recenter-start", handleRecenterStart);
+    return () => {
+      window.removeEventListener("orca-map-reset-north", handleResetNorth);
+      window.removeEventListener("orca-map-recenter-start", handleRecenterStart);
+    };
+  }, [routeStartPoint]);
 
   // Basemap Switcher Handler
   useEffect(() => {
@@ -940,8 +995,12 @@ export function MarineMap({
 
     if (routeGeometry && routeGeometry.coordinates && routeGeometry.coordinates.length >= 2) {
       const coords = routeGeometry.coordinates as [number, number][];
-      const startPt = coords[0];
-      const endPt = coords[coords.length - 1];
+      const startPt: [number, number] = routeStartPoint
+        ? [routeStartPoint.longitude, routeStartPoint.latitude]
+        : coords[0];
+      const endPt: [number, number] = routeEndPoint
+        ? [routeEndPoint.longitude, routeEndPoint.latitude]
+        : coords[coords.length - 1];
 
       const navFeatures: import("geojson").Feature[] = [
         {
@@ -960,7 +1019,12 @@ export function MarineMap({
         {
           type: "Feature",
           geometry: { type: "Point", coordinates: startPt },
-          properties: { kind: "boat_origin", name: "Departure Harbor", title: "Departure Harbor", status: "Departure Waypoint" },
+          properties: {
+            kind: "boat_origin",
+            name: routeStartPoint?.label || "Departure (Point A)",
+            title: "Departure (Point A)",
+            status: "Departure Waypoint",
+          },
         },
       ];
 
@@ -968,14 +1032,24 @@ export function MarineMap({
         navFeatures.push({
           type: "Feature",
           geometry: { type: "Point", coordinates: coords[i] },
-          properties: { kind: "mid_waypoint", name: `Mid-Channel WP-${i}`, title: `Mid-Channel Waypoint ${i}`, status: "Transit Waypoint" },
+          properties: {
+            kind: "mid_waypoint",
+            name: `Fairway WP-${i}`,
+            title: `Fairway Waypoint ${i}`,
+            status: "Transit Waypoint",
+          },
         });
       }
 
       navFeatures.push({
         type: "Feature",
         geometry: { type: "Point", coordinates: endPt },
-        properties: { kind: "target_pin", name: "PFZ Target Destination", title: "PFZ Target Destination", status: "Target Waypoint" },
+        properties: {
+          kind: "target_pin",
+          name: routeEndPoint?.label || "Destination (Point B)",
+          title: "Destination (Point B)",
+          status: "Target Waypoint",
+        },
       });
 
       source.setData({
@@ -984,8 +1058,8 @@ export function MarineMap({
       });
 
       // Fit map camera bounds to the route
-      const longitudes = coords.map((c) => c[0]);
-      const latitudes = coords.map((c) => c[1]);
+      const longitudes = [startPt[0], endPt[0], ...coords.map((c) => c[0])];
+      const latitudes = [startPt[1], endPt[1], ...coords.map((c) => c[1])];
       const minLon = Math.min(...longitudes);
       const maxLon = Math.max(...longitudes);
       const minLat = Math.min(...latitudes);
@@ -998,7 +1072,7 @@ export function MarineMap({
             [minLon, minLat],
             [maxLon, maxLat],
           ],
-          { padding: 60, maxZoom: 11, essential: true }
+          { padding: 60, maxZoom: 11, duration: 800, essential: true }
         );
       } catch {}
 
@@ -1010,13 +1084,41 @@ export function MarineMap({
               [minLon, minLat],
               [maxLon, maxLat],
             ],
-            { padding: 60, maxZoom: 11, essential: true }
+            { padding: 60, maxZoom: 11, duration: 800, essential: true }
           );
         } catch {}
       }, 100);
 
       return () => clearTimeout(fitTimer);
-    } else {
+    } else if (routeStartPoint && !routeEndPoint) {
+      // User tapped Point 1: Point it out immediately with prominent start marker & center camera!
+      const startPt: [number, number] = [routeStartPoint.longitude, routeStartPoint.latitude];
+      source.setData({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            geometry: { type: "Point", coordinates: startPt },
+            properties: {
+              kind: "boat_origin",
+              name: routeStartPoint.label || "Start (Point A)",
+              title: "Departure (Point A)",
+              status: "Departure Waypoint Set",
+            },
+          },
+        ],
+      });
+      try {
+        map.easeTo({
+          center: startPt,
+          zoom: Math.max(map.getZoom(), 8.5),
+          duration: 400,
+        });
+      } catch {}
+    } else if (routeGeometry === null && !routeStartPoint && !routeEndPoint) {
+      // Explicitly empty route (route cleared)
+      source.setData({ type: "FeatureCollection", features: [] });
+    } else if (showDemoFeatures && !compact) {
       // Default Recommended Safe Navigation Channel connecting coastal harbor to prime fishing front
       const lat = selectedLocation?.latitude ?? 18.92;
       const lon = selectedLocation?.longitude ?? 72.83;
@@ -1058,8 +1160,10 @@ export function MarineMap({
         },
       ];
       source.setData({ type: "FeatureCollection", features: navFeatures });
+    } else {
+      source.setData({ type: "FeatureCollection", features: [] });
     }
-  }, [routeGeometry, selectedLocation, state, styleRevision]);
+  }, [routeGeometry, routeStartPoint, routeEndPoint, selectedLocation, showDemoFeatures, compact, state, styleRevision]);
 
   // 7. Selected Location Center & Risk Ring
   useEffect(() => {

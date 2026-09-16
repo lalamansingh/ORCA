@@ -1781,6 +1781,11 @@
   height: 100% !important;
 }
 
+.m-nav-map-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 /* Floating Right Column Controls (Compass, Search, Sound, Route) */
 .m-nav-fabs-right {
   position: absolute;

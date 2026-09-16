@@ -33,7 +33,10 @@ import {
   ArrowRight,
   RotateCcw,
   ArrowLeftRight,
-  Compass
+  Compass,
+  ArrowUp,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 
 import { useSharedSelectedLocation, publishSelectedLocation } from "@/features/map/location-store";
@@ -1299,6 +1302,17 @@ export default function MobileAppPage() {
   const [routePointA, setRoutePointA] = useState<SelectedLocation | null>(null);
   const [routePointB, setRoutePointB] = useState<SelectedLocation | null>(null);
   const [routeActiveSlot, setRouteActiveSlot] = useState<"A" | "B">("A");
+  const [voiceNavActive, setVoiceNavActive] = useState(false);
+
+  const formatEtaTime = (durationMinutes: number) => {
+    const d = new Date(Date.now() + durationMinutes * 60 * 1000);
+    const hours = d.getHours();
+    const mins = d.getMinutes();
+    const ampm = hours >= 12 ? "pm" : "am";
+    const formattedHours = hours % 12 || 12;
+    const formattedMins = mins < 10 ? `0${mins}` : mins;
+    return `${formattedHours}:${formattedMins} ${ampm}`;
+  };
 
   const interactiveRouteData = useMemo(() => {
     if (!routePointA || !routePointB) return null;
@@ -2657,255 +2671,202 @@ export default function MobileAppPage() {
               </div>
             </div>
 
-            {/* Instruction Step Banner */}
-            <div
-              style={{
-                background: !routePointA
-                  ? "linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(56, 189, 248, 0.08))"
-                  : !routePointB
-                  ? "linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(251, 191, 36, 0.08))"
-                  : "linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.08))",
-                border: `1.5px solid ${!routePointA ? "rgba(2, 132, 199, 0.35)" : !routePointB ? "rgba(245, 158, 11, 0.4)" : "rgba(16, 185, 129, 0.4)"}`,
-                borderRadius: "12px",
-                padding: "10px 12px",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-              }}
-            >
-              <div
-                style={{
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "50%",
-                  background: !routePointA ? "#0284c7" : !routePointB ? "#f59e0b" : "#10b981",
-                  color: "#ffffff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "13px",
-                  fontWeight: 900,
-                  flexShrink: 0,
-                }}
-              >
-                {!routePointA ? "1" : !routePointB ? "2" : "✓"}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <strong style={{ display: "block", fontSize: "12px", color: "#082536" }}>
-                  {!routePointA ? t("routeStepA") : !routePointB ? t("routeStepB") : t("routeBothReady")}
-                </strong>
-                <small style={{ fontSize: "10.5px", color: "#475569" }}>
-                  {!routePointA
-                    ? "Tap any point on the map to place Start marker (Point A)"
-                    : !routePointB
-                    ? "Tap next point on the map to set Destination marker (Point B)"
-                    : `Navigating from Point A (${routePointA.latitude.toFixed(2)}°N, ${routePointA.longitude.toFixed(2)}°E) to Point B (${routePointB.latitude.toFixed(2)}°N, ${routePointB.longitude.toFixed(2)}°E)`}
-                </small>
-              </div>
-            </div>
-
-            {/* Coordinate Slots (Point A & Point B) */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <button
-                type="button"
-                onClick={() => setRouteActiveSlot("A")}
-                style={{
-                  flex: 1,
-                  background: routeActiveSlot === "A" ? "rgba(16, 185, 129, 0.12)" : "#ffffff",
-                  border: `1.5px solid ${routeActiveSlot === "A" ? "#10b981" : "#cbd5e1"}`,
-                  borderRadius: "10px",
-                  padding: "8px 10px",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  boxShadow: routeActiveSlot === "A" ? "0 0 0 2px rgba(16, 185, 129, 0.2)" : "none",
-                  transition: "all 0.15s",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
-                  <span style={{ fontSize: "10px", fontWeight: 800, color: "#10b981", textTransform: "uppercase" }}>
-                    🟢 {t("routeStartA")}
-                  </span>
-                  {routeActiveSlot === "A" && (
-                    <span style={{ fontSize: "9px", background: "#10b981", color: "#fff", padding: "1px 5px", borderRadius: "6px", fontWeight: 700 }}>
-                      ACTIVE
-                    </span>
-                  )}
-                </div>
-                <div style={{ fontSize: "11px", fontWeight: 700, color: routePointA ? "#082536" : "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {routePointA ? `${routePointA.latitude.toFixed(4)}°N, ${routePointA.longitude.toFixed(4)}°E` : t("tapMapToSet")}
-                </div>
-              </button>
-
-              <div style={{ color: "#94a3b8", fontWeight: 900, fontSize: "14px", flexShrink: 0 }}>
-                →
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setRouteActiveSlot("B")}
-                style={{
-                  flex: 1,
-                  background: routeActiveSlot === "B" ? "rgba(2, 132, 199, 0.12)" : "#ffffff",
-                  border: `1.5px solid ${routeActiveSlot === "B" ? "#0284c7" : "#cbd5e1"}`,
-                  borderRadius: "10px",
-                  padding: "8px 10px",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  boxShadow: routeActiveSlot === "B" ? "0 0 0 2px rgba(2, 132, 199, 0.2)" : "none",
-                  transition: "all 0.15s",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
-                  <span style={{ fontSize: "10px", fontWeight: 800, color: "#0284c7", textTransform: "uppercase" }}>
-                    🏁 {t("routeDestB")}
-                  </span>
-                  {routeActiveSlot === "B" && (
-                    <span style={{ fontSize: "9px", background: "#0284c7", color: "#fff", padding: "1px 5px", borderRadius: "6px", fontWeight: 700 }}>
-                      ACTIVE
-                    </span>
-                  )}
-                </div>
-                <div style={{ fontSize: "11px", fontWeight: 700, color: routePointB ? "#082536" : "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {routePointB ? `${routePointB.latitude.toFixed(4)}°N, ${routePointB.longitude.toFixed(4)}°E` : t("tapMapToSet")}
-                </div>
-              </button>
-            </div>
-
-            {/* Quick Action Toolbar */}
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setRoutePointA(location);
-                  setRouteActiveSlot("B");
-                }}
-                style={{
-                  background: "#f0f9ff",
-                  border: "1px solid #bae6fd",
-                  color: "#0369a1",
-                  borderRadius: "8px",
-                  padding: "5px 9px",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <Anchor size={12} />
-                <span>{t("routeUseCurrent")}</span>
-              </button>
-
-              {routePointA && routePointB && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const temp = routePointA;
-                    setRoutePointA(routePointB);
-                    setRoutePointB(temp);
-                  }}
-                  style={{
-                    background: "#f8fafc",
-                    border: "1px solid #cbd5e1",
-                    color: "#334155",
-                    borderRadius: "8px",
-                    padding: "5px 9px",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <ArrowLeftRight size={12} />
-                  <span>{t("routeSwap")}</span>
-                </button>
-              )}
-
-              {(routePointA || routePointB) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRoutePointA(null);
-                    setRoutePointB(null);
-                    setRouteActiveSlot("A");
-                  }}
-                  style={{
-                    background: "#fff1f2",
-                    border: "1px solid #fecdd3",
-                    color: "#e11d48",
-                    borderRadius: "8px",
-                    padding: "5px 9px",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    marginLeft: "auto",
-                  }}
-                >
-                  <RotateCcw size={12} />
-                  <span>{t("routeClear")}</span>
-                </button>
-              )}
-            </div>
-
-            {/* Interactive Map Canvas */}
-            <div className="compact-map-wrapper" style={{ position: "relative", minHeight: "360px" }}>
-              <MarineMap
-                compact={true}
-                selectedLocation={routePointB ? null : routePointA}
-                onSelectLocation={handleRoutePlannerMapClick}
-                layers={mapLayers.layers}
-                showDemoFeatures={true}
-                alerts={alertData.data?.alerts ?? []}
-                pfzs={pfzGeojson}
-                savedLocations={mobileSavedLocations}
-                riskLevel={riskLevel}
-                routeGeometry={interactiveRouteData?.geometry ?? null}
-              />
-
-              {/* Floating Helper Pill on Map */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "10px",
-                  left: "10px",
-                  right: "10px",
-                  background: "rgba(8, 37, 54, 0.88)",
-                  backdropFilter: "blur(6px)",
-                  border: "1px solid rgba(56, 189, 248, 0.3)",
-                  borderRadius: "8px",
-                  padding: "6px 10px",
-                  color: "#ffffff",
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  zIndex: 2,
-                  pointerEvents: "none",
-                }}
-              >
-                <span>
-                  {!routePointA
-                    ? "👉 Tap map to set Start (Point A)"
-                    : !routePointB
-                    ? "👉 Tap map to set Destination (Point B)"
-                    : "🗺️ 2-Point Route Computed"}
-                </span>
-                <span style={{ fontSize: "10px", color: "#38bdf8", fontWeight: 800 }}>
-                  ORCA NAV
-                </span>
-              </div>
-            </div>
-
-            {/* Route Calculation Summary & Navigation Stats */}
-            {interactiveRouteData && (
+            {/* GOOGLE MAPS TURN-BY-TURN GPS NAVIGATION MODE (WHEN BOTH POINTS SET) */}
+            {interactiveRouteData ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {/* 1. Top Green Turn Banner (Matching Reference Image) */}
+                <div className="m-turn-banner">
+                  <div className="m-turn-banner-main">
+                    <div className="m-turn-arrow-circle">
+                      <ArrowUp size={22} color="#ffffff" strokeWidth={3} />
+                    </div>
+                    <div>
+                      <div className="m-turn-title">
+                        Head {interactiveRouteData.bearingCompass} ({interactiveRouteData.bearingDeg}°)
+                      </div>
+                      <div className="m-turn-subtitle">
+                        ⚓ Safe Fairway Corridor · {interactiveRouteData.distanceKm} km to Destination
+                      </div>
+                    </div>
+                  </div>
+                  <div className="m-turn-next-badge">
+                    <span>Then</span>
+                    <span style={{ fontSize: "12px" }}>🏁</span>
+                  </div>
+                </div>
+
+                {/* 2. Navigation Map Container with Right FABs & Bottom Floating Actions */}
+                <div className="m-nav-map-container">
+                  <MarineMap
+                    compact={true}
+                    routeStartPoint={routePointA}
+                    routeEndPoint={routePointB}
+                    routeGeometry={interactiveRouteData.geometry}
+                    onSelectLocation={handleRoutePlannerMapClick}
+                    layers={mapLayers.layers}
+                    showDemoFeatures={true}
+                    alerts={alertData.data?.alerts ?? []}
+                    pfzs={pfzGeojson}
+                    savedLocations={mobileSavedLocations}
+                    riskLevel={riskLevel}
+                  />
+
+                  {/* Floating Right FAB Buttons (Compass, Fit, Sound, Reverse) */}
+                  <div className="m-nav-fabs-right">
+                    <button
+                      type="button"
+                      className="m-nav-fab-btn"
+                      title="Reset North Compass"
+                      onClick={() => window.dispatchEvent(new CustomEvent("orca-map-reset-north"))}
+                    >
+                      🧭
+                    </button>
+                    <button
+                      type="button"
+                      className="m-nav-fab-btn"
+                      title="Fit Route to Screen"
+                      onClick={() => {
+                        window.dispatchEvent(new Event("resize"));
+                        setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
+                      }}
+                    >
+                      🔍
+                    </button>
+                    <button
+                      type="button"
+                      className="m-nav-fab-btn"
+                      title={voiceNavActive ? "Mute Voice Guidance" : "Enable Voice Guidance"}
+                      onClick={() => {
+                        const next = !voiceNavActive;
+                        setVoiceNavActive(next);
+                        if (next && typeof window !== "undefined" && "speechSynthesis" in window) {
+                          try {
+                            const text = `Navigating from Point A to Point B. Head ${interactiveRouteData.bearingCompass}, distance ${interactiveRouteData.distanceKm} kilometers. Safe marine passage engaged.`;
+                            const u = new SpeechSynthesisUtterance(text);
+                            window.speechSynthesis.speak(u);
+                          } catch {}
+                        }
+                      }}
+                    >
+                      {voiceNavActive ? "🔊" : "🔇"}
+                    </button>
+                    <button
+                      type="button"
+                      className="m-nav-fab-btn"
+                      title="Swap Route Direction"
+                      onClick={() => {
+                        const tmp = routePointA;
+                        setRoutePointA(routePointB);
+                        setRoutePointB(tmp);
+                      }}
+                    >
+                      🔀
+                    </button>
+                  </div>
+
+                  {/* Floating Bottom Actions (Re-centre & Report SOS) */}
+                  <div className="m-nav-floating-bottom">
+                    <button
+                      type="button"
+                      className="m-nav-recenter-btn"
+                      onClick={() => window.dispatchEvent(new CustomEvent("orca-map-recenter-start"))}
+                    >
+                      ▲ Re-centre
+                    </button>
+                    <button
+                      type="button"
+                      className="m-nav-sos-btn"
+                      onClick={() => {
+                        setActiveTab("alerts");
+                        setAlertSubTab("sos");
+                      }}
+                    >
+                      ⚠️ Report SOS
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Google Maps Dark Bottom Trip Sheet */}
+                <div className="m-nav-bottom-sheet">
+                  {/* Left Close / Reset Button */}
+                  <button
+                    type="button"
+                    className="m-nav-close-btn"
+                    title="Clear Route"
+                    onClick={() => {
+                      setRoutePointA(null);
+                      setRoutePointB(null);
+                      setRouteActiveSlot("A");
+                    }}
+                  >
+                    <X size={18} />
+                  </button>
+
+                  {/* Center Big ETA & Distance */}
+                  <div className="m-nav-trip-center">
+                    <div className="m-nav-trip-eta-row">
+                      <span className="m-nav-trip-time">
+                        {interactiveRouteData.durationMinutes} min
+                      </span>
+                      <span style={{ fontSize: "18px" }}>🍃</span>
+                    </div>
+                    <div className="m-nav-trip-subtext">
+                      {interactiveRouteData.distanceKm} km · {formatEtaTime(interactiveRouteData.durationMinutes)}
+                    </div>
+                  </div>
+
+                  {/* Right AI Saathi Button */}
+                  <button
+                    type="button"
+                    className="m-nav-ai-btn"
+                    title="Ask AI Saathi About This Route"
+                    onClick={() => {
+                      setActiveTab("assistant");
+                      const promptText = `Please provide an ocean navigation and safety briefing for my voyage from Point A (${routePointA?.latitude.toFixed(3)}°N, ${routePointA?.longitude.toFixed(3)}°E) to Point B (${routePointB?.latitude.toFixed(3)}°N, ${routePointB?.longitude.toFixed(3)}°E). Total distance is ${interactiveRouteData.distanceKm} km, heading ${interactiveRouteData.bearingDeg}° (${interactiveRouteData.bearingCompass}). Are weather, waves and currents safe for this passage?`;
+                      setQueryInput(promptText);
+                    }}
+                  >
+                    <Sparkles size={18} />
+                  </button>
+                </div>
+
+                {/* Coordinate Slots (Point A & Point B) */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div
+                    style={{
+                      flex: 1,
+                      background: "rgba(16, 185, 129, 0.1)",
+                      border: "1.5px solid #10b981",
+                      borderRadius: "10px",
+                      padding: "8px 10px",
+                    }}
+                  >
+                    <span style={{ fontSize: "10px", fontWeight: 800, color: "#10b981", display: "block" }}>
+                      🟢 {t("routeStartA")}
+                    </span>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#082536" }}>
+                      {routePointA ? `${routePointA.latitude.toFixed(4)}°N, ${routePointA.longitude.toFixed(4)}°E` : ""}
+                    </span>
+                  </div>
+                  <div style={{ color: "#94a3b8", fontWeight: 900, fontSize: "14px" }}>→</div>
+                  <div
+                    style={{
+                      flex: 1,
+                      background: "rgba(239, 68, 68, 0.1)",
+                      border: "1.5px solid #ef4444",
+                      borderRadius: "10px",
+                      padding: "8px 10px",
+                    }}
+                  >
+                    <span style={{ fontSize: "10px", fontWeight: 800, color: "#ef4444", display: "block" }}>
+                      🏁 {t("routeDestB")}
+                    </span>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#082536" }}>
+                      {routePointB ? `${routePointB.latitude.toFixed(4)}°N, ${routePointB.longitude.toFixed(4)}°E` : ""}
+                    </span>
+                  </div>
+                </div>
+
                 {/* 4-Metric Grid */}
                 <div
                   style={{
@@ -3018,7 +2979,7 @@ export default function MobileAppPage() {
                           {idx === 0 ? "🟢" : idx === interactiveRouteData.waypoints.length - 1 ? "🏁" : "⚓"}
                         </span>
                         <div style={{ flex: 1 }}>
-                          <strong style={{ color: idx === 0 ? "#34d399" : idx === interactiveRouteData.waypoints.length - 1 ? "#38bdf8" : "#93c5fd" }}>
+                          <strong style={{ color: idx === 0 ? "#34d399" : idx === interactiveRouteData.waypoints.length - 1 ? "#ef4444" : "#93c5fd" }}>
                             {wp.name}
                           </strong>
                           <div style={{ color: "#94a3b8", fontSize: "10.5px" }}>
@@ -3057,6 +3018,224 @@ export default function MobileAppPage() {
                   <Sparkles size={16} />
                   <span>{t("routeAskSaathi")}</span>
                 </button>
+              </div>
+            ) : (
+              /* SELECTION MODE (POINT 1 OR POINT 2 NOT YET BOTH SET) */
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {/* Instruction Step Banner */}
+                <div
+                  style={{
+                    background: !routePointA
+                      ? "linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(56, 189, 248, 0.08))"
+                      : "linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.1))",
+                    border: `1.5px solid ${!routePointA ? "rgba(2, 132, 199, 0.35)" : "rgba(245, 158, 11, 0.5)"}`,
+                    borderRadius: "12px",
+                    padding: "10px 12px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "30px",
+                      height: "30px",
+                      borderRadius: "50%",
+                      background: !routePointA ? "#0284c7" : "#f59e0b",
+                      color: "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "14px",
+                      fontWeight: 900,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {!routePointA ? "1" : "2"}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <strong style={{ display: "block", fontSize: "12.5px", color: "#082536" }}>
+                      {!routePointA ? t("routeStepA") : t("routeStepB")}
+                    </strong>
+                    <small style={{ fontSize: "11px", color: "#475569" }}>
+                      {!routePointA
+                        ? "Tap any coordinate on the map to place Start marker (Point A)"
+                        : `🟢 Start Point Set (${routePointA.latitude.toFixed(3)}°N, ${routePointA.longitude.toFixed(3)}°E)! Tap next position on map for Destination (Point B)`}
+                    </small>
+                  </div>
+                </div>
+
+                {/* Coordinate Slots (Point A & Point B) */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setRouteActiveSlot("A")}
+                    style={{
+                      flex: 1,
+                      background: routeActiveSlot === "A" ? "rgba(16, 185, 129, 0.12)" : "#ffffff",
+                      border: `1.5px solid ${routeActiveSlot === "A" ? "#10b981" : "#cbd5e1"}`,
+                      borderRadius: "10px",
+                      padding: "8px 10px",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      boxShadow: routeActiveSlot === "A" ? "0 0 0 2px rgba(16, 185, 129, 0.2)" : "none",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 800, color: "#10b981", textTransform: "uppercase" }}>
+                        🟢 {t("routeStartA")}
+                      </span>
+                      {routeActiveSlot === "A" && (
+                        <span style={{ fontSize: "9px", background: "#10b981", color: "#fff", padding: "1px 5px", borderRadius: "6px", fontWeight: 700 }}>
+                          ACTIVE
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: "11px", fontWeight: 700, color: routePointA ? "#082536" : "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {routePointA ? `${routePointA.latitude.toFixed(4)}°N, ${routePointA.longitude.toFixed(4)}°E` : t("tapMapToSet")}
+                    </div>
+                  </button>
+
+                  <div style={{ color: "#94a3b8", fontWeight: 900, fontSize: "14px", flexShrink: 0 }}>
+                    →
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setRouteActiveSlot("B")}
+                    style={{
+                      flex: 1,
+                      background: routeActiveSlot === "B" ? "rgba(2, 132, 199, 0.12)" : "#ffffff",
+                      border: `1.5px solid ${routeActiveSlot === "B" ? "#0284c7" : "#cbd5e1"}`,
+                      borderRadius: "10px",
+                      padding: "8px 10px",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      boxShadow: routeActiveSlot === "B" ? "0 0 0 2px rgba(2, 132, 199, 0.2)" : "none",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 800, color: "#0284c7", textTransform: "uppercase" }}>
+                        🏁 {t("routeDestB")}
+                      </span>
+                      {routeActiveSlot === "B" && (
+                        <span style={{ fontSize: "9px", background: "#0284c7", color: "#fff", padding: "1px 5px", borderRadius: "6px", fontWeight: 700 }}>
+                          ACTIVE
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: "11px", fontWeight: 700, color: routePointB ? "#082536" : "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {routePointB ? `${routePointB.latitude.toFixed(4)}°N, ${routePointB.longitude.toFixed(4)}°E` : t("tapMapToSet")}
+                    </div>
+                  </button>
+                </div>
+
+                {/* Quick Action Toolbar */}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRoutePointA(location);
+                      setRouteActiveSlot("B");
+                    }}
+                    style={{
+                      background: "#f0f9ff",
+                      border: "1px solid #bae6fd",
+                      color: "#0369a1",
+                      borderRadius: "8px",
+                      padding: "5px 9px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <Anchor size={12} />
+                    <span>{t("routeUseCurrent")}</span>
+                  </button>
+
+                  {routePointA && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRoutePointA(null);
+                        setRoutePointB(null);
+                        setRouteActiveSlot("A");
+                      }}
+                      style={{
+                        background: "#fff1f2",
+                        border: "1px solid #fecdd3",
+                        color: "#e11d48",
+                        borderRadius: "8px",
+                        padding: "5px 9px",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        marginLeft: "auto",
+                      }}
+                    >
+                      <RotateCcw size={12} />
+                      <span>{t("routeClear")}</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Interactive Map Canvas for Coordinate Picking */}
+                <div className="compact-map-wrapper" style={{ position: "relative", minHeight: "380px", height: "380px" }}>
+                  <MarineMap
+                    compact={true}
+                    routeStartPoint={routePointA}
+                    routeEndPoint={null}
+                    routeGeometry={null}
+                    onSelectLocation={handleRoutePlannerMapClick}
+                    layers={mapLayers.layers}
+                    showDemoFeatures={true}
+                    alerts={alertData.data?.alerts ?? []}
+                    pfzs={pfzGeojson}
+                    savedLocations={mobileSavedLocations}
+                    riskLevel={riskLevel}
+                  />
+
+                  {/* Floating Helper Pill on Map */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "10px",
+                      left: "10px",
+                      right: "10px",
+                      background: "rgba(8, 37, 54, 0.92)",
+                      backdropFilter: "blur(6px)",
+                      border: `1px solid ${!routePointA ? "rgba(56, 189, 248, 0.4)" : "rgba(245, 158, 11, 0.5)"}`,
+                      borderRadius: "8px",
+                      padding: "8px 12px",
+                      color: "#ffffff",
+                      fontSize: "11.5px",
+                      fontWeight: 700,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      zIndex: 2,
+                      pointerEvents: "none",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                    }}
+                  >
+                    <span>
+                      {!routePointA
+                        ? "👉 Tap map to set Start (Point A)"
+                        : "🟢 Start Set! Tap next point for Destination (Point B)"}
+                    </span>
+                    <span style={{ fontSize: "10px", color: !routePointA ? "#38bdf8" : "#fbbf24", fontWeight: 800 }}>
+                      {!routePointA ? "STEP 1" : "STEP 2"}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
