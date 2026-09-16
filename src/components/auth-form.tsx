@@ -24,8 +24,8 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     <main className="auth-page">
       <section className="auth-aside">
         <Link className="brand" href="/">
-          <span className="brand-mark" style={{ overflow: "hidden", background: "transparent" }}>
-            <img src="/icon-192.png" alt="ORCA" width={30} height={30} style={{ objectFit: "contain" }} />
+          <span className="brand-mark" style={{ overflow: "hidden", background: "#ffffff", borderRadius: "7px", padding: "2px" }}>
+            <img src="/icon-192.png" alt="ORCA" width={28} height={28} style={{ objectFit: "contain" }} />
           </span>
           ORCA
         </Link>
