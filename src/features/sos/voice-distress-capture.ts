@@ -69,7 +69,7 @@ export class VoiceDistressCapture {
         kn: "kn-IN",
         or: "or-IN",
       };
-      this.recognition.lang = langMap[preferredLang] || "hi-IN";
+      this.recognition.lang = langMap[preferredLang] || "en-IN";
 
       this.recognition.onstart = () => {
         this.isRecording = true;

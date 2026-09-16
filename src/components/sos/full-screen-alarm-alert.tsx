@@ -19,7 +19,7 @@ interface FullScreenAlarmAlertProps {
 export function FullScreenAlarmAlert({
   hazard: propHazard,
   alert: propAlert,
-  selectedLang = "hi",
+  selectedLang = "en",
   onSafe,
   onAcknowledgeSafe,
   onViewRoute,

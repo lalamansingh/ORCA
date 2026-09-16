@@ -142,15 +142,28 @@ const LOCALIZED_PROMPTS: Record<string, { welcome: string; placeholder: string; 
 
 export default function AssistantPage() {
   const router = useRouter();
-  const [selectedLangCode, setSelectedLangCode] = useState("hi");
+  const [selectedLangCode, setSelectedLangCode] = useState("en");
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<{ query: string; reply: ConversationReply }[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const location = useSharedSelectedLocation();
 
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("orca-app-lang");
+        if (saved && SUPPORTED_LANGUAGES.some((l) => l.code === saved)) {
+          setSelectedLangCode(saved);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const currentLangConfig = LOCALIZED_PROMPTS[selectedLangCode] || LOCALIZED_PROMPTS.en;
-  const activeVoiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLangCode)?.voiceCode || "hi-IN";
+  const activeVoiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLangCode)?.voiceCode || "en-IN";
 
   const handleQuery = async (textToSend: string) => {
     if (!textToSend.trim() || loading) return;
@@ -234,7 +247,16 @@ export default function AssistantPage() {
                   <button
                     key={lang.code}
                     type="button"
-                    onClick={() => setSelectedLangCode(lang.code)}
+                    onClick={() => {
+                      setSelectedLangCode(lang.code);
+                      try {
+                        if (typeof window !== "undefined") {
+                          localStorage.setItem("orca-app-lang", lang.code);
+                        }
+                      } catch {
+                        // ignore
+                      }
+                    }}
                     style={{
                       padding: "4px 10px",
                       borderRadius: "6px",

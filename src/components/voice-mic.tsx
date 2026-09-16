@@ -48,7 +48,7 @@ interface SpeechRecognitionInstance extends EventTarget {
   onend: (() => void) | null;
 }
 
-export function VoiceMic({ onTranscript, disabled = false, selectedLang = "hi", onLanguageChange, compact = false }: VoiceMicProps) {
+export function VoiceMic({ onTranscript, disabled = false, selectedLang = "en", onLanguageChange, compact = false }: VoiceMicProps) {
   const [isListening, setIsListening] = useState(false);
   const [supported, setSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);

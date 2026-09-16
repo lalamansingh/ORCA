@@ -287,7 +287,7 @@ export function EmergencySOSCard({
   isOnline = true,
   gpsAvailable = true,
   locationLabel = "Live GPS Sector",
-  selectedLang = "hi",
+  selectedLang = "en",
   onArmSOS,
   onOpenOnboarding,
   onResetSOS,
@@ -300,7 +300,7 @@ export function EmergencySOSCard({
 
   const [isPressing, setIsPressing] = useState(false);
 
-  const i18n = EMERGENCY_CARD_I18N[selectedLang] || EMERGENCY_CARD_I18N["hi"] || EMERGENCY_CARD_I18N["en"];
+  const i18n = EMERGENCY_CARD_I18N[selectedLang] || EMERGENCY_CARD_I18N["en"] || EMERGENCY_CARD_I18N["hi"];
 
   const isAck = activeReport?.status === "ACKNOWLEDGED";
   const isResponding = activeReport?.status === "RESPONDING";

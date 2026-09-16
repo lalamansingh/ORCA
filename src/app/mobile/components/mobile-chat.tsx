@@ -166,14 +166,14 @@ export function MobileChat({
   onOpenAlertsTab,
   onOpenMapTab,
 }: MobileChatProps) {
-  const langConfig = LOCALIZED_GREETINGS[selectedLang] || LOCALIZED_GREETINGS.hi;
-  const activeVoiceCode = MOBILE_LANGUAGES.find((l) => l.code === selectedLang)?.voiceCode || "hi-IN";
+  const langConfig = LOCALIZED_GREETINGS[selectedLang] || LOCALIZED_GREETINGS.en || LOCALIZED_GREETINGS.hi;
+  const activeVoiceCode = MOBILE_LANGUAGES.find((l) => l.code === selectedLang)?.voiceCode || "en-IN";
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       id: "welcome-1",
       sender: "bot",
-      text: `${LOCALIZED_GREETINGS[selectedLang]?.greeting || LOCALIZED_GREETINGS.hi.greeting}\n\n${LOCALIZED_GREETINGS[selectedLang]?.subtitle || LOCALIZED_GREETINGS.hi.subtitle}`,
+      text: `${LOCALIZED_GREETINGS[selectedLang]?.greeting || LOCALIZED_GREETINGS.en.greeting}\n\n${LOCALIZED_GREETINGS[selectedLang]?.subtitle || LOCALIZED_GREETINGS.en.subtitle}`,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);

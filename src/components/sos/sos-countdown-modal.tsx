@@ -83,7 +83,7 @@ const COUNTDOWN_I18N: Record<
 
 export function SOSCountdownModal({
   countdownSeconds: propCountdown,
-  selectedLang = "hi",
+  selectedLang = "en",
   onCancel,
   onSendNow,
 }: SOSCountdownModalProps) {
@@ -93,7 +93,7 @@ export function SOSCountdownModal({
   const handleCancel = onCancel || store.cancelSOS;
   const handleSendNow = onSendNow || store.startVoiceCapture;
 
-  const i18n = COUNTDOWN_I18N[selectedLang] || COUNTDOWN_I18N["hi"] || COUNTDOWN_I18N["en"];
+  const i18n = COUNTDOWN_I18N[selectedLang] || COUNTDOWN_I18N["en"] || COUNTDOWN_I18N["hi"];
 
   if (!isArmed && propCountdown === undefined) return null;
 

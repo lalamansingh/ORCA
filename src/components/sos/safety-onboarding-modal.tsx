@@ -248,11 +248,11 @@ const ONBOARDING_I18N: Record<
 
 export function SafetyOnboardingModal({
   isOpen = true,
-  selectedLang = "hi",
+  selectedLang = "en",
   onClose,
   onRunTestSOS,
 }: SafetyOnboardingModalProps) {
-  const i18n = ONBOARDING_I18N[selectedLang] || ONBOARDING_I18N["hi"] || ONBOARDING_I18N["en"];
+  const i18n = ONBOARDING_I18N[selectedLang] || ONBOARDING_I18N["en"] || ONBOARDING_I18N["hi"];
 
   const [name, setName] = useState("");
   const [vesselId, setVesselId] = useState("");

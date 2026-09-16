@@ -13,7 +13,7 @@ interface DemoSimulatorBarProps {
 
 export const DemoSimulatorBar: React.FC<DemoSimulatorBarProps> = ({
   onShowOnboarding,
-  selectedLang = "hi",
+  selectedLang = "en",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSimulatingOffline, setIsSimulatingOffline] = useState(false);

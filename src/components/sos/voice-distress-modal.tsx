@@ -105,7 +105,7 @@ const VOICE_I18N: Record<
 };
 
 export function VoiceDistressModal({
-  selectedLang = "hi",
+  selectedLang = "en",
   onCancel,
   onSubmitTranscript,
 }: VoiceDistressModalProps) {
@@ -116,7 +116,7 @@ export function VoiceDistressModal({
   const [isListening, setIsListening] = useState(true);
   const [manualMode, setManualMode] = useState(false);
 
-  const i18n = VOICE_I18N[selectedLang] || VOICE_I18N["hi"] || VOICE_I18N["en"];
+  const i18n = VOICE_I18N[selectedLang] || VOICE_I18N["en"] || VOICE_I18N["hi"];
 
   useEffect(() => {
     if (!isCapturing && !onSubmitTranscript) return;

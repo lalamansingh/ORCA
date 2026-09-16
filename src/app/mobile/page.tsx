@@ -1164,16 +1164,43 @@ export default function MobileAppPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
   const [showPortModal, setShowPortModal] = useState(false);
   const [showLangModal, setShowLangModal] = useState(false);
-  const [selectedLang, setSelectedLang] = useState("hi");
-  const [saathiLang, setSaathiLang] = useState("hi");
+  const [selectedLang, setSelectedLang] = useState("en");
+  const [saathiLang, setSaathiLang] = useState("en");
+
+  // Load user saved language preference on mount
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("orca-app-lang");
+        if (saved && SUPPORTED_LANGUAGES.some((l) => l.code === saved)) {
+          setSelectedLang(saved);
+          setSaathiLang(saved);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleSelectLanguage = (code: string) => {
+    setSelectedLang(code);
+    setSaathiLang(code);
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("orca-app-lang", code);
+      }
+    } catch {
+      // ignore
+    }
+  };
 
   useEffect(() => {
     setSaathiLang(selectedLang);
   }, [selectedLang]);
 
-  // Translation helper
+  // Translation helper (defaults to English fallback)
   const t = (key: string): string => {
-    return I18N_MAP[selectedLang]?.[key] ?? I18N_MAP["hi"]?.[key] ?? key;
+    return I18N_MAP[selectedLang]?.[key] ?? I18N_MAP["en"]?.[key] ?? I18N_MAP["hi"]?.[key] ?? key;
   };
 
   // Location logic
@@ -1437,12 +1464,12 @@ export default function MobileAppPage() {
   const riskScore = risk.data?.score ?? 18;
   const isSafe = riskLevel === "LOW";
   const isModerate = riskLevel === "MODERATE";
-  const voiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLang)?.voiceCode || "hi-IN";
-  const saathiVoiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === saathiLang)?.voiceCode || "hi-IN";
+  const voiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLang)?.voiceCode || "en-IN";
+  const saathiVoiceCode = SUPPORTED_LANGUAGES.find((l) => l.code === saathiLang)?.voiceCode || "en-IN";
 
   // Dedicated translation helper for AI Saathi
   const tSaathi = (key: string): string => {
-    return I18N_MAP[saathiLang]?.[key] ?? I18N_MAP["hi"]?.[key] ?? key;
+    return I18N_MAP[saathiLang]?.[key] ?? I18N_MAP["en"]?.[key] ?? I18N_MAP["hi"]?.[key] ?? key;
   };
 
   // Dedicated emergency SOS directory and location-aware partitioned alerts
@@ -1458,7 +1485,7 @@ export default function MobileAppPage() {
     );
   }, [alertData.data?.alerts, location.latitude, location.longitude, location.label, selectedLang]);
 
-  const alertUi = ALERT_UI_STRINGS[selectedLang] || ALERT_UI_STRINGS["hi"];
+  const alertUi = ALERT_UI_STRINGS[selectedLang] || ALERT_UI_STRINGS["en"] || ALERT_UI_STRINGS["hi"];
 
   // Live Risk and Ocean Status Context for Sagar Saathi AI
   const liveRiskContext: LiveRiskContext = useMemo(() => ({
@@ -1775,7 +1802,7 @@ export default function MobileAppPage() {
             onClick={() => setShowLangModal(true)}
             title={t("selectLang")}
           >
-            {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLang)?.native.slice(0, 3) || "HI"}
+            {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLang)?.native.slice(0, 3) || "EN"}
           </button>
 
           <button
@@ -2211,8 +2238,7 @@ export default function MobileAppPage() {
                   selectedLang={selectedLang}
                   compact={true}
                   onLanguageChange={(newLang) => {
-                    setSelectedLang(newLang);
-                    setSaathiLang(newLang);
+                    handleSelectLanguage(newLang);
                   }}
                   onTranscript={(transcript) => {
                     setQueryInput(transcript);
@@ -4006,7 +4032,7 @@ export default function MobileAppPage() {
                     type="button"
                     className={`m-sheet-option ${isSelected ? "selected" : ""}`}
                     onClick={() => {
-                      setSelectedLang(l.code);
+                      handleSelectLanguage(l.code);
                       setShowLangModal(false);
                     }}
                   >
