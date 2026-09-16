@@ -729,22 +729,139 @@ export function MarineMap({
     const handleResetNorth = () => {
       mapRef.current?.easeTo({ bearing: 0, pitch: 0, duration: 400 });
     };
+
     const handleRecenterStart = () => {
-      if (routeStartPoint && mapRef.current) {
-        mapRef.current.easeTo({
+      const map = mapRef.current;
+      if (!map) return;
+
+      // 1. If we have both start and end point (or routeGeometry), fit the whole route with optimal padding and maxZoom
+      if ((routeStartPoint && routeEndPoint) || (routeGeometry && routeGeometry.coordinates && routeGeometry.coordinates.length > 1)) {
+        const pts: [number, number][] = [];
+        if (routeStartPoint) pts.push([routeStartPoint.longitude, routeStartPoint.latitude]);
+        if (routeEndPoint) pts.push([routeEndPoint.longitude, routeEndPoint.latitude]);
+        if (routeGeometry?.coordinates) {
+          routeGeometry.coordinates.forEach((c) => pts.push([c[0], c[1]]));
+        }
+
+        if (pts.length > 0) {
+          const minLon = Math.min(...pts.map((p) => p[0]));
+          const maxLon = Math.max(...pts.map((p) => p[0]));
+          const minLat = Math.min(...pts.map((p) => p[1]));
+          const maxLat = Math.max(...pts.map((p) => p[1]));
+
+          try {
+            map.resize();
+            map.fitBounds(
+              [
+                [minLon, minLat],
+                [maxLon, maxLat],
+              ],
+              {
+                padding: { top: 70, bottom: 90, left: 60, right: 60 },
+                maxZoom: 8.2, // Prevents excessive zoom into water; keeps coastal land visible
+                duration: 600,
+              }
+            );
+          } catch {}
+          return;
+        }
+      }
+
+      // 2. If only routeStartPoint exists
+      if (routeStartPoint) {
+        map.easeTo({
           center: [routeStartPoint.longitude, routeStartPoint.latitude],
-          zoom: Math.max(mapRef.current.getZoom(), 9),
+          zoom: 7.8, // Balanced coastal zoom showing harbor + land + adjacent sea
+          bearing: 0,
+          pitch: 0,
+          duration: 500,
+        });
+        return;
+      }
+
+      // 3. If only routeEndPoint exists
+      if (routeEndPoint) {
+        map.easeTo({
+          center: [routeEndPoint.longitude, routeEndPoint.latitude],
+          zoom: 7.8,
+          bearing: 0,
+          pitch: 0,
+          duration: 500,
+        });
+        return;
+      }
+
+      // 4. Fallback to selectedLocation or default India Marine View
+      if (selectedLocation) {
+        map.easeTo({
+          center: [selectedLocation.longitude, selectedLocation.latitude],
+          zoom: 7.8,
+          bearing: 0,
+          pitch: 0,
+          duration: 500,
+        });
+      } else {
+        map.easeTo({
+          center: INDIA_MARINE_VIEW.center,
+          zoom: INDIA_MARINE_VIEW.zoom,
+          bearing: 0,
+          pitch: 0,
           duration: 500,
         });
       }
     };
+
+    const handleRecenterLocation = () => {
+      const map = mapRef.current;
+      if (!map) return;
+
+      if (routeGeometry && routeGeometry.coordinates && routeGeometry.coordinates.length > 1) {
+        const coords = routeGeometry.coordinates;
+        const minLon = Math.min(...coords.map((c) => c[0]));
+        const maxLon = Math.max(...coords.map((c) => c[0]));
+        const minLat = Math.min(...coords.map((c) => c[1]));
+        const maxLat = Math.max(...coords.map((c) => c[1]));
+
+        try {
+          map.resize();
+          map.fitBounds(
+            [
+              [minLon, minLat],
+              [maxLon, maxLat],
+            ],
+            {
+              padding: { top: 70, bottom: 90, left: 60, right: 60 },
+              maxZoom: 8.2,
+              duration: 600,
+            }
+          );
+        } catch {}
+        return;
+      }
+
+      const target = selectedLocation || { longitude: 72.83, latitude: 18.92 };
+      map.easeTo({
+        center: [target.longitude, target.latitude],
+        zoom: 7.8,
+        bearing: 0,
+        pitch: 0,
+        duration: 500,
+      });
+    };
+
     window.addEventListener("orca-map-reset-north", handleResetNorth);
     window.addEventListener("orca-map-recenter-start", handleRecenterStart);
+    window.addEventListener("orca-map-fit-route", handleRecenterStart);
+    window.addEventListener("orca-map-recenter-route", handleRecenterStart);
+    window.addEventListener("orca-map-recenter-location", handleRecenterLocation);
     return () => {
       window.removeEventListener("orca-map-reset-north", handleResetNorth);
       window.removeEventListener("orca-map-recenter-start", handleRecenterStart);
+      window.removeEventListener("orca-map-fit-route", handleRecenterStart);
+      window.removeEventListener("orca-map-recenter-route", handleRecenterStart);
+      window.removeEventListener("orca-map-recenter-location", handleRecenterLocation);
     };
-  }, [routeStartPoint]);
+  }, [routeStartPoint, routeEndPoint, routeGeometry, selectedLocation]);
 
   // Basemap Switcher Handler
   useEffect(() => {
@@ -1072,7 +1189,7 @@ export function MarineMap({
             [minLon, minLat],
             [maxLon, maxLat],
           ],
-          { padding: 60, maxZoom: 11, duration: 800, essential: true }
+          { padding: 60, maxZoom: 8.2, duration: 800, essential: true }
         );
       } catch {}
 
@@ -1084,7 +1201,7 @@ export function MarineMap({
               [minLon, minLat],
               [maxLon, maxLat],
             ],
-            { padding: 60, maxZoom: 11, duration: 800, essential: true }
+            { padding: 60, maxZoom: 8.2, duration: 800, essential: true }
           );
         } catch {}
       }, 100);
@@ -1109,9 +1226,11 @@ export function MarineMap({
         ],
       });
       try {
+        const curZoom = map.getZoom();
+        const targetZoom = curZoom > 8.5 || curZoom < 6.0 ? 7.8 : curZoom;
         map.easeTo({
           center: startPt,
-          zoom: Math.max(map.getZoom(), 8.5),
+          zoom: targetZoom,
           duration: 400,
         });
       } catch {}
@@ -1178,7 +1297,7 @@ export function MarineMap({
     }
 
     const currentZoom = map.getZoom();
-    const targetZoom = compact ? Math.max(currentZoom, 8) : Math.max(currentZoom, LOCATION_ZOOM);
+    const targetZoom = currentZoom > 8.5 || currentZoom < 6.0 ? (compact ? 7.5 : 7.8) : currentZoom;
     map.easeTo({
       center: [selectedLocation.longitude, selectedLocation.latitude],
       zoom: targetZoom,

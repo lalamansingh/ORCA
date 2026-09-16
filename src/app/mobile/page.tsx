@@ -2449,7 +2449,7 @@ export default function MobileAppPage() {
                         type="button"
                         className="m-nav-fab-btn"
                         title="Compass Orientation"
-                        onClick={() => handleSelectMapLocation(location)}
+                        onClick={() => window.dispatchEvent(new CustomEvent("orca-map-reset-north"))}
                       >
                         🧭
                       </button>
@@ -2457,7 +2457,7 @@ export default function MobileAppPage() {
                         type="button"
                         className="m-nav-fab-btn"
                         title="Zoom / Re-center Route"
-                        onClick={() => handleSelectMapLocation(location)}
+                        onClick={() => window.dispatchEvent(new CustomEvent("orca-map-recenter-location"))}
                       >
                         🔍
                       </button>
@@ -2485,7 +2485,10 @@ export default function MobileAppPage() {
                       <button
                         type="button"
                         className="m-nav-recenter-btn"
-                        onClick={() => handleSelectMapLocation(location)}
+                        onClick={() => {
+                          handleSelectMapLocation(location);
+                          window.dispatchEvent(new CustomEvent("orca-map-recenter-location"));
+                        }}
                       >
                         ▲ {t("recenter")}
                       </button>
@@ -2847,8 +2850,7 @@ export default function MobileAppPage() {
                       className="m-nav-fab-btn"
                       title="Fit Route to Screen"
                       onClick={() => {
-                        window.dispatchEvent(new Event("resize"));
-                        setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
+                        window.dispatchEvent(new CustomEvent("orca-map-recenter-start"));
                       }}
                     >
                       🔍
@@ -2892,7 +2894,7 @@ export default function MobileAppPage() {
                       className="m-nav-recenter-btn"
                       onClick={() => window.dispatchEvent(new CustomEvent("orca-map-recenter-start"))}
                     >
-                      ▲ Re-centre
+                      ▲ {t("recenter")}
                     </button>
                     <button
                       type="button"
@@ -2902,7 +2904,7 @@ export default function MobileAppPage() {
                         setAlertSubTab("sos");
                       }}
                     >
-                      ⚠️ Report SOS
+                      ⚠️ {t("reportSos")}
                     </button>
                   </div>
                 </div>
