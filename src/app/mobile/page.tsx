@@ -1763,19 +1763,27 @@ export default function MobileAppPage() {
             VolumeKeyListener.recordManualPress();
           }}
           className="mobile-bar-brand"
-          style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
-          title="ORCA (Tap 3x to trigger SOS test)"
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            padding: "2px 0",
+            display: "flex",
+            alignItems: "center",
+          }}
+          title="ORCA Marine Intelligence (Tap 3x to trigger SOS test)"
         >
-          <div className="mobile-brand-icon">
-            <img
-              src="/icon-192.png"
-              alt="ORCA"
-              width={26}
-              height={26}
-              style={{ objectFit: "contain", borderRadius: "6px" }}
-            />
-          </div>
-          ORCA
+          <img
+            src="/orca-brand-logo.png"
+            alt="ORCA Marine Intelligence"
+            style={{
+              height: "32px",
+              width: "auto",
+              objectFit: "contain",
+              filter: "drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 1.2px rgba(255, 255, 255, 0.85))",
+              display: "block",
+            }}
+          />
         </button>
 
         {/* Coastal Harbor / Coordinate Selector */}
@@ -2794,29 +2802,8 @@ export default function MobileAppPage() {
 
             {/* GOOGLE MAPS TURN-BY-TURN GPS NAVIGATION MODE (WHEN BOTH POINTS SET) */}
             {interactiveRouteData ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {/* 1. Top Green Turn Banner (Matching Reference Image) */}
-                <div className="m-turn-banner">
-                  <div className="m-turn-banner-main">
-                    <div className="m-turn-arrow-circle">
-                      <ArrowUp size={22} color="#ffffff" strokeWidth={3} />
-                    </div>
-                    <div>
-                      <div className="m-turn-title">
-                        Head {interactiveRouteData.bearingCompass} ({interactiveRouteData.bearingDeg}°)
-                      </div>
-                      <div className="m-turn-subtitle">
-                        ⚓ Safe Fairway Corridor · {interactiveRouteData.distanceKm} km to Destination
-                      </div>
-                    </div>
-                  </div>
-                  <div className="m-turn-next-badge">
-                    <span>Then</span>
-                    <span style={{ fontSize: "12px" }}>🏁</span>
-                  </div>
-                </div>
-
-                {/* 2. Navigation Map Container with Right FABs & Bottom Floating Actions */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {/* Full-Bleed Google Maps-Style Navigation Map Container */}
                 <div className="m-nav-map-container">
                   <MarineMap
                     compact={true}
@@ -2831,6 +2818,27 @@ export default function MobileAppPage() {
                     savedLocations={mobileSavedLocations}
                     riskLevel={riskLevel}
                   />
+
+                  {/* 1. Floating Green Turn Banner (Matching Reference Image) */}
+                  <div className="m-turn-banner">
+                    <div className="m-turn-banner-main">
+                      <div className="m-turn-arrow-circle">
+                        <ArrowUp size={20} color="#ffffff" strokeWidth={3} />
+                      </div>
+                      <div>
+                        <div className="m-turn-title">
+                          Head {interactiveRouteData.bearingCompass} ({interactiveRouteData.bearingDeg}°)
+                        </div>
+                        <div className="m-turn-subtitle">
+                          ⚓ Safe Fairway Corridor · {interactiveRouteData.distanceKm} km to Destination
+                        </div>
+                      </div>
+                    </div>
+                    <div className="m-turn-next-badge">
+                      <span>Then</span>
+                      <span style={{ fontSize: "12px" }}>🏁</span>
+                    </div>
+                  </div>
 
                   {/* Floating Right FAB Buttons (Compass, Fit, Sound, Reverse) */}
                   <div className="m-nav-fabs-right">
@@ -2905,50 +2913,50 @@ export default function MobileAppPage() {
                       ⚠️ Report SOS
                     </button>
                   </div>
-                </div>
 
-                {/* 3. Google Maps Dark Bottom Trip Sheet */}
-                <div className="m-nav-bottom-sheet">
-                  {/* Left Close / Reset Button */}
-                  <button
-                    type="button"
-                    className="m-nav-close-btn"
-                    title="Clear Route"
-                    onClick={() => {
-                      setRoutePointA(null);
-                      setRoutePointB(null);
-                      setRouteActiveSlot("A");
-                    }}
-                  >
-                    <X size={18} />
-                  </button>
+                  {/* Floating Google Maps Dark Bottom Trip Sheet */}
+                  <div className="m-nav-bottom-sheet">
+                    {/* Left Close / Reset Button */}
+                    <button
+                      type="button"
+                      className="m-nav-close-btn"
+                      title="Clear Route"
+                      onClick={() => {
+                        setRoutePointA(null);
+                        setRoutePointB(null);
+                        setRouteActiveSlot("A");
+                      }}
+                    >
+                      <X size={18} />
+                    </button>
 
-                  {/* Center Big ETA & Distance */}
-                  <div className="m-nav-trip-center">
-                    <div className="m-nav-trip-eta-row">
-                      <span className="m-nav-trip-time">
-                        {interactiveRouteData.durationMinutes} min
-                      </span>
-                      <span style={{ fontSize: "18px" }}>🍃</span>
+                    {/* Center Big ETA & Distance */}
+                    <div className="m-nav-trip-center">
+                      <div className="m-nav-trip-eta-row">
+                        <span className="m-nav-trip-time">
+                          {interactiveRouteData.durationMinutes} min
+                        </span>
+                        <span style={{ fontSize: "18px" }}>🍃</span>
+                      </div>
+                      <div className="m-nav-trip-subtext">
+                        {interactiveRouteData.distanceKm} km · {formatEtaTime(interactiveRouteData.durationMinutes)}
+                      </div>
                     </div>
-                    <div className="m-nav-trip-subtext">
-                      {interactiveRouteData.distanceKm} km · {formatEtaTime(interactiveRouteData.durationMinutes)}
-                    </div>
+
+                    {/* Right AI Saathi Button */}
+                    <button
+                      type="button"
+                      className="m-nav-ai-btn"
+                      title="Ask AI Saathi About This Route"
+                      onClick={() => {
+                        setActiveTab("assistant");
+                        const promptText = `Please provide an ocean navigation and safety briefing for my voyage from Point A (${routePointA?.latitude.toFixed(3)}°N, ${routePointA?.longitude.toFixed(3)}°E) to Point B (${routePointB?.latitude.toFixed(3)}°N, ${routePointB?.longitude.toFixed(3)}°E). Total distance is ${interactiveRouteData.distanceKm} km, heading ${interactiveRouteData.bearingDeg}° (${interactiveRouteData.bearingCompass}). Are weather, waves and currents safe for this passage?`;
+                        setQueryInput(promptText);
+                      }}
+                    >
+                      <Sparkles size={18} />
+                    </button>
                   </div>
-
-                  {/* Right AI Saathi Button */}
-                  <button
-                    type="button"
-                    className="m-nav-ai-btn"
-                    title="Ask AI Saathi About This Route"
-                    onClick={() => {
-                      setActiveTab("assistant");
-                      const promptText = `Please provide an ocean navigation and safety briefing for my voyage from Point A (${routePointA?.latitude.toFixed(3)}°N, ${routePointA?.longitude.toFixed(3)}°E) to Point B (${routePointB?.latitude.toFixed(3)}°N, ${routePointB?.longitude.toFixed(3)}°E). Total distance is ${interactiveRouteData.distanceKm} km, heading ${interactiveRouteData.bearingDeg}° (${interactiveRouteData.bearingCompass}). Are weather, waves and currents safe for this passage?`;
-                      setQueryInput(promptText);
-                    }}
-                  >
-                    <Sparkles size={18} />
-                  </button>
                 </div>
 
                 {/* Coordinate Badges (Point A & Point B) */}
@@ -3615,7 +3623,7 @@ export default function MobileAppPage() {
                 </div>
 
                 {/* Interactive Map Canvas for Coordinate Picking */}
-                <div className="compact-map-wrapper" style={{ position: "relative", minHeight: "380px", height: "380px" }}>
+                <div className="m-select-map-container">
                   <MarineMap
                     compact={true}
                     routeStartPoint={routePointA}
