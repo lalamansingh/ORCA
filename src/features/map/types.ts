@@ -1,4 +1,4 @@
-export type LocationSource="gps"|"map"|"saved"|"default";
+export type LocationSource="gps"|"map"|"saved"|"default"|"manual";
 export interface SelectedLocation{latitude:number;longitude:number;source:LocationSource;label?:string;accuracy?:number;timestamp?:number}
 export type MarineLayerId="pfz"|"sst"|"chlorophyll"|"waves"|"currents"|"weather"|"alerts"|"boundaries"|"restricted"|"protected"|"route"|"saved"|"ais";
 export type LayerStatus="LIVE"|"PARTIAL"|"DEMO"|"NOT_CONNECTED"|"UNAVAILABLE";
