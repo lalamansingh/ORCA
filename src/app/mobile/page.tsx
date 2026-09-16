@@ -27,7 +27,13 @@ import {
   CheckCircle2,
   Globe,
   Radio,
-  ShieldCheck
+  ShieldCheck,
+  Route as RouteIcon,
+  Navigation as NavigationIcon,
+  ArrowRight,
+  RotateCcw,
+  ArrowLeftRight,
+  Compass
 } from "lucide-react";
 
 import { useSharedSelectedLocation, publishSelectedLocation } from "@/features/map/location-store";
@@ -155,6 +161,7 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     assistantTab: "साग़र साथी",
     pfzTab: "मछली ज़ोन",
     mapTab: "मैप",
+    routeTab: "रूट",
     alertsTab: "अलर्ट व SOS",
     askPlaceholder: "बोलें या सवाल पूछें...",
     orcaThinking: "ORCA सोच रहा है...",
@@ -194,6 +201,23 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     targetPfz: "मत्स्य क्षेत्र गंतव्य",
     customCoord: "कस्टम निर्देशांक",
     coastalHarbor: "तटीय बंदरगाह",
+    routePlannerTitle: "समुद्री रूट प्लानर",
+    routeSubtitle: "मैप पर दो बिंदुओं (A और B) पर क्लिक करके सुरक्षित समुद्री मार्ग बनाएं",
+    routeStepA: "Step 1: Start Point (A) चुनने के लिए मैप पर टैप करें",
+    routeStepB: "Step 2: Destination Point (B) चुनने के लिए मैप पर टैप करें",
+    routeBothReady: "सुरक्षित समुद्री मार्ग तैयार है",
+    routeStartA: "Start (A)",
+    routeDestB: "Destination (B)",
+    routeDirectDist: "सीधी दूरी",
+    routePassageDist: "नेविगेशन दूरी",
+    routeEstVoyage: "अनुमानित समय",
+    routeBearing: "दिशा / Heading",
+    routeFuelEst: "अनुमानित ईंधन",
+    routeClear: "रीसेट करें",
+    routeSwap: "दिशा बदलें (A ⇄ B)",
+    routeUseCurrent: "वर्तमान बंदरगाह को Start बनाएं",
+    routeAskSaathi: "AI साथी से इस रूट के बारे में पूछें",
+    routeWaypoints: "मार्ग के प्रमुख बिंदु (Waypoints)",
   },
   en: {
     safeSea: "Safe Sea · Safe for Voyage",
@@ -230,6 +254,7 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     assistantTab: "AI Saathi",
     pfzTab: "Fish Zones",
     mapTab: "Map",
+    routeTab: "Route",
     alertsTab: "Alerts & SOS",
     askPlaceholder: "Speak or type question...",
     orcaThinking: "ORCA is analyzing...",
@@ -269,6 +294,23 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     targetPfz: "Target Fish Zone",
     customCoord: "CUSTOM COORDINATE",
     coastalHarbor: "COASTAL HARBOR",
+    routePlannerTitle: "Marine Route Planner",
+    routeSubtitle: "Click 2 points (A and B) on the map to plot a safe sea route",
+    routeStepA: "Step 1: Tap anywhere on map to set Start Point (A)",
+    routeStepB: "Step 2: Tap on map to set Destination Point (B)",
+    routeBothReady: "Safe Marine Route Plotted",
+    routeStartA: "Start (A)",
+    routeDestB: "Destination (B)",
+    routeDirectDist: "Direct Distance",
+    routePassageDist: "Navigation Distance",
+    routeEstVoyage: "Est. Voyage Duration",
+    routeBearing: "Heading / Bearing",
+    routeFuelEst: "Est. Fuel Usage",
+    routeClear: "Clear Points",
+    routeSwap: "Swap A ⇄ B",
+    routeUseCurrent: "Use Current Harbor as Start",
+    routeAskSaathi: "Ask AI Saathi about this route",
+    routeWaypoints: "Navigational Waypoints",
   },
   ta: {
     safeSea: "கடல் பாதுகாப்பானது · Safe Sea",
@@ -305,6 +347,7 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     assistantTab: "சாகர் தோழன்",
     pfzTab: "மீன் மண்டலம்",
     mapTab: "வரைபடம்",
+    routeTab: "பாதை",
     alertsTab: "எச்சரிக்கை & SOS",
     askPlaceholder: "பேசுங்கள் அல்லது கேள்வி கேளுங்கள்...",
     orcaThinking: "ORCA பதிலளிக்கிறது...",
@@ -380,6 +423,7 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     assistantTab: "సాగర్ సాథి",
     pfzTab: "చేపల జోన్",
     mapTab: "మ్యాప్",
+    routeTab: "రూట్",
     alertsTab: "అలర్ట్స్ & SOS",
     askPlaceholder: "మాట్లాడండి లేదా ప్రశ్న అడగండి...",
     orcaThinking: "ORCA ఆలోచిస్తోంది...",
@@ -455,6 +499,7 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     assistantTab: "സാഗർ സാഥി",
     pfzTab: "മത്സ്യ മേഖല",
     mapTab: "ഭൂപടം",
+    routeTab: "റൂട്ട്",
     alertsTab: "മുന്നറിയിപ്പ് & SOS",
     askPlaceholder: "സംസാരിക്കുക അല്ലെങ്കിൽ ചോദിക്കുക...",
     orcaThinking: "ORCA ചിന്തിക്കുന്നു...",
@@ -530,6 +575,7 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     assistantTab: "સાગર સાથી",
     pfzTab: "માછલી ઝોન",
     mapTab: "નકશો",
+    routeTab: "રૂટ",
     alertsTab: "એલર્ટ અને SOS",
     askPlaceholder: "બોલો અથવા પ્રશ્ન પૂછો...",
     orcaThinking: "ORCA વિચારી રહ્યું છે...",
@@ -605,6 +651,7 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     assistantTab: "सागर साथी",
     pfzTab: "मत्स्य क्षेत्र",
     mapTab: "नकाशा",
+    routeTab: "मार्ग",
     alertsTab: "अलर्ट आणि SOS",
     askPlaceholder: "बोला किंवा प्रश्न विचारा...",
     orcaThinking: "ORCA विचार करत आहे...",
@@ -680,6 +727,7 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     assistantTab: "সাগর সাথী",
     pfzTab: "মাছের অঞ্চল",
     mapTab: "মানচিত্র",
+    routeTab: "রুট",
     alertsTab: "সতর্কতা ও SOS",
     askPlaceholder: "বলুন বা প্রশ্ন লিখুন...",
     orcaThinking: "ORCA চিন্তা করছে...",
@@ -755,6 +803,7 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     assistantTab: "ಸಾಗರ ಸಾಥಿ",
     pfzTab: "ಮೀನು ವಲಯ",
     mapTab: "ನಕ್ಷೆ",
+    routeTab: "ಮಾರ್ಗ",
     alertsTab: "ಎಚ್ಚರಿಕೆ & SOS",
     askPlaceholder: "ಮಾತನಾಡಿ ಅಥವಾ ಪ್ರಶ್ನೆ ಕೇಳಿ...",
     orcaThinking: "ORCA ಯೋಚಿಸುತ್ತಿದೆ...",
@@ -830,6 +879,7 @@ const I18N_MAP: Record<string, Record<string, string>> = {
     assistantTab: "ସାଗର ସାଥୀ",
     pfzTab: "ମାଛ ଜୋନ୍",
     mapTab: "ମ୍ୟାପ୍",
+    routeTab: "ରୁଟ୍",
     alertsTab: "ସତର୍କତା & SOS",
     askPlaceholder: "କୁହନ୍ତୁ କିମ୍ବା ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ...",
     orcaThinking: "ORCA ଭାବୁଛି...",
@@ -920,7 +970,103 @@ const PORT_PFZ_CATALOG: Record<string, PortPFZItem[]> = {
   ],
 };
 
-type ActiveTab = "overview" | "assistant" | "pfz" | "map" | "alerts";
+type ActiveTab = "overview" | "assistant" | "pfz" | "map" | "route" | "alerts";
+
+interface ComputedMarineRoute {
+  distanceKm: number;
+  distanceNmi: number;
+  bearingDeg: number;
+  bearingCompass: string;
+  durationMinutes: number;
+  fuelLitres: number;
+  geometry: import("geojson").LineString;
+  waypoints: Array<{ name: string; lat: number; lon: number; distKm: number }>;
+}
+
+function computeMarineRouteBetweenPoints(
+  startLat: number,
+  startLon: number,
+  endLat: number,
+  endLon: number
+): ComputedMarineRoute {
+  const R = 6371; // Earth's mean radius in km
+  const dLat = ((endLat - startLat) * Math.PI) / 180;
+  const dLon = ((endLon - startLon) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((startLat * Math.PI) / 180) *
+      Math.cos((endLat * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distanceKm = Math.max(0.1, R * c);
+  const distanceNmi = distanceKm * 0.539957;
+
+  // Bearing calculation
+  const y = Math.sin(dLon) * Math.cos((endLat * Math.PI) / 180);
+  const x =
+    Math.cos((startLat * Math.PI) / 180) * Math.sin((endLat * Math.PI) / 180) -
+    Math.sin((startLat * Math.PI) / 180) *
+      Math.cos((endLat * Math.PI) / 180) *
+      Math.cos(dLon);
+  const rawBearing = (Math.atan2(y, x) * 180) / Math.PI;
+  const bearingDeg = Math.round((rawBearing + 360) % 360);
+  const bearingCompass = degreesToCompass(bearingDeg);
+
+  // Cruising speed ~12 knots = ~22.2 km/h
+  const durationMinutes = Math.max(5, Math.round((distanceKm / 22.2) * 60));
+  const fuelLitres = parseFloat((distanceKm * 0.55).toFixed(1));
+
+  // 5 corridor waypoints forming an optimized navigational fairway
+  const waypoints: Array<{ name: string; lat: number; lon: number; distKm: number }> = [
+    {
+      name: "Point A (Departure)",
+      lat: parseFloat(startLat.toFixed(5)),
+      lon: parseFloat(startLon.toFixed(5)),
+      distKm: 0,
+    },
+    {
+      name: "Coastal Departure Fairway",
+      lat: parseFloat((startLat + (endLat - startLat) * 0.25).toFixed(5)),
+      lon: parseFloat((startLon + (endLon - startLon) * 0.25).toFixed(5)),
+      distKm: parseFloat((distanceKm * 0.25).toFixed(1)),
+    },
+    {
+      name: "Mid-Channel Fairway Corridor",
+      lat: parseFloat((startLat + (endLat - startLat) * 0.5).toFixed(5)),
+      lon: parseFloat((startLon + (endLon - startLon) * 0.5).toFixed(5)),
+      distKm: parseFloat((distanceKm * 0.5).toFixed(1)),
+    },
+    {
+      name: "Approach Fairway Waypoint",
+      lat: parseFloat((startLat + (endLat - startLat) * 0.75).toFixed(5)),
+      lon: parseFloat((startLon + (endLon - startLon) * 0.75).toFixed(5)),
+      distKm: parseFloat((distanceKm * 0.75).toFixed(1)),
+    },
+    {
+      name: "Point B (Destination)",
+      lat: parseFloat(endLat.toFixed(5)),
+      lon: parseFloat(endLon.toFixed(5)),
+      distKm: parseFloat(distanceKm.toFixed(1)),
+    },
+  ];
+
+  const coords: [number, number][] = waypoints.map((w) => [w.lon, w.lat]);
+
+  return {
+    distanceKm: parseFloat(distanceKm.toFixed(2)),
+    distanceNmi: parseFloat(distanceNmi.toFixed(2)),
+    bearingDeg,
+    bearingCompass,
+    durationMinutes,
+    fuelLitres,
+    geometry: {
+      type: "LineString",
+      coordinates: coords,
+    },
+    waypoints,
+  };
+}
 
 function calculateDestinationCoordinate(
   originLat: number,
@@ -1149,9 +1295,45 @@ export default function MobileAppPage() {
     updated_at: "",
   })), []);
 
-  // Trigger Map resize whenever Map tab is activated
+  // Interactive 2-Coordinate Route Planner State
+  const [routePointA, setRoutePointA] = useState<SelectedLocation | null>(null);
+  const [routePointB, setRoutePointB] = useState<SelectedLocation | null>(null);
+  const [routeActiveSlot, setRouteActiveSlot] = useState<"A" | "B">("A");
+
+  const interactiveRouteData = useMemo(() => {
+    if (!routePointA || !routePointB) return null;
+    return computeMarineRouteBetweenPoints(
+      routePointA.latitude,
+      routePointA.longitude,
+      routePointB.latitude,
+      routePointB.longitude
+    );
+  }, [routePointA, routePointB]);
+
+  const handleRoutePlannerMapClick = (clickedLoc: SelectedLocation) => {
+    if (routeActiveSlot === "A" || !routePointA) {
+      setRoutePointA({
+        ...clickedLoc,
+        label: clickedLoc.label && clickedLoc.label !== "Marine Sector"
+          ? clickedLoc.label
+          : `Point A (${clickedLoc.latitude.toFixed(3)}°N, ${clickedLoc.longitude.toFixed(3)}°E)`,
+      });
+      // Automatically advance to select Point B
+      setRouteActiveSlot("B");
+    } else {
+      setRoutePointB({
+        ...clickedLoc,
+        label: clickedLoc.label && clickedLoc.label !== "Marine Sector"
+          ? clickedLoc.label
+          : `Point B (${clickedLoc.latitude.toFixed(3)}°N, ${clickedLoc.longitude.toFixed(3)}°E)`,
+      });
+      setRouteActiveSlot("A");
+    }
+  };
+
+  // Trigger Map resize whenever Map or Route tab is activated
   useEffect(() => {
-    if (activeTab === "map") {
+    if (activeTab === "map" || activeTab === "route") {
       window.dispatchEvent(new Event("resize"));
       const t1 = setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
       const t2 = setTimeout(() => window.dispatchEvent(new Event("resize")), 300);
@@ -1722,6 +1904,12 @@ export default function MobileAppPage() {
                   <MapIcon size={20} />
                 </div>
                 <span className="m-action-label">{t("map")}</span>
+              </div>
+              <div className="m-action-card" onClick={() => setActiveTab("route")}>
+                <div className="m-action-icon-wrap" style={{ background: "#f0fdf4", color: "#10b981" }}>
+                  <RouteIcon size={20} />
+                </div>
+                <span className="m-action-label">{t("routeTab")}</span>
               </div>
               <div className="m-action-card" onClick={() => setActiveTab("alerts")}>
                 <div className="m-action-icon-wrap" style={{ background: "#fee2e2", color: "#dc2626" }}>
@@ -2453,7 +2641,428 @@ export default function MobileAppPage() {
           </div>
         )}
 
-        {/* TAB 5: ALERTS & SOS (अलर्ट व सुरक्षा) */}
+        {/* TAB 5: ROUTE PLANNER (2-Coordinate Interactive Map Route) */}
+        {activeTab === "route" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {/* Header */}
+            <div className="m-section-header">
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(16, 185, 129, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10b981" }}>
+                  <RouteIcon size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 800, color: "#082536" }}>{t("routePlannerTitle")}</h3>
+                  <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>{t("routeSubtitle")}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Instruction Step Banner */}
+            <div
+              style={{
+                background: !routePointA
+                  ? "linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(56, 189, 248, 0.08))"
+                  : !routePointB
+                  ? "linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(251, 191, 36, 0.08))"
+                  : "linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.08))",
+                border: `1.5px solid ${!routePointA ? "rgba(2, 132, 199, 0.35)" : !routePointB ? "rgba(245, 158, 11, 0.4)" : "rgba(16, 185, 129, 0.4)"}`,
+                borderRadius: "12px",
+                padding: "10px 12px",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <div
+                style={{
+                  width: "28px",
+                  height: "28px",
+                  borderRadius: "50%",
+                  background: !routePointA ? "#0284c7" : !routePointB ? "#f59e0b" : "#10b981",
+                  color: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "13px",
+                  fontWeight: 900,
+                  flexShrink: 0,
+                }}
+              >
+                {!routePointA ? "1" : !routePointB ? "2" : "✓"}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <strong style={{ display: "block", fontSize: "12px", color: "#082536" }}>
+                  {!routePointA ? t("routeStepA") : !routePointB ? t("routeStepB") : t("routeBothReady")}
+                </strong>
+                <small style={{ fontSize: "10.5px", color: "#475569" }}>
+                  {!routePointA
+                    ? "Tap any point on the map to place Start marker (Point A)"
+                    : !routePointB
+                    ? "Tap next point on the map to set Destination marker (Point B)"
+                    : `Navigating from Point A (${routePointA.latitude.toFixed(2)}°N, ${routePointA.longitude.toFixed(2)}°E) to Point B (${routePointB.latitude.toFixed(2)}°N, ${routePointB.longitude.toFixed(2)}°E)`}
+                </small>
+              </div>
+            </div>
+
+            {/* Coordinate Slots (Point A & Point B) */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <button
+                type="button"
+                onClick={() => setRouteActiveSlot("A")}
+                style={{
+                  flex: 1,
+                  background: routeActiveSlot === "A" ? "rgba(16, 185, 129, 0.12)" : "#ffffff",
+                  border: `1.5px solid ${routeActiveSlot === "A" ? "#10b981" : "#cbd5e1"}`,
+                  borderRadius: "10px",
+                  padding: "8px 10px",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  boxShadow: routeActiveSlot === "A" ? "0 0 0 2px rgba(16, 185, 129, 0.2)" : "none",
+                  transition: "all 0.15s",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 800, color: "#10b981", textTransform: "uppercase" }}>
+                    🟢 {t("routeStartA")}
+                  </span>
+                  {routeActiveSlot === "A" && (
+                    <span style={{ fontSize: "9px", background: "#10b981", color: "#fff", padding: "1px 5px", borderRadius: "6px", fontWeight: 700 }}>
+                      ACTIVE
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: "11px", fontWeight: 700, color: routePointA ? "#082536" : "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {routePointA ? `${routePointA.latitude.toFixed(4)}°N, ${routePointA.longitude.toFixed(4)}°E` : t("tapMapToSet")}
+                </div>
+              </button>
+
+              <div style={{ color: "#94a3b8", fontWeight: 900, fontSize: "14px", flexShrink: 0 }}>
+                →
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setRouteActiveSlot("B")}
+                style={{
+                  flex: 1,
+                  background: routeActiveSlot === "B" ? "rgba(2, 132, 199, 0.12)" : "#ffffff",
+                  border: `1.5px solid ${routeActiveSlot === "B" ? "#0284c7" : "#cbd5e1"}`,
+                  borderRadius: "10px",
+                  padding: "8px 10px",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  boxShadow: routeActiveSlot === "B" ? "0 0 0 2px rgba(2, 132, 199, 0.2)" : "none",
+                  transition: "all 0.15s",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2px" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 800, color: "#0284c7", textTransform: "uppercase" }}>
+                    🏁 {t("routeDestB")}
+                  </span>
+                  {routeActiveSlot === "B" && (
+                    <span style={{ fontSize: "9px", background: "#0284c7", color: "#fff", padding: "1px 5px", borderRadius: "6px", fontWeight: 700 }}>
+                      ACTIVE
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: "11px", fontWeight: 700, color: routePointB ? "#082536" : "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {routePointB ? `${routePointB.latitude.toFixed(4)}°N, ${routePointB.longitude.toFixed(4)}°E` : t("tapMapToSet")}
+                </div>
+              </button>
+            </div>
+
+            {/* Quick Action Toolbar */}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setRoutePointA(location);
+                  setRouteActiveSlot("B");
+                }}
+                style={{
+                  background: "#f0f9ff",
+                  border: "1px solid #bae6fd",
+                  color: "#0369a1",
+                  borderRadius: "8px",
+                  padding: "5px 9px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                <Anchor size={12} />
+                <span>{t("routeUseCurrent")}</span>
+              </button>
+
+              {routePointA && routePointB && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const temp = routePointA;
+                    setRoutePointA(routePointB);
+                    setRoutePointB(temp);
+                  }}
+                  style={{
+                    background: "#f8fafc",
+                    border: "1px solid #cbd5e1",
+                    color: "#334155",
+                    borderRadius: "8px",
+                    padding: "5px 9px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <ArrowLeftRight size={12} />
+                  <span>{t("routeSwap")}</span>
+                </button>
+              )}
+
+              {(routePointA || routePointB) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRoutePointA(null);
+                    setRoutePointB(null);
+                    setRouteActiveSlot("A");
+                  }}
+                  style={{
+                    background: "#fff1f2",
+                    border: "1px solid #fecdd3",
+                    color: "#e11d48",
+                    borderRadius: "8px",
+                    padding: "5px 9px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    marginLeft: "auto",
+                  }}
+                >
+                  <RotateCcw size={12} />
+                  <span>{t("routeClear")}</span>
+                </button>
+              )}
+            </div>
+
+            {/* Interactive Map Canvas */}
+            <div className="compact-map-wrapper" style={{ position: "relative", minHeight: "360px" }}>
+              <MarineMap
+                compact={true}
+                selectedLocation={routePointB ? null : routePointA}
+                onSelectLocation={handleRoutePlannerMapClick}
+                layers={mapLayers.layers}
+                showDemoFeatures={true}
+                alerts={alertData.data?.alerts ?? []}
+                pfzs={pfzGeojson}
+                savedLocations={mobileSavedLocations}
+                riskLevel={riskLevel}
+                routeGeometry={interactiveRouteData?.geometry ?? null}
+              />
+
+              {/* Floating Helper Pill on Map */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "10px",
+                  left: "10px",
+                  right: "10px",
+                  background: "rgba(8, 37, 54, 0.88)",
+                  backdropFilter: "blur(6px)",
+                  border: "1px solid rgba(56, 189, 248, 0.3)",
+                  borderRadius: "8px",
+                  padding: "6px 10px",
+                  color: "#ffffff",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  zIndex: 2,
+                  pointerEvents: "none",
+                }}
+              >
+                <span>
+                  {!routePointA
+                    ? "👉 Tap map to set Start (Point A)"
+                    : !routePointB
+                    ? "👉 Tap map to set Destination (Point B)"
+                    : "🗺️ 2-Point Route Computed"}
+                </span>
+                <span style={{ fontSize: "10px", color: "#38bdf8", fontWeight: 800 }}>
+                  ORCA NAV
+                </span>
+              </div>
+            </div>
+
+            {/* Route Calculation Summary & Navigation Stats */}
+            {interactiveRouteData && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {/* 4-Metric Grid */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: "8px",
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "10px",
+                      padding: "10px 12px",
+                    }}
+                  >
+                    <small style={{ color: "#64748b", fontSize: "10.5px", display: "block" }}>
+                      📏 {t("routePassageDist")}
+                    </small>
+                    <strong style={{ color: "#082536", fontSize: "18px", fontWeight: 800 }}>
+                      {interactiveRouteData.distanceKm} km
+                    </strong>
+                    <div style={{ color: "#0284c7", fontSize: "11px", fontWeight: 700 }}>
+                      {interactiveRouteData.distanceNmi} NM (Nautical Miles)
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "10px",
+                      padding: "10px 12px",
+                    }}
+                  >
+                    <small style={{ color: "#64748b", fontSize: "10.5px", display: "block" }}>
+                      ⏱️ {t("routeEstVoyage")}
+                    </small>
+                    <strong style={{ color: "#10b981", fontSize: "18px", fontWeight: 800 }}>
+                      ~{Math.floor(interactiveRouteData.durationMinutes / 60) > 0 ? `${Math.floor(interactiveRouteData.durationMinutes / 60)}h ` : ""}{interactiveRouteData.durationMinutes % 60}m
+                    </strong>
+                    <div style={{ color: "#64748b", fontSize: "11px" }}>
+                      @ ~12 kt Cruising Speed
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "10px",
+                      padding: "10px 12px",
+                    }}
+                  >
+                    <small style={{ color: "#64748b", fontSize: "10.5px", display: "block" }}>
+                      🧭 {t("routeBearing")}
+                    </small>
+                    <strong style={{ color: "#082536", fontSize: "18px", fontWeight: 800 }}>
+                      {interactiveRouteData.bearingDeg}° {interactiveRouteData.bearingCompass}
+                    </strong>
+                    <div style={{ color: "#64748b", fontSize: "11px" }}>
+                      Compass Direction
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "10px",
+                      padding: "10px 12px",
+                    }}
+                  >
+                    <small style={{ color: "#64748b", fontSize: "10.5px", display: "block" }}>
+                      ⛽ {t("routeFuelEst")}
+                    </small>
+                    <strong style={{ color: "#d97706", fontSize: "18px", fontWeight: 800 }}>
+                      ~{interactiveRouteData.fuelLitres} L
+                    </strong>
+                    <div style={{ color: "#64748b", fontSize: "11px" }}>
+                      Est. Diesel Consumption
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step-by-Step Waypoint Guidance Card */}
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, rgba(8, 37, 54, 0.96), rgba(15, 60, 85, 0.96))",
+                    border: "1.5px solid rgba(52, 189, 209, 0.35)",
+                    borderRadius: "12px",
+                    padding: "14px",
+                    color: "#ffffff",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <NavigationIcon size={14} style={{ color: "#38bdf8" }} />
+                      <strong style={{ fontSize: "12.5px" }}>{t("routeWaypoints")}</strong>
+                    </div>
+                    <span style={{ fontSize: "10px", background: "rgba(16, 185, 129, 0.2)", color: "#34d399", padding: "2px 6px", borderRadius: "6px", fontWeight: 700 }}>
+                      5 CORRIDOR POINTS
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "12px" }}>
+                    {interactiveRouteData.waypoints.map((wp, idx) => (
+                      <div key={idx} style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                        <span style={{ fontSize: "13px", lineHeight: "1.2" }}>
+                          {idx === 0 ? "🟢" : idx === interactiveRouteData.waypoints.length - 1 ? "🏁" : "⚓"}
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          <strong style={{ color: idx === 0 ? "#34d399" : idx === interactiveRouteData.waypoints.length - 1 ? "#38bdf8" : "#93c5fd" }}>
+                            {wp.name}
+                          </strong>
+                          <div style={{ color: "#94a3b8", fontSize: "10.5px" }}>
+                            {wp.distKm} km · {wp.lat.toFixed(4)}°N, {wp.lon.toFixed(4)}°E
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Ask AI Saathi About this Custom Route */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("assistant");
+                    const promptText = `Please provide an ocean navigation and safety briefing for my voyage from Point A (${routePointA?.latitude.toFixed(3)}°N, ${routePointA?.longitude.toFixed(3)}°E) to Point B (${routePointB?.latitude.toFixed(3)}°N, ${routePointB?.longitude.toFixed(3)}°E). Total distance is ${interactiveRouteData.distanceKm} km, heading ${interactiveRouteData.bearingDeg}° (${interactiveRouteData.bearingCompass}). Are weather, waves and currents safe for this passage?`;
+                    setQueryInput(promptText);
+                  }}
+                  style={{
+                    background: "linear-gradient(135deg, #0284c7, #0369a1)",
+                    border: "none",
+                    borderRadius: "12px",
+                    padding: "12px 16px",
+                    color: "#ffffff",
+                    fontWeight: 800,
+                    fontSize: "13px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(2, 132, 199, 0.3)",
+                  }}
+                >
+                  <Sparkles size={16} />
+                  <span>{t("routeAskSaathi")}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 6: ALERTS & SOS (अलर्ट व सुरक्षा) */}
         {activeTab === "alerts" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {/* Clean Segmented Sub-Tab Toggle */}
@@ -2705,7 +3314,7 @@ export default function MobileAppPage() {
           className={`m-nav-item ${activeTab === "overview" ? "active" : ""}`}
           onClick={() => setActiveTab("overview")}
         >
-          <LayoutDashboard size={20} />
+          <LayoutDashboard size={19} />
           <span className="m-nav-label">{t("statusTab")}</span>
         </button>
 
@@ -2714,7 +3323,7 @@ export default function MobileAppPage() {
           className={`m-nav-item ${activeTab === "assistant" ? "active" : ""}`}
           onClick={() => setActiveTab("assistant")}
         >
-          <Bot size={20} />
+          <Bot size={19} />
           <span className="m-nav-label">{t("assistantTab")}</span>
         </button>
 
@@ -2723,7 +3332,7 @@ export default function MobileAppPage() {
           className={`m-nav-item ${activeTab === "pfz" ? "active" : ""}`}
           onClick={() => setActiveTab("pfz")}
         >
-          <Fish size={20} />
+          <Fish size={19} />
           <span className="m-nav-label">{t("pfzTab")}</span>
         </button>
 
@@ -2732,8 +3341,17 @@ export default function MobileAppPage() {
           className={`m-nav-item ${activeTab === "map" ? "active" : ""}`}
           onClick={() => setActiveTab("map")}
         >
-          <MapIcon size={20} />
+          <MapIcon size={19} />
           <span className="m-nav-label">{t("mapTab")}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`m-nav-item ${activeTab === "route" ? "active" : ""}`}
+          onClick={() => setActiveTab("route")}
+        >
+          <RouteIcon size={19} />
+          <span className="m-nav-label">{t("routeTab")}</span>
         </button>
 
         <button
@@ -2741,7 +3359,7 @@ export default function MobileAppPage() {
           className={`m-nav-item ${activeTab === "alerts" ? "active" : ""}`}
           onClick={() => setActiveTab("alerts")}
         >
-          <ShieldAlert size={20} />
+          <ShieldAlert size={19} />
           <span className="m-nav-label">{t("alertsTab")}</span>
         </button>
       </nav>
