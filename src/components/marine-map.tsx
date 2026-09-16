@@ -40,6 +40,13 @@ const interactiveLayerIds = [
   "orca-pfz",
   "orca-pfz-live-line",
   "orca-pfz-live-fill",
+  "orca-tfz-fill",
+  "orca-tfz-line",
+  "orca-tfz-point",
+  "orca-svas-fill",
+  "orca-svas-line",
+  "orca-waves-zones-fill",
+  "orca-waves-zones-line",
   "orca-alert-fill",
   "orca-alert-line",
   "orca-alert-point",
@@ -233,31 +240,164 @@ export function MarineMap({
       });
     }
 
-    // 6. Wave & Swell Conditions Layer
+    // 6. Wave & Swell Conditions Layer (Ocean State Forecast - OSF)
     if (!map.getSource("orca-waves-grid")) {
       map.addSource("orca-waves-grid", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: "orca-waves-zones-fill",
+        type: "fill",
+        source: "orca-waves-grid",
+        filter: ["==", ["geometry-type"], "Polygon"],
+        paint: {
+          "fill-color": ["coalesce", ["get", "safety_color"], "#06b6d4"],
+          "fill-opacity": 0.28,
+        },
+      });
+      map.addLayer({
+        id: "orca-waves-zones-line",
+        type: "line",
+        source: "orca-waves-grid",
+        filter: ["==", ["geometry-type"], "Polygon"],
+        paint: {
+          "line-color": ["coalesce", ["get", "safety_color"], "#38bdf8"],
+          "line-width": 2.5,
+        },
+      });
+      map.addLayer({
+        id: "orca-waves-zones-label",
+        type: "symbol",
+        source: "orca-waves-grid",
+        filter: ["==", ["geometry-type"], "Polygon"],
+        layout: {
+          "text-field": ["get", "name"],
+          "text-size": 10.5,
+          "text-offset": [0, 0],
+          "text-allow-overlap": false,
+        },
+        paint: {
+          "text-color": "#ffffff",
+          "text-halo-color": "#031726",
+          "text-halo-width": 2,
+        },
+      });
       map.addLayer({
         id: "orca-waves-grid-circle",
         type: "circle",
         source: "orca-waves-grid",
+        filter: ["==", ["geometry-type"], "Point"],
         paint: {
           "circle-radius": 8,
-          "circle-color": "#06b6d4",
+          "circle-color": ["coalesce", ["get", "color"], "#06b6d4"],
           "circle-stroke-width": 2,
           "circle-stroke-color": "#ffffff",
-          "circle-opacity": 0.85,
+          "circle-opacity": 0.9,
         },
       });
       map.addLayer({
         id: "orca-waves-grid-label",
         type: "symbol",
         source: "orca-waves-grid",
+        filter: ["==", ["geometry-type"], "Point"],
         layout: { "text-field": ["get", "label"], "text-size": 10, "text-offset": [0, 1.4], "text-allow-overlap": false },
         paint: { "text-color": "#38bdf8", "text-halo-color": "#031726", "text-halo-width": 2 },
       });
     }
 
-    // 7. Ocean Currents Layer
+    // 6b. Tuna Fishing Zones (TFZ - INCOIS Pelagic Tuna Advisories)
+    if (!map.getSource("orca-tfz-source")) {
+      map.addSource("orca-tfz-source", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: "orca-tfz-fill",
+        type: "fill",
+        source: "orca-tfz-source",
+        filter: ["==", ["geometry-type"], "Polygon"],
+        paint: {
+          "fill-color": "#f59e0b",
+          "fill-opacity": 0.28,
+        },
+      });
+      map.addLayer({
+        id: "orca-tfz-line",
+        type: "line",
+        source: "orca-tfz-source",
+        filter: ["==", ["geometry-type"], "Polygon"],
+        paint: {
+          "line-color": "#fbbf24",
+          "line-width": 3,
+        },
+      });
+      map.addLayer({
+        id: "orca-tfz-point",
+        type: "circle",
+        source: "orca-tfz-source",
+        filter: ["==", ["geometry-type"], "Point"],
+        paint: {
+          "circle-radius": 9,
+          "circle-color": "#d97706",
+          "circle-stroke-width": 2.5,
+          "circle-stroke-color": "#ffffff",
+        },
+      });
+      map.addLayer({
+        id: "orca-tfz-label",
+        type: "symbol",
+        source: "orca-tfz-source",
+        layout: {
+          "text-field": ["get", "label"],
+          "text-size": 11,
+          "text-offset": [0, 1.4],
+          "text-allow-overlap": false,
+        },
+        paint: {
+          "text-color": "#fbbf24",
+          "text-halo-color": "#000000",
+          "text-halo-width": 2,
+        },
+      });
+    }
+
+    // 6c. Small Vessel Advisory Services (SVAS - INCOIS Small Craft Safety)
+    if (!map.getSource("orca-svas-source")) {
+      map.addSource("orca-svas-source", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: "orca-svas-fill",
+        type: "fill",
+        source: "orca-svas-source",
+        filter: ["==", ["geometry-type"], "Polygon"],
+        paint: {
+          "fill-color": ["coalesce", ["get", "safety_color"], "#10b981"],
+          "fill-opacity": 0.26,
+        },
+      });
+      map.addLayer({
+        id: "orca-svas-line",
+        type: "line",
+        source: "orca-svas-source",
+        paint: {
+          "line-color": ["coalesce", ["get", "safety_color"], "#10b981"],
+          "line-width": 2.5,
+          "line-dasharray": [3, 2],
+        },
+      });
+      map.addLayer({
+        id: "orca-svas-label",
+        type: "symbol",
+        source: "orca-svas-source",
+        layout: {
+          "text-field": ["get", "name"],
+          "text-size": 10.5,
+          "text-offset": [0, 0],
+          "text-allow-overlap": false,
+        },
+        paint: {
+          "text-color": "#ffffff",
+          "text-halo-color": "#031726",
+          "text-halo-width": 2,
+        },
+      });
+    }
+
+    // 7. Ocean Currents Layer (Ocean State Forecast - OSF)
     if (!map.getSource("orca-currents-grid")) {
       map.addSource("orca-currents-grid", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addLayer({
@@ -266,10 +406,10 @@ export function MarineMap({
         source: "orca-currents-grid",
         paint: {
           "circle-radius": 8,
-          "circle-color": "#8b5cf6",
+          "circle-color": ["coalesce", ["get", "color"], "#8b5cf6"],
           "circle-stroke-width": 2,
           "circle-stroke-color": "#ffffff",
-          "circle-opacity": 0.85,
+          "circle-opacity": 0.9,
         },
       });
       map.addLayer({
@@ -893,9 +1033,11 @@ export function MarineMap({
 
     const layerMap: Record<string, string[]> = {
       pfz: ["orca-pfz", "orca-pfz-live-fill", "orca-pfz-live-line", "orca-pfz-live-label"],
+      tfz: ["orca-tfz-fill", "orca-tfz-line", "orca-tfz-point", "orca-tfz-label"],
+      svas: ["orca-svas-fill", "orca-svas-line", "orca-svas-label"],
       sst: ["orca-sst", "orca-sst-grid-points", "orca-sst-grid-label"],
       chlorophyll: ["orca-chlorophyll", "orca-chl-grid-points", "orca-chl-grid-label"],
-      waves: ["orca-waves-grid-circle", "orca-waves-grid-label"],
+      waves: ["orca-waves-zones-fill", "orca-waves-zones-line", "orca-waves-zones-label", "orca-waves-grid-circle", "orca-waves-grid-label"],
       currents: ["orca-currents-grid-circle", "orca-currents-grid-label"],
       weather: ["orca-weather-grid-circle", "orca-weather-grid-label"],
       ais: ["orca-ais-vessels-point", "orca-ais-vessels-label"],
@@ -956,7 +1098,7 @@ export function MarineMap({
     };
   }, [selectedLocation, state, styleRevision]);
 
-  // 2. Fetch & Populate Ocean Products Grids (SST, Chlorophyll, Waves, Currents, Weather, Restricted)
+  // 2. Fetch & Populate Ocean Products Grids (SST, Chlorophyll, Waves, Currents, Weather, Restricted, TFZ, SVAS)
   useEffect(() => {
     const map = mapRef.current;
     if (!map || state !== "ready") return;
@@ -965,7 +1107,8 @@ export function MarineMap({
     const lon = selectedLocation?.longitude ?? 72.83;
 
     const fetchGrid = (product: string, sourceId: string) => {
-      fetch(`${API_BASE_URL}${API_V1_PREFIX}/ocean-products/grid?product=${product}&latitude=${lat}&longitude=${lon}&radius_km=130`)
+      const localUrl = `/api/v1/ocean-products/grid?product=${product}&latitude=${lat}&longitude=${lon}&radius_km=130`;
+      fetch(localUrl)
         .then((res) => res.json())
         .then((data) => {
           const source = map.getSource(sourceId) as import("maplibre-gl").GeoJSONSource | undefined;
@@ -973,13 +1116,26 @@ export function MarineMap({
             source.setData(data);
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          fetch(`${API_BASE_URL}${API_V1_PREFIX}/ocean-products/grid?product=${product}&latitude=${lat}&longitude=${lon}&radius_km=130`)
+            .then((res) => res.json())
+            .then((data) => {
+              const source = map.getSource(sourceId) as import("maplibre-gl").GeoJSONSource | undefined;
+              if (source && data && data.features) {
+                source.setData(data);
+              }
+            })
+            .catch(() => {});
+        });
     };
 
-    fetchGrid("sst", "orca-sst-grid");
-    fetchGrid("chlorophyll", "orca-chl-grid");
     fetchGrid("waves", "orca-waves-grid");
     fetchGrid("currents", "orca-currents-grid");
+    fetchGrid("tfz", "orca-tfz-source");
+    fetchGrid("svas", "orca-svas-source");
+    fetchGrid("pfz", "orca-pfz-live");
+    fetchGrid("sst", "orca-sst-grid");
+    fetchGrid("chlorophyll", "orca-chl-grid");
     fetchGrid("weather", "orca-weather-grid");
     fetchGrid("restricted", "orca-restricted-zones");
   }, [selectedLocation, state, styleRevision]);

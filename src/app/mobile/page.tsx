@@ -1225,6 +1225,7 @@ export default function MobileAppPage() {
   const [isNavAudioActive, setIsNavAudioActive] = useState(true);
   const [showSafetyOnboardingModal, setShowSafetyOnboardingModal] = useState(false);
   const [alertSubTab, setAlertSubTab] = useState<"sos" | "advisories">("sos");
+  const [inspectedFeature, setInspectedFeature] = useState<import("@/features/map/types").MapFeatureDetails | null>(null);
 
   const sosStore = useSOSStore();
 
@@ -1240,10 +1241,7 @@ export default function MobileAppPage() {
 
   const handleSelectMapParam = (paramId: string) => {
     setActiveMapParam(paramId);
-    const target = mapLayers.layers.find((l) => l.id === paramId);
-    if (target && !target.enabled) {
-      mapLayers.toggle(paramId);
-    }
+    mapLayers.enable(paramId);
   };
 
   const weather = conditions.data?.weather?.current;
@@ -2434,6 +2432,7 @@ export default function MobileAppPage() {
                       compact={true}
                       selectedLocation={location}
                       onSelectLocation={handleSelectMapLocation}
+                      onFeatureSelect={setInspectedFeature}
                       layers={mapLayers.layers}
                       showDemoFeatures={true}
                       alerts={alertData.data?.alerts ?? []}
@@ -2607,11 +2606,12 @@ export default function MobileAppPage() {
             })() : (
               <>
                 {/* Standard Map Container for Wave, Wind, SST, Currents, Alerts */}
-                <div className="compact-map-wrapper">
+                <div className="compact-map-wrapper" style={{ position: "relative" }}>
                   <MarineMap
                     compact={true}
                     selectedLocation={location}
                     onSelectLocation={handleSelectMapLocation}
+                    onFeatureSelect={setInspectedFeature}
                     layers={mapLayers.layers}
                     showDemoFeatures={true}
                     alerts={alertData.data?.alerts ?? []}
@@ -2620,8 +2620,124 @@ export default function MobileAppPage() {
                     riskLevel={riskLevel}
                     routeGeometry={calculatedRouteGeometry}
                   />
+
+                  {/* Floating Controls for Samudra 2.0 Map View */}
+                  <div className="m-nav-fabs-right">
+                    <button
+                      type="button"
+                      className="m-nav-fab-btn"
+                      title="Compass Orientation"
+                      onClick={() => window.dispatchEvent(new CustomEvent("orca-map-reset-north"))}
+                    >
+                      🧭
+                    </button>
+                    <button
+                      type="button"
+                      className="m-nav-fab-btn"
+                      title="Re-centre Location"
+                      onClick={() => window.dispatchEvent(new CustomEvent("orca-map-recenter-location"))}
+                    >
+                      ▲
+                    </button>
+                  </div>
                 </div>
               </>
+            )}
+
+            {/* Samudra 2.0 Interactive Feature Inspection Card */}
+            {inspectedFeature && (
+              <div
+                className="m-samudra-inspect-card"
+                style={{
+                  background: "linear-gradient(135deg, rgba(8, 37, 54, 0.98), rgba(15, 23, 42, 0.98))",
+                  border: "1px solid rgba(56, 189, 248, 0.35)",
+                  borderRadius: "14px",
+                  padding: "12px 14px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  boxShadow: "0 8px 30px rgba(0,0,0,0.4)",
+                  animation: "fadeIn 0.2s ease-out",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                      📍 {inspectedFeature.type || "SAMUDRA 2.0 ADVISORY"}
+                    </span>
+                    <h4 style={{ margin: "2px 0 0", fontSize: "14px", fontWeight: 800, color: "#f8fafc" }}>
+                      {inspectedFeature.title}
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setInspectedFeature(null)}
+                    style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#94a3b8", borderRadius: "50%", width: "24px", height: "24px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 8px", borderRadius: "8px", background: "rgba(16, 185, 129, 0.2)", color: "#34d399", border: "1px solid rgba(16, 185, 129, 0.3)" }}>
+                    {inspectedFeature.status}
+                  </span>
+                  {inspectedFeature.properties?.depth_m && (
+                    <span style={{ fontSize: "11px", padding: "3px 8px", borderRadius: "8px", background: "rgba(56, 189, 248, 0.15)", color: "#38bdf8" }}>
+                      ⚓ Depth: {inspectedFeature.properties.depth_m}
+                    </span>
+                  )}
+                  {inspectedFeature.properties?.target_species && (
+                    <span style={{ fontSize: "11px", padding: "3px 8px", borderRadius: "8px", background: "rgba(245, 158, 11, 0.15)", color: "#fbbf24" }}>
+                      🐟 Species: {inspectedFeature.properties.target_species}
+                    </span>
+                  )}
+                  {inspectedFeature.properties?.wave_height_m && (
+                    <span style={{ fontSize: "11px", padding: "3px 8px", borderRadius: "8px", background: "rgba(6, 182, 212, 0.15)", color: "#22d3ee" }}>
+                      🌊 Height: {inspectedFeature.properties.wave_height_m}m
+                    </span>
+                  )}
+                  {inspectedFeature.properties?.speed_knots && (
+                    <span style={{ fontSize: "11px", padding: "3px 8px", borderRadius: "8px", background: "rgba(139, 92, 246, 0.15)", color: "#c084fc" }}>
+                      🧭 Speed: {inspectedFeature.properties.speed_knots} kn
+                    </span>
+                  )}
+                </div>
+
+                {inspectedFeature.properties?.advisory && (
+                  <p style={{ margin: 0, fontSize: "11px", color: "#cbd5e1", lineHeight: 1.4 }}>
+                    ℹ️ {inspectedFeature.properties.advisory}
+                  </p>
+                )}
+                {inspectedFeature.properties?.recommendation && (
+                  <p style={{ margin: 0, fontSize: "11px", color: "#cbd5e1", lineHeight: 1.4 }}>
+                    ⚠️ {inspectedFeature.properties.recommendation}
+                  </p>
+                )}
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "4px", borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: "10px", color: "#94a3b8" }}>
+                  <span>Source: {inspectedFeature.source}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleSelectMapParam("route");
+                      setInspectedFeature(null);
+                    }}
+                    style={{
+                      background: "#0284c7",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "4px 10px",
+                      fontSize: "10.5px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    🧭 Plan Route Here
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* Real-time Dynamic Coordinate Intelligence Card */}
@@ -2715,6 +2831,10 @@ export default function MobileAppPage() {
                 liveValue = "24 Live Vessels Nearby";
               } else if (param.id === "pfz") {
                 liveValue = "3 Active Advisory Zones";
+              } else if (param.id === "tfz") {
+                liveValue = "2 Oceanic Tuna Fronts (Yellowfin / Skipjack)";
+              } else if (param.id === "svas") {
+                liveValue = "Safe for Small Crafts (<15m) · Normal";
               } else if (param.id === "alerts") {
                 liveValue = `${alertData.data?.alerts?.length || 1} Active Hazard Zones`;
               } else if (param.id === "route") {
